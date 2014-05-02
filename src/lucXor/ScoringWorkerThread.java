@@ -24,12 +24,16 @@ public class ScoringWorkerThread implements Runnable {
 
     @Override
     public void run() {
-        this.curPSM.generatePermutations(this.runMode_);
-        try {
-            this.curPSM.scorePermutations();
+        //this.curPSM.generatePermutations(this.runMode_);
 
-            if( (this.jobIdx % 100) == 0 ) System.err.print(this.jobIdx + " ");
-            if( (this.jobIdx % 1000) == 0 ) System.err.print("\n");
+
+        try {
+            synchronized (this) {
+                this.curPSM.scorePermutations();
+
+                if ((this.jobIdx % 100) == 0) System.err.print(this.jobIdx + " ");
+                if ((this.jobIdx % 1000) == 0) System.err.print("\n");
+            }
 
         } catch (IOException e) {
             e.printStackTrace();

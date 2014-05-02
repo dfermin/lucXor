@@ -38,7 +38,7 @@ public class constants {
 	public static final double PPM = 1.0 / 1000000.0;
 	public static final double TINY_NUM = 1e-10; // represents a really small number
 	public static final double MIN_DELTA_SCORE = 0.1;
-    public static final double FUNCTION_TIME_LIMIT = 10; // how long a function call can go for (in seconds) before we kill it
+    public static final double FUNCTION_TIME_LIMIT = 120; // how long a function call can go for (in seconds) before we kill it
 
 
 }

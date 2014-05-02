@@ -307,7 +307,7 @@ public class LucXor {
         }
         else NCPU = 1;
 
-        for(int RN = 0; RN < 2; RN++) { // RN = run number
+        for(int RN = 0; RN < 2; RN++) { // RN = run number, 0 = calc. FDR 1 = assign FDR estimates
 
             if(globals.runMode == constants.DEFAULT_RUN_MODE) {
 
@@ -325,15 +325,12 @@ public class LucXor {
                 int ctr = 1;
                 for(PSM p : globals.PSM_list) {
 
-                    if(!p.specId.equalsIgnoreCase("ppeptidemix2_CID_Orbi.1913.1913.3")) continue;
-
                     p.generatePermutations(RN);
                     p.scorePermutations();
 
                     if(globals.debugMode == constants.WRITE_SCORED_PKS) p.writeScoredPeaks();
 
                     ctr++;
-                    System.exit(0);
 
                     if( (ctr % 100) == 0 ) System.err.print(ctr + " ");
                     if( (ctr % 1000) == 0 ) System.err.print("\n");
@@ -341,9 +338,12 @@ public class LucXor {
             }
             else { // multi-threaded scoring
 
-                ExecutorService executor = Executors.newFixedThreadPool(globals.numThreads);
+                // A pool of 'N' worker threads to do the work
+                final int NTHREADS = globals.numThreads;
+                ExecutorService executor = Executors.newFixedThreadPool(NTHREADS);
                 int ctr = 1;
                 for(PSM p : globals.PSM_list) {
+                    p.generatePermutations(RN);
                     Runnable worker = new ScoringWorkerThread(p, RN, ctr++);
                     executor.execute(worker);
                 }
@@ -351,6 +351,7 @@ public class LucXor {
 
                 // wait for all jobs to finish
                 executor.awaitTermination((long) constants.FUNCTION_TIME_LIMIT, TimeUnit.SECONDS);
+
                 while( !executor.isTerminated() ) {}
             }
             System.err.print("\n");
@@ -607,19 +608,22 @@ public class LucXor {
                 }
             }
             else { // multi-threaded scoring
-                ExecutorService executor = Executors.newFixedThreadPool(globals.numThreads);
+                final int NTHREADS = globals.numThreads;
+                ExecutorService executor = Executors.newFixedThreadPool(NTHREADS);
                 int ctr = 1;
                 for(PSM p : globals.PSM_list) {
+                    p.generatePermutations(RN);
                     Runnable worker = new ScoringWorkerThread(p, RN, ctr++);
                     executor.execute(worker);
                 }
                 executor.shutdown();
 
                 // wait for all jobs to finish
-                if( !executor.awaitTermination((long) constants.FUNCTION_TIME_LIMIT, TimeUnit.SECONDS) ) {
-                    System.err.println("\nThread queue failed to terminate nicely\n");
-                    executor.shutdownNow();
-                }
+                executor.awaitTermination((long) constants.FUNCTION_TIME_LIMIT, TimeUnit.SECONDS);
+//                if( !executor.awaitTermination((long) constants.FUNCTION_TIME_LIMIT, TimeUnit.SECONDS) ) {
+//                    System.err.println("\nThread queue failed to terminate nicely\n");
+//                    executor.shutdownNow();
+//                }
                 while( !executor.isTerminated() ) {}
             }
             System.err.print("\n");
