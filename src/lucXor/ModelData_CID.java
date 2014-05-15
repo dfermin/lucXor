@@ -9,6 +9,7 @@ import java.io.File;
 import java.io.FileWriter;
 import java.io.IOException;
 import java.util.ArrayList;
+import java.util.Collections;
 
 /**
  *
@@ -34,50 +35,71 @@ public class ModelData_CID {
 	final double CID_ADJUST = 16.0 / 25.0; 
 	
 	public ModelData_CID(int z, ArrayList<PeakClass> peaks) {
-		chargeState = z;
-		numPSM = 0;
+        chargeState = z;
+        numPSM = 0;
 
         int Nb = 0, Ny = 0, Nu = 0;
 
-		for(PeakClass pk : peaks) {
-			if(pk.matched) {
-				if(pk.matchedIonStr.startsWith("b")) { Nb++; }
-				if(pk.matchedIonStr.startsWith("y")) { Ny++; }
-			}
-			else { Nu++; } //unmatched_pks.add(pk);
-		}
+        for (PeakClass pk : peaks) {
+            if (pk.matched) {
+                if (pk.matchedIonStr.startsWith("b")) {
+                    Nb++;
+                }
+                if (pk.matchedIonStr.startsWith("y")) {
+                    Ny++;
+                }
+            } else {
+                Nu++;
+            } //unmatched_pks.add(pk);
+        }
 
-        b_intensity = new double[ Nb ];
-        b_distance = new double[ Nb ];
-        y_intensity = new double[ Ny ];
-        y_distance = new double[ Ny ];
-        u_intensity = new double[ Nu ];
-        u_distance = new double[ Nu ];
+
+        b_intensity = new double[Nb];
+        b_distance = new double[Nb];
+        y_intensity = new double[Ny];
+        y_distance = new double[Ny];
 
         Nb = 0;
         Ny = 0;
-        Nu = 0;
 
-        for(PeakClass pk : peaks) {
-            if(pk.matched) {
-                if(pk.matchedIonStr.startsWith("b")) {
-                    b_intensity[ Nb ] = pk.norm_intensity;
-                    b_distance[ Nb ]  = pk.dist;
+        for (PeakClass pk : peaks) {
+            if (pk.matched) {
+                if (pk.matchedIonStr.startsWith("b")) {
+                    b_intensity[Nb] = pk.norm_intensity;
+                    b_distance[Nb] = pk.dist;
                     Nb++;
                 }
 
-                if(pk.matchedIonStr.startsWith("y")) {
-                    y_intensity[ Ny ] = pk.norm_intensity;
-                    y_distance[ Ny ]  = pk.dist;
+                if (pk.matchedIonStr.startsWith("y")) {
+                    y_intensity[Ny] = pk.norm_intensity;
+                    y_distance[Ny] = pk.dist;
                     Ny++;
                 }
             }
-            else {
-                u_intensity[ Nu ] = pk.norm_intensity;
-                u_distance[ Nu ]  = pk.dist;
-                Nu++;
-            }
         }
+
+
+        // We will limit the size of the negative distribution to speed things up
+        int limitN = (Nb + Ny);
+        if(limitN < constants.MIN_NUM_NEG_PKS) limitN += constants.MIN_NUM_NEG_PKS;
+
+        if(limitN > Nu) limitN = Nu; // prevents segfault on insufficient data for modeling
+        u_intensity = new double[ limitN ];
+        u_distance = new double[ limitN ];
+
+        ArrayList<PeakClass> negPks = new ArrayList<>();
+        for (PeakClass pk : peaks) {
+            if (!pk.matched) negPks.add(pk);
+        }
+        Collections.shuffle(negPks);
+        for(int i = 0; i < limitN; i++) {
+            PeakClass pk = negPks.get(i);
+            u_intensity[i] = pk.norm_intensity;
+            u_distance[i]  = pk.dist;
+        }
+        negPks.clear();
+        negPks = null;
+
     }
 	
 
@@ -117,7 +139,6 @@ public class ModelData_CID {
 		sum = 0;
 		N = (double) u_distance.length;
 		for(double d : u_distance) sum += d;
-		//mu_dist_U = (sum / N);
 		mu_dist_U = 0;
 
 	}
@@ -250,4 +271,71 @@ public class ModelData_CID {
         u_intensity = null;
     }
 
+
+    /******************
+     * Function writes the peaks used for modeling to disk
+     */
+    public void writeModelPks() throws IOException {
+        File debugF = new File("debug_model_pks_CID.txt");
+        FileWriter fw = null;
+        BufferedWriter bw = null;
+        String line;
+        double mz, dist, relI, normI;
+
+        if(!debugF.exists()) {
+            fw = new FileWriter(debugF);
+            bw = new BufferedWriter(fw);
+            String hdr = "charge\tdataType\tvalue\n";
+            bw.write(hdr);
+        }
+        else{
+            fw = new FileWriter(debugF, true); // open for appending
+            bw = new BufferedWriter(fw);
+        }
+
+
+        for(int b = 0; b < b_intensity.length; b++) {
+            normI = globals.round_dbl(b_intensity[b], 4);
+            line = Integer.toString(chargeState) + "\tyi\t" +
+                    Double.toString(normI) + "\n";
+            bw.write(line);
+        }
+
+        for(int y = 0; y < y_intensity.length; y++) {
+            normI = globals.round_dbl(y_intensity[y], 4);
+            line = Integer.toString(chargeState) + "\tyi\t" +
+                    Double.toString(normI) + "\n";
+            bw.write(line);
+        }
+
+        for(int n = 0; n < u_intensity.length; n++) {
+            normI = globals.round_dbl(u_intensity[n], 4);
+            line = Integer.toString(chargeState) + "\tni\t" +
+                    Double.toString(normI) + "\n";
+            bw.write(line);
+        }
+
+        for(int b = 0; b < b_distance.length; b++) {
+            dist = globals.round_dbl(b_distance[b], 4);
+            line = Integer.toString(chargeState) + "\tbd\t" +
+                    Double.toString(dist) + "\n";
+            bw.write(line);
+        }
+
+        for(int y = 0; y < y_distance.length; y++) {
+            dist = globals.round_dbl(y_distance[y], 4);
+            line = Integer.toString(chargeState) + "\tyd\t" +
+                    Double.toString(dist) + "\n";
+            bw.write(line);
+        }
+
+        for(int n = 0; n < u_distance.length; n++) {
+            dist = globals.round_dbl(u_distance[n], 4);
+            line = Integer.toString(chargeState) + "\tnd\t" +
+                    Double.toString(dist) + "\n";
+            bw.write(line);
+        }
+
+        bw.close();
+    }
 }

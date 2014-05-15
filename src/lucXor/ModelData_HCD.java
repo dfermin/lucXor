@@ -66,7 +66,6 @@ public class ModelData_HCD {
 		// To speed things up, we separate the data into primitive arrays
 		b_int = new double[ b ];
 		y_int = new double[ y ];
-		n_int = new double[ n ];
 		pos_dist = new double[ p ];
 		
 		
@@ -88,9 +87,16 @@ public class ModelData_HCD {
 			pos_dist[ p ] = pk.dist;
 			p++;
 		}
-		
-		
-		n = 0;
+
+        // We will limit the size of the negative distribution to speed things up
+        int limitN = (b + y);
+        if(limitN < constants.MIN_NUM_NEG_PKS) limitN += constants.MIN_NUM_NEG_PKS;
+
+        if(limitN > n) limitN = n; // prevents segfault on insufficient data for modeling
+
+        n_int = new double[ limitN ];
+        Collections.shuffle(negPks);
+        n = 0;
 		for(PeakClass pk : negPks) {
 			n_int[ n ] = pk.norm_intensity;
 			n++;
@@ -98,15 +104,6 @@ public class ModelData_HCD {
 		
 		posPks.clear(); posPks = null;
 		negPks.clear(); negPks = null;
-		
-		
-		// remove extreme outliers
-//		double pTrim = 0.1;
-//		percentileTrim('b', 0, pTrim);
-//		percentileTrim('b', 1, pTrim);
-//		percentileTrim('y', 0, pTrim);
-//		percentileTrim('y', 1, pTrim);
-//		percentileTrim('n', 0, pTrim);
 	}
 
 	

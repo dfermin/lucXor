@@ -32,6 +32,7 @@ public class constants {
     public static final int WRITE_ALL_MATCHED_PK_SCORES = 5;
     public static final int DEFAULT_RUN_MODE = 0;
     public static final int REPORT_DECOYS = 1;
+    public static final int MIN_NUM_NEG_PKS = 50000;
 	
 	public static final double WATER = 18.01056;
 	public static final double PROTON = 1.00728;

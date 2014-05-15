@@ -222,7 +222,6 @@ public class globals {
                 double m = Double.valueOf(ary[1]);
                 decoyNLmap.put(k,m);
             }
-
 			
 			if(line.startsWith("NL")) {
 				String[] ary = parse_NL_line(line);
@@ -264,7 +263,7 @@ public class globals {
 		}
 		br.close();
 		
-		if( (null == outputFile) || (outputFile.isEmpty()) ) outputFile = "juciphor_results.tsv";
+		if( (null == outputFile) || (outputFile.isEmpty()) ) outputFile = "lucxor_results.tsv";
 		
 		String classStr = "";
 		switch(scoringMethod) {

@@ -1,7 +1,6 @@
 package lucXor;
 
-import gnu.trove.TCollections;
-import gnu.trove.list.array.TDoubleArrayList;
+
 import gnu.trove.list.array.TIntArrayList;
 import org.apache.commons.math3.util.FastMath;
 
@@ -35,21 +34,34 @@ public class SpectrumClass {
         maxI = 0;
         maxI_index = 0;
 
+        TIntArrayList candPks = new TIntArrayList(N);
+        for(int i = 0; i < N; i++) {
+            if(intensities_[i] == 0) continue; // skip zero intensity peaks
+            candPks.add(i);
+        }
+
+        N = candPks.size(); // *new* peak list size
+
         this.mz = new double[ N ];
         this.raw_intensity = new double[ N ];
         this.norm_intensity = new double[ N ];
         this.rel_intensity = new double[ N ];
 
-
         // record passed values into arrays
         for(int i = 0; i < N; i++) {
-            if(intensities_[i] > maxI) {
-                maxI = intensities_[i];
-                maxI_index = i;
+            int curIdx = candPks.get(i);
+
+            if(intensities_[ curIdx ] > maxI) {
+                maxI = intensities_[ curIdx ];
+                maxI_index = curIdx;
             }
-            this.mz[i] = mz_[i];
-            this.raw_intensity[i] = intensities_[i];
+            this.mz[i] = mz_[ curIdx ];
+            this.raw_intensity[i] = intensities_[ curIdx ];
+
         }
+
+        candPks.clear();
+        candPks = null;
 
         // compute relative intensity and prep remaining arrays
         for(int i = 0; i < N; i++) {
