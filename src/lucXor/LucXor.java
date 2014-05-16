@@ -39,10 +39,10 @@ public class LucXor {
 				
 		
 		if(args.length < 1) {
-			System.err.print("USAGE: java -jar lucXor.jar input_file\n");
-			System.err.print("To get a template input file type: 'java -jar lucXor.jar -t'\n");
-            System.err.print("Once you have modified the input file to suit your needs, give it as the sole argument to lucXor.jar\n");
-            System.err.print("Example: java -jar lucXor.jar input_file_you_edited\n\n");
+			System.err.print("USAGE: java -jar lucXor.jar <input_file>\n\n");
+			System.err.print("\tGenerate a lucXor input file with: java -jar lucXor.jar\n");
+            System.err.print("\tModify the input file to suit your needs and submit it to the program.\n");
+            System.err.print("\tExample: java -jar lucXor.jar input_file_you_edited\n\n");
 			System.exit(0);
 		}
 		
