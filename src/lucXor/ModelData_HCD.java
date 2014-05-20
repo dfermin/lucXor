@@ -60,7 +60,10 @@ public class ModelData_HCD {
 				if(pk.matchedIonStr.startsWith("b")) { posPks.add(pk); b++; }
 				if(pk.matchedIonStr.startsWith("y")) { posPks.add(pk); y++; }
 			}
-			else { negPks.add(pk); n++; }
+			else {
+                negPks.add(pk);
+                n++;
+            }
 		}
 		
 		// To speed things up, we separate the data into primitive arrays
@@ -97,9 +100,9 @@ public class ModelData_HCD {
         n_int = new double[ limitN ];
         Collections.shuffle(negPks);
         n = 0;
-		for(PeakClass pk : negPks) {
+		for(n = 0; n < limitN; n++) {
+            PeakClass pk = negPks.get(n);
 			n_int[ n ] = pk.norm_intensity;
-			n++;
 		}
 		
 		posPks.clear(); posPks = null;

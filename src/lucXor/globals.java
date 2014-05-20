@@ -818,17 +818,26 @@ public class globals {
 	// Function returns the TPP-formatted representation of the given single
 	// character modification
 	static String getTPPresidue(String c) {
-		String ret = "x";
-		String orig = "x";
-		
-		int i = (int) Math.round(AAmassMap.get(c));
-		
-		if(isDecoyResidue(c)) {
-			orig = decoyAAMap.get(c);
-		}
-		else orig = c.toUpperCase();
-		
-		ret = orig + "[" + String.valueOf(i) + "]";
+		String ret = "";
+		String orig = "";
+
+        if(c.equalsIgnoreCase("[")) {
+            int d = (int) Math.round(globals.ntermMass);
+            ret = "n[" + String.valueOf(d) + "]";
+        }
+        else if(c.equals("]")) {
+            int d = (int) Math.round(globals.ctermMass);
+            ret += "c[" + String.valueOf(d) + "]";
+        }
+        else {
+            int i = (int) Math.round(AAmassMap.get(c));
+
+            if (isDecoyResidue(c)) {
+                orig = decoyAAMap.get(c);
+            } else orig = c.toUpperCase();
+
+            ret = orig + "[" + String.valueOf(i) + "]";
+        }
 		
 		return ret;
 	}

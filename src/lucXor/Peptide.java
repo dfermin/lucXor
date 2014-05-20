@@ -154,24 +154,28 @@ class Peptide {
 		// Append N-term modification (if any is present)
 		if(modPeptide.startsWith("[")) {
 			int d = (int) Math.round(globals.ntermMass);
-			ret = "n[" + String.valueOf( d ) + "]=";
+			ret = "n[" + String.valueOf( d ) + "]";
 		}
-		
-		
-		// Now label peptide residues
+
+       	// Now label peptide residues
 		for(int i = 0; i < pepLen; i++) {
 			String aa = Character.toString( modPeptide.charAt(i) );
-			
+
+            if(aa.equals("[") || aa.equals("]")) continue;
+
 			if(modPosMap.containsKey(i)) {
-				ret += globals.getTPPresidue(aa);
+                ret += globals.getTPPresidue(aa);
 			}
+            else if(nonTargetMods.containsKey(i)) {
+                ret += globals.getTPPresidue(aa);
+            }
 			else ret += aa;
 		}
 		
 		// Append C-term modification (if any is present)
 		if(modPeptide.endsWith("]")) {
 			int d = (int) Math.round(globals.ctermMass);
-			ret += "=c[" + String.valueOf(d) + "]";
+			ret += "c[" + String.valueOf(d) + "]";
 		}
 		
 		return ret;
