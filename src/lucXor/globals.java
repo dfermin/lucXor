@@ -638,6 +638,9 @@ public class globals {
                 double[] mz = curMZML.getMZ(sn);
                 double[] intensities = curMZML.getIntensities(sn);
 
+                // If this happens, there is something wrong with the spectrum so skip it
+                if(mz.length != intensities.length) continue;
+
                 SpectrumClass X = new SpectrumClass(mz, intensities);
 
                 // assign this spectrum to it's PSM

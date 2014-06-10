@@ -34,6 +34,10 @@ public class SpectrumClass {
         maxI = 0;
         maxI_index = 0;
 
+        // This should never happen but just to avoid a segfault we put this conditional in
+        if(mz_.length != intensities_.length)
+            N = Math.min(mz_.length, intensities_.length);
+
         TIntArrayList candPks = new TIntArrayList(N);
         for(int i = 0; i < N; i++) {
             if(intensities_[i] == 0) continue; // skip zero intensity peaks

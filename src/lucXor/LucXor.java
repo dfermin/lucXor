@@ -31,7 +31,7 @@ public class LucXor {
 		
 		// Get the release version of the program from the ANT build.xml file
 		//String releaseVersion = LucXor.class.getPackage().getImplementationVersion();
-		String releaseVersion = "1.2014May20";
+		String releaseVersion = "1.2014June10";
 
 		System.err.print("\nlucXor (JAVA-based version of Luciphor)\n" +
 						 "Version: " + releaseVersion + "\n" +
