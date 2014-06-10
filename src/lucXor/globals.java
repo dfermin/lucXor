@@ -621,6 +621,7 @@ public class globals {
             System.err.print(baseFN + ":  "); // beginning of info line
 
             int ctr = 0;
+            int iter = 0;
             List<Integer> scanNums = (List<Integer>) scanMap.get(fn);
             Collections.sort(scanNums); // order scan numbers
 
@@ -629,6 +630,10 @@ public class globals {
             mzMLreader curMZML = new mzMLreader(mzML_path);
 
             for(int sn : scanNums) {
+                iter++;
+                if( iter % 10 == 0 ) {
+                    System.err.print("\r" + baseFN + ":  " + iter + "... "); // beginning of info line
+                }
 
                 int N = curMZML.getNumPeaks(sn);
                 if(N == 0) {
@@ -639,7 +644,15 @@ public class globals {
                 double[] intensities = curMZML.getIntensities(sn);
 
                 // If this happens, there is something wrong with the spectrum so skip it
-                if(mz.length != intensities.length) continue;
+                if(mz.length != intensities.length) {
+                    System.err.print(
+                            "\nERROR:" + baseFN + " Scan: " + sn +
+                            "\n# of mz values != # intensity values: " +
+                            mz.length + " != " + intensities.length +
+                            "\nSkipping this scan...\n"
+                    );
+                    continue;
+                }
 
                 SpectrumClass X = new SpectrumClass(mz, intensities);
 
@@ -653,7 +666,7 @@ public class globals {
                 }
                 X = null;
             }
-            System.err.println(ctr + " spectra read in."); // end of file reading
+            System.err.print("\r" + ctr + " spectra read in.            "); // end of file reading
         }
 
     }

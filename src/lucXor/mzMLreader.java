@@ -32,6 +32,7 @@ public class mzMLreader extends DefaultHandler {
     String mzArrayString;
     String intensityArrayString;
     String binaryDataType;
+    int precision;
     int numScans;
     int scanNum;
     int msLevel;
@@ -53,6 +54,10 @@ public class mzMLreader extends DefaultHandler {
 
 
     public mzMLreader(String inputF) {
+
+        precision = 0;
+        mz_precision = 0;
+        int_precision = 0;
 
         srcMzML = inputF;
         File f = new File(srcMzML);
@@ -103,13 +108,19 @@ public class mzMLreader extends DefaultHandler {
             intStringDone = false;
         }
 
-
         if(element.equalsIgnoreCase("cvParam")) {
             for(int i = 0; i < attr.getLength(); i++) {
                 String attr_name  = attr.getLocalName(i);
                 String attr_value = attr.getValue(i);
 
                 if(attr_name.equalsIgnoreCase("accession")) {
+
+                    if(attr_value.equals("MS:1000523")) {
+                        precision = 64;
+                    }
+                    if(attr_value.equals("MS:1000521")) {
+                        precision = 32;
+                    }
 
                     if(attr_value.equalsIgnoreCase("MS:1000511")) { // ms-level
                         msLevel = Integer.valueOf(attr.getValue("value"));
@@ -126,12 +137,14 @@ public class mzMLreader extends DefaultHandler {
                     if(attr_value.equalsIgnoreCase("MS:1000514")) { // m/z array
                         binaryDataType = "m/z";
                         mzArrayString = "";
+                        mz_precision = precision;
                         break;
                     }
 
                     if(attr_value.equalsIgnoreCase("MS:1000515")) { // intensity array
                         binaryDataType = "intensity";
                         intensityArrayString = "";
+                        int_precision = precision;
                         break;
                     }
                 }
@@ -150,12 +163,10 @@ public class mzMLreader extends DefaultHandler {
             if( (mzStringDone == false) && (binaryDataType.equals("m/z")) ) {
                 mzArrayString = tmpValue;
                 mzStringDone = true;
-                mz_precision = 64;
             }
             else if( (intStringDone == false) && (binaryDataType.equals("intensity")) ) {
                 intensityArrayString = tmpValue;
                 intStringDone = true;
-                int_precision = 32;
             }
         }
 
