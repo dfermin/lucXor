@@ -567,7 +567,8 @@ public class globals {
 	static void read_in_spectra() throws FileNotFoundException, IOException, IllegalStateException, SAXException, ParserConfigurationException, DataFormatException {
 		
 		System.err.println("\nReading spectra from " + globals.spectrumPath.getCanonicalPath() + "  (" + globals.spectrumSuffix.toUpperCase() + " format)");
-		
+		System.err.println("This can take a while so please be patient.");
+
 		Multimap<String, Integer> scanMap = ArrayListMultimap.create();
 		
 		int droppedPSMs  = 0; // holds the number of PSMs for which no corresponding spectrum file could be found
@@ -618,7 +619,7 @@ public class globals {
         // Iterate over the file names
         for(String fn : scanMap.keySet()) {
             String baseFN = new File(fn).getName();
-            System.err.print(baseFN + ":  "); // beginning of info line
+            System.err.print("\n" + baseFN + ":  "); // beginning of info line
 
             int ctr = 0;
             int iter = 0;
@@ -631,7 +632,7 @@ public class globals {
 
             for(int sn : scanNums) {
                 iter++;
-                if( iter % 10 == 0 ) {
+                if( iter % 100 == 0 ) {
                     System.err.print("\r" + baseFN + ":  " + iter + "... "); // beginning of info line
                 }
 
@@ -666,7 +667,7 @@ public class globals {
                 }
                 X = null;
             }
-            System.err.print("\r" + ctr + " spectra read in.            "); // end of file reading
+            System.err.print("\r" + baseFN +  ":  " + ctr + " spectra read in.            "); // end of file reading
         }
 
     }

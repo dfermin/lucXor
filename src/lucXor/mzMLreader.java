@@ -28,10 +28,10 @@ import java.util.zip.DataFormatException;
 public class mzMLreader extends DefaultHandler {
 
     String srcMzML;
-    String tmpValue;
     String mzArrayString;
     String intensityArrayString;
     String binaryDataType;
+    StringBuilder tmpValue = null;
     int precision;
     int numScans;
     int scanNum;
@@ -69,6 +69,8 @@ public class mzMLreader extends DefaultHandler {
 
         spectrumMap = new TIntObjectHashMap<mzMLreader.SpectrumStruct>();
 
+        tmpValue = new StringBuilder();
+
         SAXParserFactory factory = SAXParserFactory.newInstance();
         SAXParser parser = null;
         try {
@@ -90,8 +92,8 @@ public class mzMLreader extends DefaultHandler {
 
 
     @Override
-    public void characters(char[] ac, int i, int j) throws SAXException {
-        tmpValue = new String(ac, i, j);
+    public void characters(char[] ac, int start, int length) throws SAXException {
+        tmpValue.append(ac, start, length);
     }
 
 
@@ -138,6 +140,7 @@ public class mzMLreader extends DefaultHandler {
                         binaryDataType = "m/z";
                         mzArrayString = "";
                         mz_precision = precision;
+                        tmpValue = new StringBuilder();
                         break;
                     }
 
@@ -145,13 +148,12 @@ public class mzMLreader extends DefaultHandler {
                         binaryDataType = "intensity";
                         intensityArrayString = "";
                         int_precision = precision;
+                        tmpValue = new StringBuilder();
                         break;
                     }
                 }
             }
         }
-
-
     } // end startElement()
 
 
@@ -161,11 +163,11 @@ public class mzMLreader extends DefaultHandler {
         // this conditional actually captures the compressed encoded string
         if(element.equalsIgnoreCase("binary")) {
             if( (mzStringDone == false) && (binaryDataType.equals("m/z")) ) {
-                mzArrayString = tmpValue;
+                mzArrayString = tmpValue.toString();
                 mzStringDone = true;
             }
             else if( (intStringDone == false) && (binaryDataType.equals("intensity")) ) {
-                intensityArrayString = tmpValue;
+                intensityArrayString = tmpValue.toString();
                 intStringDone = true;
             }
         }
@@ -200,7 +202,6 @@ public class mzMLreader extends DefaultHandler {
                     e.printStackTrace();
                 }
             }
-
         }
     }
 
