@@ -263,7 +263,7 @@ public class globals {
 		}
 		br.close();
 		
-		if( (null == outputFile) || (outputFile.isEmpty()) ) outputFile = "lucxor_results.tsv";
+		if( (null == outputFile) || (outputFile.isEmpty()) ) outputFile = "luciphor_results.tsv";
 		
 		String classStr = "";
 		switch(scoringMethod) {
@@ -889,7 +889,7 @@ public class globals {
 	
 	// Function writes a sample input file for LucXor to disk
 	static void writeTemplateInputFile() throws IOException {
-		File outF = new File("lucxor_input_template.txt");
+		File outF = new File("luciphor_input_template.txt");
 		
 		FileWriter fw = new FileWriter(outF.getAbsoluteFile());
 		BufferedWriter bw = new BufferedWriter(fw);

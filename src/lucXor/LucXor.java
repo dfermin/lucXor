@@ -31,18 +31,18 @@ public class LucXor {
 		
 		// Get the release version of the program from the ANT build.xml file
 		//String releaseVersion = LucXor.class.getPackage().getImplementationVersion();
-		String releaseVersion = "1.2014June11";
+		String releaseVersion = "1.2014Sept08";
 
-		System.err.print("\nlucXor (JAVA-based version of Luciphor)\n" +
+		System.err.print("\nluciphor2 (JAVA-based version of Luciphor)\n" +
 						 "Version: " + releaseVersion + "\n" +
 						 "Original C++ version available at: http://luciphor.sf.net\n\n");
 				
 		
 		if(args.length < 1) {
-			System.err.print("USAGE: java -jar lucXor.jar <input_file>\n\n");
-			System.err.print("\tGenerate a lucXor input file with: java -jar lucXor.jar\n");
+			System.err.print("USAGE: java -jar luciphor2.jar <input_file>\n\n");
+			System.err.print("\tGenerate a luciphor2 input file with: java -jar luciphor2.jar -t\n");
             System.err.print("\tModify the input file to suit your needs and submit it to the program.\n");
-            System.err.print("\tExample: java -jar lucXor.jar input_file_you_edited\n\n");
+            System.err.print("\tExample: java -jar lucciphor2.jar input_file_you_edited\n\n");
 			System.exit(0);
 		}
 		
