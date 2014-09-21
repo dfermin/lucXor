@@ -150,23 +150,23 @@ class Peptide {
 	// Function returns the modified peptide assigned to this object in "TPP format"
 	public String getModPepTPP() {
 		String ret = "";
-		
+		int pepLen_local = pepLen;
+
 		// Append N-term modification (if any is present)
 		if(modPeptide.startsWith("[")) {
 			int d = (int) Math.round(globals.ntermMass);
 			ret = "n[" + String.valueOf( d ) + "]";
+            pepLen_local += 1; // need this to capture last residue in this function
 		}
 
        	// Now label peptide residues
-		for(int i = 0; i < pepLen; i++) {
+		for(int i = 0; i < pepLen_local; i++) {
 			String aa = Character.toString( modPeptide.charAt(i) );
 
             if(aa.equals("[") || aa.equals("]")) continue;
 
-			if(modPosMap.containsKey(i)) {
-                ret += globals.getTPPresidue(aa);
-			}
-            else if(nonTargetMods.containsKey(i)) {
+            // this is a modified amino acid
+            if(Character.isLowerCase(modPeptide.charAt(i))) {
                 ret += globals.getTPPresidue(aa);
             }
 			else ret += aa;

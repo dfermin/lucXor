@@ -683,8 +683,7 @@ class PSM {
 	String getResults() {
 		
 		String ret = specId + "\t";
-		
-		
+
 		if(globals.peptideRepresentation == constants.SINGLE_CHAR) {
 			ret += origPep.peptide + "\t";
 			ret += score1pep.modPeptide + "\t";

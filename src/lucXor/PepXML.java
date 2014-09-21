@@ -78,7 +78,7 @@ class PepXML extends DefaultHandler {
 			}
 		}
 		
-		// for handling terminal modifications
+		// for handling terminal modifications (this is found in the top portion of the pepXML file)
 		if(qName.equalsIgnoreCase("terminal_modification")) {
 			String terminus = attr.getValue("terminus");
 			double modMass = Double.valueOf( attr.getValue("massdiff") );
@@ -182,10 +182,13 @@ class PepXML extends DefaultHandler {
 			// Skip PSMs that exceed the number of candidate permutations
 			if(curPSM.origPep.getNumPerm() > globals.max_num_permutations)
 				numBadChars = 100;
-			
-			
+
 			if(numBadChars == 0) {
-				curPSM.process();
+//                if(curPSM.specId.equalsIgnoreCase("QE_140625_01_IS117_Phosphoproteome.59296.59296.2")) {
+//                    int debug = 0;
+//                }
+
+                curPSM.process();
 				if(curPSM.isKeeper) globals.PSM_list.add(curPSM);
                 curPSM = null;
 			}

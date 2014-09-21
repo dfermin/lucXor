@@ -839,7 +839,7 @@ public class globals {
 		String orig = "";
 
         if(c.equalsIgnoreCase("[")) {
-            int d = (int) Math.round(globals.ntermMass);
+            int d = (int) Math.round(globals.ntermMass) + 1; // adds a proton
             ret = "n[" + String.valueOf(d) + "]";
         }
         else if(c.equals("]")) {
