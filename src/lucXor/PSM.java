@@ -718,7 +718,7 @@ class PSM {
 	
 	// This function will write the scored peaks for the top permutation assigned
 	// to this PSM. The data is written in a TAB-delimited format.
-	void writeScoredPeaks() throws IOException {
+	void debug_writeScoredPeaks() throws IOException {
 		
 		String tsvFileName = "";
 		if(globals.inputType == constants.PEPXML) tsvFileName = specId + ".tsv";
@@ -794,6 +794,68 @@ class PSM {
 		
 		bw.close();
 	}
+
+
+
+    // This function returns the matched peaks for the top 2 permutations assigned
+    // to this PSM. The data is returned in a TAB-delimited format.
+    String writeMatchedPks() {
+
+        String ret = "";
+
+        score1pep.build_ion_ladders();
+        score1pep.matchPeaks(PeakList);
+
+        if(globals.scoringAlgorithm == constants.CID) score1pep.calcScore_CID();
+        if(globals.scoringAlgorithm == constants.HCD) score1pep.calcScore_HCD();
+
+        ArrayList<PeakClass> mPK = score1pep.matchedPeaks;
+        Collections.sort(mPK, PeakClass.comparator_mz);
+        for(PeakClass pk : mPK) {
+            if(!pk.matched) continue;
+
+            String mz = Double.toString(globals.round_dbl(pk.mz, 4));
+            String relI = Double.toString(globals.round_dbl(pk.rel_intensity, 4));
+            String Iscore = Double.toString(globals.round_dbl(pk.intensityScore, 4));
+            String Dscore = Double.toString(globals.round_dbl(pk.distScore, 4));
+            String score = Double.toString(globals.round_dbl(pk.score, 4));
+
+            ret += specId + "\t1\t" + score1pep.modPeptide + "\t" + pk.matchedIonStr + "\t" +
+                   mz + "\t" + relI + "\t" + Dscore + "\t" + Iscore + "\t" +
+                   score + "\n";
+        }
+
+
+        score2pep.build_ion_ladders();
+        score2pep.matchPeaks(PeakList);
+        if(globals.scoringAlgorithm == constants.CID) score2pep.calcScore_CID();
+        if(globals.scoringAlgorithm == constants.HCD) score2pep.calcScore_HCD();
+
+
+        mPK.clear();
+        mPK = score2pep.matchedPeaks;
+        Collections.sort(mPK, PeakClass.comparator_mz);
+        for(PeakClass pk : mPK) {
+            if(!pk.matched) continue;
+
+            String mz = Double.toString(globals.round_dbl(pk.mz, 4));
+            String relI = Double.toString(globals.round_dbl(pk.rel_intensity, 4));
+            String Iscore = Double.toString(globals.round_dbl(pk.intensityScore, 4));
+            String Dscore = Double.toString(globals.round_dbl(pk.distScore, 4));
+            String score = Double.toString(globals.round_dbl(pk.score, 4));
+
+            ret += specId + "\t2\t" + score2pep.modPeptide + "\t" + pk.matchedIonStr + "\t" +
+                    mz + "\t" + relI + "\t" + Dscore + "\t" + Iscore + "\t" +
+                    score + "\n";
+        }
+
+        return(ret);
+    }
+
+
+
+
+
 
 
     // This function prepares the PSM to be scored again *AFTER* the FLR has been estimated.

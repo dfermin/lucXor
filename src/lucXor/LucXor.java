@@ -31,7 +31,7 @@ public class LucXor {
 		
 		// Get the release version of the program from the ANT build.xml file
 		//String releaseVersion = LucXor.class.getPackage().getImplementationVersion();
-		String releaseVersion = "1.2014Sept08";
+		String releaseVersion = "1.2014Oct10";
 
 		System.err.print("\nluciphor2 (JAVA-based version of Luciphor)\n" +
 						 "Version: " + releaseVersion + "\n" +
@@ -42,7 +42,7 @@ public class LucXor {
 			System.err.print("USAGE: java -jar luciphor2.jar <input_file>\n\n");
 			System.err.print("\tGenerate a luciphor2 input file with: java -jar luciphor2.jar -t\n");
             System.err.print("\tModify the input file to suit your needs and submit it to the program.\n");
-            System.err.print("\tExample: java -jar lucciphor2.jar input_file_you_edited\n\n");
+            System.err.print("\tExample: java -jar luciphor2.jar input_file_you_edited\n\n");
 			System.exit(0);
 		}
 		
@@ -359,7 +359,7 @@ public class LucXor {
                     p.generatePermutations(RN);
                     p.scorePermutations();
 
-                    if(globals.debugMode == constants.WRITE_SCORED_PKS) p.writeScoredPeaks();
+                    if(globals.debugMode == constants.WRITE_SCORED_PKS) p.debug_writeScoredPeaks();
 
                     ctr++;
 
@@ -610,7 +610,7 @@ public class LucXor {
                     p.generatePermutations(RN);
                     p.scorePermutations();
 
-                    if(globals.debugMode == constants.WRITE_SCORED_PKS) p.writeScoredPeaks();
+                    if(globals.debugMode == constants.WRITE_SCORED_PKS) p.debug_writeScoredPeaks();
 
                     ctr++;
 
@@ -668,13 +668,32 @@ public class LucXor {
 	private static void writeResults() throws IOException {
 		
 		// set the output file's name
-		if(globals.outputFile.equalsIgnoreCase("juciphor_results.tsv")) {
-			globals.outputFile = "juciphor_results." + globals.timeStamp + ".tsv";
+		if(globals.outputFile.equalsIgnoreCase("luciphor_results.tsv")) {
+			globals.outputFile = "luciphor_results." + globals.timeStamp + ".tsv";
 		}
 
         File outF = new File(globals.outputFile);
-        System.err.println("\nResults written to '" + outF.getAbsoluteFile() + "'\n");
+        System.err.println("\nResults written to '" + outF.getAbsoluteFile() + "'");
 
+        // You will only need these variables when the user wants the matched
+        // peaks to be written to disk
+        File matchedPksF = null;
+        FileWriter fwPks = null;
+        BufferedWriter bwPks = null;
+
+        if(globals.writeMatchedPeaks) {
+            String suffixDir = outF.getParent();
+            globals.matchedPkFile = suffixDir + "/luciphor_matchedPks." + globals.timeStamp +".tsv";
+            System.err.print("Matched peaks will be written to '" + globals.matchedPkFile + "'\n");
+            matchedPksF = new File(globals.matchedPkFile);
+            fwPks  = new FileWriter(matchedPksF.getAbsoluteFile());
+            bwPks = new BufferedWriter(fwPks);
+
+            // Column header for the peak file
+            String pkHdr = "specId\tpepNum\tpredictPep\tfragmentIon\t" +
+                           "m/z\trelIntensity\tDscore\tIscore\tscore\n";
+            bwPks.write(pkHdr);
+        }
 
         FileWriter fw = new FileWriter(outF.getAbsoluteFile());
 		BufferedWriter bw = new BufferedWriter(fw);
@@ -709,9 +728,11 @@ public class LucXor {
 
 		for(PSM psm : globals.PSM_list) {
 			bw.write( psm.getResults() );
+            if(globals.writeMatchedPeaks) bwPks.write( psm.writeMatchedPks() );
 		}
 		
 		bw.close();
+        if(globals.writeMatchedPeaks) bwPks.close();
 		
 	}
 	

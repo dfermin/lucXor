@@ -29,6 +29,7 @@ public class globals {
 
 	static File spectrumPath = null;
 	static String spectrumSuffix = null;
+    static String matchedPkFile = null;
 	static File inputFile = null;
 	static String outputFile = null;
 	static String timeStamp = null;
@@ -56,6 +57,7 @@ public class globals {
 	static double ntermMass;
 	static double ctermMass;
 	static double minRelIntensity;
+    static boolean writeMatchedPeaks;
 	
 	static ArrayList<PSM> PSM_list = null;
 
@@ -92,6 +94,7 @@ public class globals {
         reduceNL = 0;
 		numThreads = Runtime.getRuntime().availableProcessors();
 		tsvHdr = 0; // default is no header
+        writeMatchedPeaks = false; // true means you will generate the matched peaks
 
 		BufferedReader br = new BufferedReader(new FileReader(inF));
 		String line;
@@ -199,6 +202,11 @@ public class globals {
 				String s = parse_input_line(line);
 				debugMode = Integer.valueOf(s);
 			}
+
+            if(line.startsWith("WRITE_MATCHED_PEAKS_FILE")) {
+                String s = parse_input_line(line);
+                if(s.equals("1")) writeMatchedPeaks = true;
+            }
 
             if(line.startsWith("RUN_MODE")) {
                 String s = parse_input_line(line);
@@ -309,8 +317,9 @@ public class globals {
 		System.err.println("Max Charge State:        " + maxChargeState);
 		System.err.println("Reduce NL:               " + (reduceNL == 0 ? "no" : "yes"));
 		System.err.println("Output File:             " + outputFile);
-		
-		
+        System.err.println("Write matched Peaks:     " + (writeMatchedPeaks ? "yes" : "no"));
+        System.err.print("\n");
+
 		if(debugMode != 0) {
 			System.err.println("Debug mode:              " + debugMode + "  (Limiting to 1 CPU)\n");
 		    globals.numThreads = 1;
@@ -889,13 +898,13 @@ public class globals {
 	
 	// Function writes a sample input file for LucXor to disk
 	static void writeTemplateInputFile() throws IOException {
-		File outF = new File("luciphor_input_template.txt");
+		File outF = new File("luciphor2_input_template.txt");
 		
 		FileWriter fw = new FileWriter(outF.getAbsoluteFile());
 		BufferedWriter bw = new BufferedWriter(fw);
 		
-		bw.write("## Input file for LucXor.\n## Anything after a hash '#' is ignored\n");
-		bw.write("## These initial parameters are for performing a phosphorylation search\n\n");
+		bw.write("## Input file for Luciphor2 (aka: LucXor).\n## Anything after a hash '#' is ignored\n");
+		bw.write("## By default, these initial parameters are for performing a phosphorylation search\n\n");
 		bw.write("SPECTRUM_PATH = <fill_in> ## specify the path to the spectra here\n");
 		bw.write("SPECTRUM_SUFFIX = MGF     ## available options are MGF, mzML, or mzXML\n\n");
 		
@@ -914,9 +923,14 @@ public class globals {
 		bw.write("MIN_MZ = 150.0 ## do not consider peaks below this value " +
 				"for matching fragment ions\n\n");
 
-		bw.write("OUTPUT_FILE =  # Specify the path to your desired output filename here\n" +
+		bw.write("OUTPUT_FILE =  ## Specify the path to your desired output filename here\n" +
 				 "               ## A default value will be used if nothing is specified here.\n\n");
-		
+
+        bw.write("WRITE_MATCHED_PEAKS_FILE = 0 ## Generate a tab-delimited file of all the matched peaks\n" +
+                 "                             ## for the top 2 predictions of each spectra\n" +
+                 "                             ## Useful for plotting spectra\n" +
+                 "                             ## 0 = no, 1 = yes");
+
 		bw.write("## Place here any FIXED modifications that were used in your search\n" +
 				 "## This field is ONLY used for tab-delimited input\n" +
 				 "## Syntax: FIXED_MOD = <RESIDUE> <MODIFICATION_MASS>\n" +
@@ -943,8 +957,8 @@ public class globals {
 				 "## The residue field is case sensitive. For example: lower case 'sty' implies\n" +
 				 "## that the neutral loss can only occur if the specified modification is present\n" +
 				 "## Syntax: NL = <RESDIUES> -<NEUTRAL_LOSS_MOLECULAR_FORMULA> <MASS_LOST>\n" + 
-				 "#NL = STE -H2O -18.01056\n" + 
-				 "#NL = RKQN -NH3 -17.026548\n" +
+				 "#NL = STE -H2O -18.01056    ## a correctly formatted example, (not actually recommended for phospho-searches)\n" +
+				 "#NL = RKQN -NH3 -17.026548  ## another correctly formatted example, (again not recommended for phospho-searches)\n" +
 				 "NL = sty -H3PO4 -97.97690\n\n");
 		
 		bw.write("DECOY_MASS = 79.966331  ## how much to add to an amino acid to make it a decoy\n\n");
