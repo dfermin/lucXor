@@ -929,7 +929,7 @@ public class globals {
         bw.write("WRITE_MATCHED_PEAKS_FILE = 0 ## Generate a tab-delimited file of all the matched peaks\n" +
                  "                             ## for the top 2 predictions of each spectra\n" +
                  "                             ## Useful for plotting spectra\n" +
-                 "                             ## 0 = no, 1 = yes");
+                 "                             ## 0 = no, 1 = yes\n\n");
 
 		bw.write("## Place here any FIXED modifications that were used in your search\n" +
 				 "## This field is ONLY used for tab-delimited input\n" +
