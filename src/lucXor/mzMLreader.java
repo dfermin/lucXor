@@ -40,7 +40,7 @@ public class mzMLreader extends DefaultHandler {
 
     Boolean isBase64Encoded = true;
     Boolean mzStringDone, intStringDone; // true means you processed this data
-    String compressionType;
+    String compressionType = "none";     // default value, if nothing specified in file - assume no compression
 
 
     static TIntObjectHashMap<SpectrumStruct> spectrumMap; // k = scanNumber, v = spectrum
@@ -129,11 +129,13 @@ public class mzMLreader extends DefaultHandler {
                         break;
                     }
 
-                    if(attr_value.equalsIgnoreCase("MS:1000576")) { // compression
-                        String p = attr.getValue("name");
-                        if(p.contains("zlib")) compressionType = "zlib";
-                        else compressionType = "none";
+                    if(attr_value.equalsIgnoreCase("MS:1000576")) { // compression enabled
+                        compressionType = "zlib";
                         break;
+                    }
+
+                    if(attr_value.equalsIgnoreCase("MS:1000574")) { // compression disabled
+                        compressionType = "none";
                     }
 
                     if(attr_value.equalsIgnoreCase("MS:1000514")) { // m/z array
