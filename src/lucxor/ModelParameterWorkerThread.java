@@ -1,4 +1,4 @@
-package lucXor;
+package lucxor;
 
 /**
  * Created by dfermin on 5/15/14.

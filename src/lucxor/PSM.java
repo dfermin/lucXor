@@ -2,23 +2,16 @@
  * To change this template, choose Tools | Templates
  * and open the template in the editor.
  */
-package lucXor;
+package lucxor;
 
-import com.sun.xml.internal.bind.v2.runtime.reflect.Lister;
-import gnu.trove.TCollections;
-import gnu.trove.list.array.TDoubleArrayList;
-import gnu.trove.list.array.TIntArrayList;
-import gnu.trove.map.hash.TDoubleIntHashMap;
 import gnu.trove.map.hash.TDoubleObjectHashMap;
 import gnu.trove.map.hash.THashMap;
 import gnu.trove.map.hash.TIntDoubleHashMap;
-import gnu.trove.set.hash.TIntHashSet;
 
 import java.io.BufferedWriter;
 import java.io.File;
 import java.io.FileWriter;
 import java.io.IOException;
-import java.lang.reflect.Array;
 import java.util.*;
 import java.util.Map.Entry;
 import java.util.regex.Matcher;

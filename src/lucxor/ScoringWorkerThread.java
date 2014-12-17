@@ -1,4 +1,4 @@
-package lucXor;
+package lucxor;
 
 import java.io.IOException;
 

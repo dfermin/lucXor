@@ -1,22 +1,18 @@
-package lucXor;
+package lucxor;
 
 import gnu.trove.map.hash.TIntObjectHashMap;
-import org.apache.commons.codec.binary.Base64;
 import org.xml.sax.Attributes;
 import org.xml.sax.SAXException;
 import org.xml.sax.helpers.DefaultHandler;
-import sun.misc.BASE64Decoder;
 
 import javax.xml.parsers.ParserConfigurationException;
 import javax.xml.parsers.SAXParser;
 import javax.xml.parsers.SAXParserFactory;
 import java.io.File;
 import java.io.IOException;
-import java.nio.ByteOrder;
 import java.util.zip.Inflater;
 
 import java.io.ByteArrayOutputStream;
-import java.nio.ByteBuffer;
 import java.util.zip.DataFormatException;
 
 
@@ -362,5 +358,4 @@ public class mzMLreader extends DefaultHandler {
         }
         return ret.intensity_;
     }
-
 }
