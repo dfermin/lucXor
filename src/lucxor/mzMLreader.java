@@ -1,22 +1,18 @@
-package lucXor;
+package lucxor;
 
 import gnu.trove.map.hash.TIntObjectHashMap;
-import org.apache.commons.codec.binary.Base64;
 import org.xml.sax.Attributes;
 import org.xml.sax.SAXException;
 import org.xml.sax.helpers.DefaultHandler;
-import sun.misc.BASE64Decoder;
 
 import javax.xml.parsers.ParserConfigurationException;
 import javax.xml.parsers.SAXParser;
 import javax.xml.parsers.SAXParserFactory;
 import java.io.File;
 import java.io.IOException;
-import java.nio.ByteOrder;
 import java.util.zip.Inflater;
 
 import java.io.ByteArrayOutputStream;
-import java.nio.ByteBuffer;
 import java.util.zip.DataFormatException;
 
 
@@ -40,7 +36,7 @@ public class mzMLreader extends DefaultHandler {
 
     Boolean isBase64Encoded = true;
     Boolean mzStringDone, intStringDone; // true means you processed this data
-    String compressionType;
+    String compressionType = "none";     // default value, if nothing specified in file - assume no compression
 
 
     static TIntObjectHashMap<SpectrumStruct> spectrumMap; // k = scanNumber, v = spectrum
@@ -129,11 +125,13 @@ public class mzMLreader extends DefaultHandler {
                         break;
                     }
 
-                    if(attr_value.equalsIgnoreCase("MS:1000576")) { // compression
-                        String p = attr.getValue("name");
-                        if(p.contains("zlib")) compressionType = "zlib";
-                        else compressionType = "none";
+                    if(attr_value.equalsIgnoreCase("MS:1000576")) { // compression enabled
+                        compressionType = "zlib";
                         break;
+                    }
+
+                    if(attr_value.equalsIgnoreCase("MS:1000574")) { // compression disabled
+                        compressionType = "none";
                     }
 
                     if(attr_value.equalsIgnoreCase("MS:1000514")) { // m/z array
@@ -360,5 +358,4 @@ public class mzMLreader extends DefaultHandler {
         }
         return ret.intensity_;
     }
-
 }

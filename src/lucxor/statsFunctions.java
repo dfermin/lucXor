@@ -2,13 +2,11 @@
  * To change this template, choose Tools | Templates
  * and open the template in the editor.
  */
-package lucXor;
+package lucxor;
 
 import java.util.ArrayList;
 import java.util.concurrent.ExecutionException;
 
-import gnu.trove.TDecorators;
-import gnu.trove.list.TIntList;
 import gnu.trove.list.array.TIntArrayList;
 import org.paukov.combinatorics.Factory;
 import org.paukov.combinatorics.Generator;

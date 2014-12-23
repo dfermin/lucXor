@@ -2,21 +2,16 @@
  * To change this template, choose Tools | Templates
  * and open the template in the editor.
  */
-package lucXor;
-
-import com.google.common.collect.ArrayListMultimap;
+package lucxor;
 
 import java.util.*;
 import java.util.Map.Entry;
 
-import gnu.trove.impl.hash.TIntDoubleHash;
 import gnu.trove.list.TIntList;
-import gnu.trove.list.array.TDoubleArrayList;
 import gnu.trove.list.array.TIntArrayList;
 import gnu.trove.map.hash.TDoubleObjectHashMap;
 import gnu.trove.map.hash.THashMap;
 import gnu.trove.map.hash.TIntDoubleHashMap;
-import gnu.trove.procedure.TIntDoubleProcedure;
 import org.apache.commons.math3.util.FastMath;
 
 /**
