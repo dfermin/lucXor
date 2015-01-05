@@ -71,16 +71,8 @@ public class mzMLreader extends DefaultHandler {
         SAXParser parser = null;
         try {
             parser = factory.newSAXParser();
-        } catch (ParserConfigurationException e) {
-            e.printStackTrace();
-        } catch (SAXException e) {
-            e.printStackTrace();
-        }
-        try {
             parser.parse(srcMzML, this);
-        } catch (SAXException e) {
-            e.printStackTrace();
-        } catch (IOException e) {
+        } catch (ParserConfigurationException | SAXException | IOException e) {
             e.printStackTrace();
         }
     }
@@ -232,7 +224,7 @@ public class mzMLreader extends DefaultHandler {
         double[] retAry = new double[numPeaks];
 
 
-        if(precision == 32) {
+        if (precision == 32) {
 
             int asInt;
             float asFloat = 0.0f;
@@ -241,16 +233,14 @@ public class mzMLreader extends DefaultHandler {
             for (int i = 0; i < numPeaks; i++) {
                 offset = i * chunkSize;
 
-                asInt = ((decoded[offset + 0] & 0xFF)) // zero shift
+                asInt = (  (decoded[offset + 0] & 0xFF)) // zero shift
                         | ((decoded[offset + 1] & 0xFF) << 8)
                         | ((decoded[offset + 2] & 0xFF) << 16)
                         | ((decoded[offset + 3] & 0xFF) << 24);
                 asFloat = Float.intBitsToFloat(asInt);
                 retAry[i] = asFloat;
             }
-        }
-
-        if(precision == 64) {
+        } else if (precision == 64) {
             long asLong;
             double asDouble = 0.0d;
             int offset;
@@ -258,7 +248,7 @@ public class mzMLreader extends DefaultHandler {
             for (int i = 0; i < numPeaks; i++) {
                 offset = i * chunkSize;
 
-                asLong = ((long) (decoded[offset + 0] & 0xFF)) // zero shift
+                asLong = ( (long) (decoded[offset + 0] & 0xFF)) // zero shift
                         | ((long) (decoded[offset + 1] & 0xFF) << 8)
                         | ((long) (decoded[offset + 2] & 0xFF) << 16)
                         | ((long) (decoded[offset + 3] & 0xFF) << 24)
@@ -270,6 +260,8 @@ public class mzMLreader extends DefaultHandler {
 
                 retAry[i] = asDouble;
             }
+        } else {
+            throw new IllegalArgumentException("Precision can only be 32 or 64 bits.");
         }
 
         return retAry;
