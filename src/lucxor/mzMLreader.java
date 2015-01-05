@@ -8,12 +8,12 @@ import org.xml.sax.helpers.DefaultHandler;
 import javax.xml.parsers.ParserConfigurationException;
 import javax.xml.parsers.SAXParser;
 import javax.xml.parsers.SAXParserFactory;
+import java.io.ByteArrayOutputStream;
 import java.io.File;
 import java.io.IOException;
-import java.util.zip.Inflater;
-
-import java.io.ByteArrayOutputStream;
+import java.util.Arrays;
 import java.util.zip.DataFormatException;
+import java.util.zip.Inflater;
 
 
 
@@ -107,9 +107,11 @@ public class mzMLreader extends DefaultHandler {
 
                     if(attr_value.equals("MS:1000523")) {
                         precision = 64;
+                        break;
                     }
                     if(attr_value.equals("MS:1000521")) {
                         precision = 32;
+                        break;
                     }
 
                     if(attr_value.equalsIgnoreCase("MS:1000511")) { // ms-level
@@ -117,13 +119,13 @@ public class mzMLreader extends DefaultHandler {
                         break;
                     }
 
-                    if(attr_value.equalsIgnoreCase("MS:1000576")) { // compression enabled
-                        compressionType = "zlib";
+                    if(attr_value.equalsIgnoreCase("MS:1000576")) { // no compression
+                        compressionType = "none";
                         break;
                     }
 
-                    if(attr_value.equalsIgnoreCase("MS:1000574")) { // compression disabled
-                        compressionType = "none";
+                    if(attr_value.equalsIgnoreCase("MS:1000574")) { // zlib compression
+                        compressionType = "zlib";
                     }
 
                     if(attr_value.equalsIgnoreCase("MS:1000514")) { // m/z array
