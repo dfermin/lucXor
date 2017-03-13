@@ -6,19 +6,24 @@ package lucxor;
 
 import com.google.common.collect.ArrayListMultimap;
 import com.google.common.collect.Multimap;
+import gnu.trove.map.hash.THashMap;
+import gnu.trove.map.hash.TIntObjectHashMap;
+import org.xml.sax.SAXException;
+import umich.ms.datatypes.LCMSData;
+import umich.ms.datatypes.LCMSDataSubset;
+import umich.ms.datatypes.scan.IScan;
+import umich.ms.datatypes.scancollection.IScanCollection;
+import umich.ms.datatypes.scancollection.ScanIndex;
+import umich.ms.datatypes.spectrum.ISpectrum;
+import umich.ms.fileio.exceptions.FileParsingException;
+import umich.ms.fileio.filetypes.mzml.MZMLFile;
+import umich.ms.fileio.filetypes.mzxml.MZXMLFile;
+
+import javax.xml.parsers.ParserConfigurationException;
 import java.io.*;
 import java.text.SimpleDateFormat;
 import java.util.*;
 import java.util.zip.DataFormatException;
-import javax.xml.parsers.ParserConfigurationException;
-
-import gnu.trove.map.hash.THashMap;
-import gnu.trove.map.hash.TIntObjectHashMap;
-import org.xml.sax.SAXException;
-
-import umich.ms.datatypes.scan.AbstractScan;
-import umich.ms.datatypes.scancollection.impl.ScanCollectionDefault;
-import umich.ms.fileio.filetypes.MZXMLFile;
 
 /**
  *
@@ -572,7 +577,7 @@ public class globals {
 	}
 
 	
-	static void read_in_spectra() throws FileNotFoundException, IOException, IllegalStateException, SAXException, ParserConfigurationException, DataFormatException {
+	static void read_in_spectra() throws IOException, IllegalStateException, SAXException, ParserConfigurationException, DataFormatException, FileParsingException {
 		
 		System.err.println("\nReading spectra from " + globals.spectrumPath.getCanonicalPath() + "  (" + globals.spectrumSuffix.toUpperCase() + " format)");
 		System.err.println("This can take a while so please be patient.");
@@ -622,7 +627,7 @@ public class globals {
      * Function reads in spectral data from mzML files
      * @param scanMap
      */
-    private static void read_mzML(Multimap<String, Integer> scanMap)  {
+    private static void read_mzML(Multimap<String, Integer> scanMap) throws FileParsingException {
 
         // Iterate over the file names
         for(String fn : scanMap.keySet()) {
@@ -636,26 +641,28 @@ public class globals {
 
             // read in the mzXML file
             String mzML_path = globals.spectrumPath + "/" + baseFN;
-            mzMLreader curMZML = new mzMLreader(mzML_path);
 
-            for(int sn : scanNums) {
+			final MZMLFile curMZML = new MZMLFile(mzML_path);
+
+            for(int scanNum : scanNums) {
                 iter++;
                 if( iter % 100 == 0 ) {
                     System.err.print("\r" + baseFN + ":  " + iter + "... "); // beginning of info line
                 }
-
-                int N = curMZML.getNumPeaks(sn);
+				final IScan scan = curMZML.parseScan(scanNum, true);
+				final ISpectrum spectrum = scan.getSpectrum();
+				int N = spectrum.getMZs().length;
                 if(N == 0) {
                     continue; // no valid spectrum for this scan number
                 }
 
-                double[] mz = curMZML.getMZ(sn);
-                double[] intensities = curMZML.getIntensities(sn);
+                double[] mz = spectrum.getMZs();
+                double[] intensities = spectrum.getIntensities();
 
                 // If this happens, there is something wrong with the spectrum so skip it
                 if(mz.length != intensities.length) {
                     System.err.print(
-                            "\nERROR:" + baseFN + " Scan: " + sn +
+                            "\nERROR:" + baseFN + " Scan: " + scanNum +
                             "\n# of mz values != # intensity values: " +
                             mz.length + " != " + intensities.length +
                             "\nSkipping this scan...\n"
@@ -667,7 +674,7 @@ public class globals {
 
                 // assign this spectrum to it's PSM
                 for (PSM p : PSM_list) {
-                    if (p.srcFile.equalsIgnoreCase(baseFN) && (p.scanNum == sn)) {
+                    if (p.srcFile.equalsIgnoreCase(baseFN) && (p.scanNum == scanNum)) {
                         p.recordSpectra(X);
                         ctr++;
                         break;
@@ -771,7 +778,7 @@ public class globals {
 	
 	
 	// Function to read spectra from mzXML file
-	private static void read_mzXML(Multimap<String, Integer> scanMap) throws IllegalStateException, IOException, SAXException, ParserConfigurationException, DataFormatException {
+	private static void read_mzXML(Multimap<String, Integer> scanMap) throws IllegalStateException, IOException, SAXException, ParserConfigurationException, DataFormatException, FileParsingException {
 		
 		// Iterate over the file names
 		for(String fn : scanMap.keySet()) {
@@ -785,22 +792,22 @@ public class globals {
             int N = numThreads;
             if(numThreads > 1) N -= 1;
 
-			MZXMLFile theFile = new MZXMLFile(fn);
-            theFile.setNumThreadsForParsing(N);
-            theFile.setParsingTimeout(60L); // 1 minute before it times out trying to read a file
-			ScanCollectionDefault scans = theFile.parseScanCollectionDefaultFromFile(scanNums);
-			
-			TreeMap<Integer, TreeMap<Integer, AbstractScan>> mapMsLevel2num2scan = scans.getMapMsLevel2num2scan();
-			TreeMap<Integer, AbstractScan> ms2scans = mapMsLevel2num2scan.get(2);
-			
-			if( (null == ms2scans) || (ms2scans.isEmpty()) ) {
+			final MZXMLFile mzxml = new MZXMLFile(fn, false);
+			mzxml.setNumThreadsForParsing(N);
+            mzxml.setParsingTimeout(60L); // 1 minute before it times out trying to read a file
+			final LCMSData lcmsData = new LCMSData(mzxml);
+			lcmsData.load(LCMSDataSubset.MS2_WITH_SPECTRA);
+			final IScanCollection scans = lcmsData.getScans();
+			final ScanIndex ms2ScanIndex = scans.getMapMsLevel2index().get(2);
+
+			if( (ms2ScanIndex == null) || (ms2ScanIndex.getNum2scan().isEmpty()) ) {
 				System.err.println("\nERROR: globals.read_mzXML(): Unable to read MS2 scans from '" + fn + "'\n");
 				System.exit(0);
 			}
 			
-			for(Map.Entry<Integer, AbstractScan> num2scan : ms2scans.entrySet()) {
+			for(Map.Entry<Integer, IScan> num2scan : ms2ScanIndex.getNum2scan().entrySet()) {
 				int scanNum = num2scan.getKey();
-				AbstractScan scan = num2scan.getValue();
+				IScan scan = num2scan.getValue();
 				double[] mz = scan.getSpectrum().getMZs();
 				double[] intensities = scan.getSpectrum().getIntensities();
 
@@ -814,7 +821,6 @@ public class globals {
 						break;
 					}
 				}
-				curSpectrum = null;
 			}
 			
 			System.err.println(ctr + " spectra read in.");  // end of info line
