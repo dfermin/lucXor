@@ -16,6 +16,8 @@ import gnu.trove.map.hash.TIntIntHashMap;
 import gnu.trove.set.hash.THashSet;
 import gnu.trove.set.hash.TIntHashSet;
 import org.xml.sax.SAXException;
+import umich.ms.fileio.exceptions.FileParsingException;
+//import umich.ms.fileio.exceptions.FileParsingException;
 
 /**
  *
@@ -27,7 +29,7 @@ public class LucXor {
     private static long endTime;
     private static long elapsedTime;
 
-	public static void main(String[] args) throws ParserConfigurationException, SAXException, IOException, FileNotFoundException, IllegalStateException, DataFormatException, CloneNotSupportedException, InterruptedException, ExecutionException {
+	public static void main(String[] args) throws ParserConfigurationException, SAXException, IOException, IllegalStateException, DataFormatException, CloneNotSupportedException, InterruptedException, ExecutionException, FileParsingException {
 		
 		// Get the release version of the program from the ANT build.xml file
 		//String releaseVersion = LucXor.class.getPackage().getImplementationVersion();
