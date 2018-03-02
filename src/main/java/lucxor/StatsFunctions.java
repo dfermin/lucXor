@@ -14,7 +14,7 @@ import org.paukov.combinatorics.ICombinatoricsVector;
 /**
  * @author dfermin
  */
-public class StatsFunctions {
+class StatsFunctions {
 
   /***************
    * Function returns the number of combinations of (n choose k)
@@ -41,7 +41,7 @@ public class StatsFunctions {
 
 
   // Recursive function to compute the Factorial (X!) of a given number
-  public double factorial(double x) {
+  private double factorial(double x) {
     double ret = 1.0;
 
     if (x <= 1) {
@@ -56,12 +56,11 @@ public class StatsFunctions {
 
 
   ArrayList<TIntArrayList> getAllCombinations(TIntArrayList candModSites, int k) {
-    ArrayList<TIntArrayList> ret = new ArrayList();
-    int L = candModSites.size(); // total number of values
+    ArrayList<TIntArrayList> ret = new ArrayList<>();
 
     // http://code.google.com/p/combinatoricslib/#3._Simple_combinations
 
-    ArrayList<Integer> vec = new ArrayList();
+    ArrayList<Integer> vec = new ArrayList<>();
     for (int i : candModSites.toArray()) {
       vec.add(i);
     }
@@ -95,7 +94,6 @@ public class StatsFunctions {
   void calcFLR() throws InterruptedException, ExecutionException {
     double maxDeltaScore = -1.0;
     FLRClass flr = new FLRClass();
-    ArrayList<FLRClass> flrAry = new ArrayList();
 
     System.err.println("\nComputing False Localization Rate (FLR)");
 

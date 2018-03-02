@@ -7,11 +7,11 @@ import java.io.IOException;
  */
 
 
-public class ScoringWorkerThread implements Runnable {
+class ScoringWorkerThread implements Runnable {
 
-  private PSM curPSM; // the PSM to be scored
-  private int jobIdx; // index of this PSM in the Globals.PSM_list
-  private int runMode_;
+  private final PSM curPSM; // the PSM to be scored
+  private final int jobIdx; // index of this PSM in the Globals.PSM_list
+  private final int runMode_;
 
   // Default constructor for this class
   public ScoringWorkerThread(PSM externalPSM, int rn, int i) {

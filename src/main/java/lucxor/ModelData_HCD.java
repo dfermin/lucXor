@@ -21,38 +21,33 @@ import java.util.concurrent.Future;
 /**
  * @author dfermin
  */
-public class ModelData_HCD {
+class ModelData_HCD {
 
-  static final int ntick = 2000;
+  private static final int ntick = 2000;
   private final static double NORMAL_CONSTANT = 1.0 / Math.sqrt(2.0 * Math.PI);
-  int chargeState;
+  private final int chargeState;
   int numPSM;
-  double bIntBW, yIntBW;  // positive peak intensity bandwidth
-  double negIntBW;  // negative peak intensity bandwidth
-  double posDistBW; // positive peak distance bandwidth
 
-  double bIntMean, bIntVar, yIntMean, yIntVar;
-  double negIntMean, negIntVar;
-  double posDistMean, posDistVar;
-  double negDistMean, negDistVar;
+  private double bIntMean, bIntVar, yIntMean, yIntVar;
+  private double negIntMean, negIntVar;
+  private double posDistMean, posDistVar;
 
 
-  double[] bTickMarksInt, yTickMarksInt, negTickMarksInt;
-  double[] posTickMarksDist, negTickMarksDist;
-  double[] f_int_b, f_int_y, f_int_neg;
-  double[] f_dist;
+  private double[] bTickMarksInt, yTickMarksInt, negTickMarksInt;
+  private double[] posTickMarksDist;
+  private double[] f_int_b, f_int_y, f_int_neg;
+  private double[] f_dist;
 
-  ArrayList<PeakClass> posPks, negPks;
-  double[] b_int, y_int, n_int;
-  double[] pos_dist;
+  private double[] b_int, y_int, n_int;
+  private final double[] pos_dist;
 
 
   // Default constructor
   public ModelData_HCD(int z, ArrayList<PeakClass> peaks) {
     chargeState = z;
     numPSM = 0;
-    posPks = new ArrayList();
-    negPks = new ArrayList();
+    ArrayList<PeakClass> posPks = new ArrayList<>();
+    ArrayList<PeakClass> negPks = new ArrayList<>();
 
     int b = 0;
     int y = 0;
@@ -127,11 +122,11 @@ public class ModelData_HCD {
   // This function trims the extreme values out of the distributions
   public void percentileTrim(char ionType, int dataType, double percentTrim) {
     double[] d = null;
-    double[] f = null;
-    int N = 0;
-    int n = 0;
-    int a = 0;
-    int b = 0;
+    double[] f;
+    int N;
+    int n;
+    int a;
+    int b;
 
     if (ionType == 'b') {
       if (dataType == 0) {
@@ -191,7 +186,7 @@ public class ModelData_HCD {
     double N = 0;
     double sum = 0;
 
-    /********** B-ions ********/
+    //********** B-ions ********/
     N = (double) b_int.length;
     sum = 0;
     for (double b : b_int) {
@@ -199,7 +194,7 @@ public class ModelData_HCD {
     }
     bIntMean = sum / N;
 
-    /********** Y-ions ********/
+    //********** Y-ions ********/
     N = (double) y_int.length;
     sum = 0;
     for (double y : y_int) {
@@ -207,10 +202,10 @@ public class ModelData_HCD {
     }
     yIntMean = sum / N;
 
-    /*** Positive peak distances ***/
+    //*** Positive peak distances ***/
     posDistMean = getMode(pos_dist);
 
-    /********** Noise peaks *******/
+    //********** Noise peaks *******/
     N = (double) n_int.length;
     sum = 0;
     for (double n : n_int) {
@@ -221,7 +216,7 @@ public class ModelData_HCD {
     // For the negative distribution we assume a uniform distribution over a
     // 1 Dalton window. As such, the log of a uniform distribution between
     // -1 to 1 is zero
-    negDistMean = 0;
+    double negDistMean = 0;
   }
 
 
@@ -229,7 +224,7 @@ public class ModelData_HCD {
   public void calcVar() {
     double N, v;
 
-    /**** B-ions ****/
+    //**** B-ions ****/
     v = 0;
     N = ((double) b_int.length) - 1.0;
     for (double b : b_int) {
@@ -238,7 +233,7 @@ public class ModelData_HCD {
     }
     bIntVar = (v / N);
 
-    /**** Y-ions ****/
+    //**** Y-ions ****/
     v = 0;
     N = ((double) y_int.length) - 1.0;
     for (double b : y_int) {
@@ -247,7 +242,7 @@ public class ModelData_HCD {
     }
     yIntVar = (v / N);
 
-    /***** Positive Peak Distance *******/
+    //***** Positive Peak Distance *******/
     v = 0;
     N = ((double) pos_dist.length) - 1.0;
     for (double n : pos_dist) {
@@ -256,7 +251,7 @@ public class ModelData_HCD {
     }
     posDistVar = (v / N);
 
-    /***** Noise Peaks *******/
+    //***** Noise Peaks *******/
     v = 0;
     N = ((double) n_int.length) - 1.0;
     for (double n : n_int) {
@@ -280,21 +275,25 @@ public class ModelData_HCD {
     double kernelResult = 0;
     double t;
 
-    if (ionType == 'b') {
-      N = b_int.length;
-      norm_ints = b_int;
-      variance = bIntVar;
-      System.err.println("+" + chargeState + "  Estimating NP Model for b-ion intensities");
-    } else if (ionType == 'y') {
-      N = y_int.length;
-      norm_ints = y_int;
-      variance = yIntVar;
-      System.err.println("+" + chargeState + "  Estimating NP Model for y-ion intensities");
-    } else {
-      N = n_int.length;
-      norm_ints = n_int;
-      variance = negIntVar;
-      System.err.println("+" + chargeState + "  Estimating NP Model for noise peak intensities");
+    switch (ionType) {
+      case 'b':
+        N = b_int.length;
+        norm_ints = b_int;
+        variance = bIntVar;
+        System.err.println("+" + chargeState + "  Estimating NP Model for b-ion intensities");
+        break;
+      case 'y':
+        N = y_int.length;
+        norm_ints = y_int;
+        variance = yIntVar;
+        System.err.println("+" + chargeState + "  Estimating NP Model for y-ion intensities");
+        break;
+      default:
+        N = n_int.length;
+        norm_ints = n_int;
+        variance = negIntVar;
+        System.err.println("+" + chargeState + "  Estimating NP Model for noise peak intensities");
+        break;
     }
 
     // get the range of the normalized intensities
@@ -342,26 +341,10 @@ public class ModelData_HCD {
       ExecutorService pool = Executors.newFixedThreadPool(Globals.numThreads);
 
       // Create a List to hold the tasks to be performed
-      List<Future<Double>> taskList = new ArrayList<Future<Double>>(Globals.numThreads);
+      List<Future<Double>> taskList = new ArrayList<>(Globals.numThreads);
 
       // break up the data in norm_ints into thread chunks
-      for (int cpu = 0; cpu < Globals.numThreads; cpu++) {
-        int start = cpu * block;
-        int end = start + block;
-        if (cpu == (Globals.numThreads - 1)) {
-          end = norm_ints.length;
-        }
-
-        // get a subset of the data to submit to the worker thread
-        double[] subAry = Arrays.copyOfRange(norm_ints, start, end);
-
-        // create a task and submit it to the pool
-        Callable<Double> C = new NormalDensityWorkerThread(subAry, tic, bw);
-        Future<Double> task = pool.submit(C);
-        taskList.add(task);
-
-        subAry = null;
-      }
+      FLRClass.breakUpDataIntoThreadChunks(norm_ints, bw, block, tic, pool, taskList);
 
       // Actually launch the tasks and store the results to kernelResults
       kernelResult = 0;
@@ -379,18 +362,19 @@ public class ModelData_HCD {
       pool.shutdown(); // shutdown the threadpool
     }
 
-    if (ionType == 'b') {
-      bTickMarksInt = tickMarksInt;
-      f_int_b = f_int;
-      bIntBW = bw;
-    } else if (ionType == 'y') {
-      yTickMarksInt = tickMarksInt;
-      f_int_y = f_int;
-      yIntBW = bw;
-    } else {
-      negTickMarksInt = tickMarksInt;
-      f_int_neg = f_int;
-      negIntBW = bw;
+    switch (ionType) {
+      case 'b':
+        bTickMarksInt = tickMarksInt;
+        f_int_b = f_int;
+        break;
+      case 'y':
+        yTickMarksInt = tickMarksInt;
+        f_int_y = f_int;
+        break;
+      default:
+        negTickMarksInt = tickMarksInt;
+        f_int_neg = f_int;
+        break;
     }
 
   }
@@ -456,24 +440,10 @@ public class ModelData_HCD {
       ExecutorService pool = Executors.newFixedThreadPool(Globals.numThreads);
 
       // Create a list to hold the tasks to be performed
-      List<Future<Double>> taskList = new ArrayList<Future<Double>>(Globals.numThreads);
+      List<Future<Double>> taskList = new ArrayList<>(Globals.numThreads);
 
       // break up the data in D into thread chunks
-      for (int cpu = 0; cpu < Globals.numThreads; cpu++) {
-        int start = cpu * block;
-        int end = start + block;
-        if (cpu == (Globals.numThreads - 1)) {
-          end = pos_dist.length;
-        }
-
-        double[] subAry = Arrays.copyOfRange(pos_dist, start, end);
-
-        // construct the tasks to submit to the threadpool
-        Callable<Double> C = new NormalDensityWorkerThread(subAry, tic, bw);
-        Future<Double> task = pool.submit(C);
-        taskList.add(task); // put the "task" into the queue to be executed
-        subAry = null;
-      }
+      FLRClass.breakUpDataIntoThreadChunks(pos_dist, bw, block, tic, pool, taskList);
 
       // Now launch each task
       kernelResult = 0;
@@ -492,7 +462,7 @@ public class ModelData_HCD {
     }
 
     f_dist = f_ary;
-    posDistBW = bw;
+    double posDistBW = bw;
   }
 
 
@@ -510,7 +480,7 @@ public class ModelData_HCD {
   private double getMode(double[] ary) {
 
     double mode = 0;
-    int Nbins = (int) ntick;
+    int Nbins = ntick;
     double binWidth = 0.0001;
     final double LIMIT = 0.1;
 
@@ -554,18 +524,22 @@ public class ModelData_HCD {
     double[] tickMarksInt = null;
     double[] f_int = null;
 
-    if (ionType == 'b') {
-      N = bTickMarksInt.length;
-      tickMarksInt = bTickMarksInt;
-      f_int = f_int_b;
-    } else if (ionType == 'y') {
-      N = yTickMarksInt.length;
-      tickMarksInt = yTickMarksInt;
-      f_int = f_int_y;
-    } else if (ionType == 'n') {
-      N = negTickMarksInt.length;
-      tickMarksInt = negTickMarksInt;
-      f_int = f_int_neg;
+    switch (ionType) {
+      case 'b':
+        N = bTickMarksInt.length;
+        tickMarksInt = bTickMarksInt;
+        f_int = f_int_b;
+        break;
+      case 'y':
+        N = yTickMarksInt.length;
+        tickMarksInt = yTickMarksInt;
+        f_int = f_int_y;
+        break;
+      case 'n':
+        N = negTickMarksInt.length;
+        tickMarksInt = negTickMarksInt;
+        f_int = f_int_neg;
+        break;
     }
 
     double start_tick = tickMarksInt[0];
@@ -658,29 +632,29 @@ public class ModelData_HCD {
       bw = new BufferedWriter(fw);
     }
 
-    for (int b = 0; b < b_int.length; b++) {
-      normI = Globals.round_dbl(b_int[b], 4);
+    for (double bInt : b_int) {
+      normI = Globals.round_dbl(bInt, 4);
       line = Integer.toString(chargeState) + "\tyi\t" +
           Double.toString(normI) + "\n";
       bw.write(line);
     }
 
-    for (int y = 0; y < y_int.length; y++) {
-      normI = Globals.round_dbl(y_int[y], 4);
+    for (double yInt : y_int) {
+      normI = Globals.round_dbl(yInt, 4);
       line = Integer.toString(chargeState) + "\tyi\t" +
           Double.toString(normI) + "\n";
       bw.write(line);
     }
 
-    for (int n = 0; n < n_int.length; n++) {
-      normI = Globals.round_dbl(n_int[n], 4);
+    for (double nInt : n_int) {
+      normI = Globals.round_dbl(nInt, 4);
       line = Integer.toString(chargeState) + "\tni\t" +
           Double.toString(normI) + "\n";
       bw.write(line);
     }
 
-    for (int p = 0; p < pos_dist.length; p++) {
-      dist = Globals.round_dbl(pos_dist[p], 4);
+    for (double posDist : pos_dist) {
+      dist = Globals.round_dbl(posDist, 4);
       line = Integer.toString(chargeState) + "\td\t" +
           Double.toString(dist) + "\n";
       bw.write(line);

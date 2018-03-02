@@ -21,19 +21,18 @@ import org.xml.sax.helpers.DefaultHandler;
 class PepXML extends DefaultHandler {
 
 
-  HashMap<String, Double> variableMods = null;
-  HashMap<String, Double> fixedMods = null;
-  String temp;
-  String searchEngine;
-  String AA_alphabet = "ACDEFGHIKLMNPQRSTVWY";
-  PSM curPSM = null;
-  boolean recordMods;
+  private HashMap<String, Double> variableMods;
+  private HashMap<String, Double> fixedMods;
+  private String searchEngine;
+  private final String AA_alphabet = "ACDEFGHIKLMNPQRSTVWY";
+  private PSM curPSM = null;
+  private boolean recordMods;
 
   // Default constructor for this class
   PepXML(File inputXML) throws ParserConfigurationException, SAXException, IOException {
 
-    variableMods = new HashMap();
-    fixedMods = new HashMap();
+    variableMods = new HashMap<>();
+    fixedMods = new HashMap<>();
     recordMods = true; // changes to false after the end of first search_summary section
 
     SAXParserFactory factory = SAXParserFactory.newInstance();
@@ -43,9 +42,7 @@ class PepXML extends DefaultHandler {
         .parse(inputXML, this); // this class itself is the default handler, hence the use of 'this'
   }
 
-  public void startElement(String uri, String localName, String qName, Attributes attr)
-      throws SAXException {
-    temp = "";
+  public void startElement(String uri, String localName, String qName, Attributes attr) {
 
     if (qName.equalsIgnoreCase("search_summary")) {
       String se = attr.getValue("search_engine");
@@ -171,9 +168,7 @@ class PepXML extends DefaultHandler {
   }
 
 
-  public void endElement(String uri, String localName, String qName) throws SAXException {
-
-    temp = null; // shouldn't need this anymore
+  public void endElement(String uri, String localName, String qName) {
 
     if (qName.equalsIgnoreCase("search_summary")) { // record the AA modifications
 
@@ -223,7 +218,6 @@ class PepXML extends DefaultHandler {
    // It handles non-XML tag text when it's encountered
    */
   public void characters(char[] buffer, int start, int length) {
-    temp = new String(buffer, start, length);
   }
 
 }

@@ -13,12 +13,12 @@ import org.apache.commons.math3.util.FastMath;
  */
 
 
-public class NormalDensityWorkerThread implements Callable<Double> {
+class NormalDensityWorkerThread implements Callable<Double> {
 
   private final double NORMAL_CONSTANT = 1.0 / Math.sqrt(2.0 * Math.PI);
-  private double[] ary;
-  private double tic;
-  private double bw;
+  private final double[] ary;
+  private final double tic;
+  private final double bw;
 
 
   public NormalDensityWorkerThread(double[] dataAry, double tic_, double bandWidth) {
@@ -29,7 +29,7 @@ public class NormalDensityWorkerThread implements Callable<Double> {
 
 
   @Override
-  public Double call() throws Exception {
+  public Double call() {
     double sum = 0;
     double x = 0;
 

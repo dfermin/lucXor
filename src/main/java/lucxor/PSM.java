@@ -33,23 +33,23 @@ class PSM {
   boolean isKeeper; // true means the PSM can be scored
   boolean useForModel; // true means the PSM can be used for modeling
   boolean isDecoy; // true means the top match for this PSM is a decoy
-  boolean isUnambiguous; // true means the number potential PTM sites is equal to the number of reported PTM sites
+  private boolean isUnambiguous; // true means the number potential PTM sites is equal to the number of reported PTM sites
 
   TIntDoubleHashMap modCoordMap = null; // holds modified amino acid positions
 
-  THashMap<String, Double> posPermutationScoreMap = null;
-  THashMap<String, Double> negPermutationScoreMap = null;
+  private THashMap<String, Double> posPermutationScoreMap = null;
+  private THashMap<String, Double> negPermutationScoreMap = null;
 
   // matched and unmatched peaks
   ArrayList<PeakClass> posPeaks = null;
   ArrayList<PeakClass> negPeaks = null;
 
-  SpectrumClass PeakList = null;
+  private SpectrumClass PeakList = null;
 
 
-  Peptide origPep;
-  Peptide score1pep; // top scoring peptide permutation
-  Peptide score2pep; // 2nd best scoring peptide permutation
+  final Peptide origPep;
+  private Peptide score1pep; // top scoring peptide permutation
+  private Peptide score2pep; // 2nd best scoring peptide permutation
 
 
   // default constructor
@@ -102,7 +102,6 @@ class PSM {
     if (isKeeper) {
       // We will reconstruct the specId here to remove left-padded zeros
       String suffix = "";
-      String scanStr = Integer.toString(scanNum);
 
       if (Globals.inputType == Constants.PEPXML) {
 		  if (Globals.spectrumSuffix.equalsIgnoreCase("mzXML")) {
@@ -270,13 +269,13 @@ class PSM {
   // of the peptide sequence associated with this PSM
   void matchAllPeaks() {
 
-    posPeaks = new ArrayList(PeakList.N);
+    posPeaks = new ArrayList<>(PeakList.N);
 
     TIntDoubleHashMap mcp = new TIntDoubleHashMap(); // use this to record modifications for each permutation
 
     // This variable will hold all of the fragment ions that are possible for every
     // permutation of the peptide sequence assigned to this peptide
-    THashMap<String, Double> all_ions = new THashMap<String, Double>();
+    THashMap<String, Double> all_ions = new THashMap<>();
 
     for (String pep : posPermutationScoreMap.keySet()) {
       mcp.clear();
@@ -294,7 +293,7 @@ class PSM {
     // We use this data object to collect all of these cases for later processing.
     // k = observed Peak MZ value
     // v = array list of all the theoretical peaks that match to it
-    TDoubleObjectHashMap<ArrayList<PeakClass>> candMatchedPks = new TDoubleObjectHashMap<ArrayList<PeakClass>>(
+    TDoubleObjectHashMap<ArrayList<PeakClass>> candMatchedPks = new TDoubleObjectHashMap<>(
         PeakList.N);
 
     // Iterate over each theoretical ion
@@ -313,7 +312,7 @@ class PSM {
         ary.add(newEntry);
         candMatchedPks.put(matchedPk.mz, ary);
       } else {
-        ArrayList<PeakClass> ary = new ArrayList<PeakClass>();
+        ArrayList<PeakClass> ary = new ArrayList<>();
         ary.add(matchedPk);
         candMatchedPks.put(matchedPk.mz, ary);
       }
@@ -322,7 +321,7 @@ class PSM {
     // For each matched peak in 'candMatchedPks' now select the match that is the closest by m/z value
     for (double mz : candMatchedPks.keys()) {
       ArrayList<PeakClass> ary = candMatchedPks.get(mz);
-      Collections.sort(ary, PeakClass.comparator_mz_abs_dist);
+      ary.sort(PeakClass.comparator_mz_abs_dist);
       posPeaks.add(ary.get(0));
     }
     candMatchedPks.clear();
@@ -340,7 +339,7 @@ class PSM {
 
     // Now that you have matched all the peaks you can for this spectrum
     // All the remaining peaks are noise, we put them in the negPeaks arraylist
-    negPeaks = new ArrayList<PeakClass>(PeakList.N);
+    negPeaks = new ArrayList<>(PeakList.N);
 
     for (int i = 0; i < PeakList.N; i++) {
 
@@ -381,10 +380,6 @@ class PSM {
   /*******
    * This function returns a PeakClass object matched to the given theoretical mz value.
    * The function returns a null object if no match was found.
-   *
-   * @param theo_ion
-   * @param theo_mz
-   * @return
    */
   private PeakClass getMatchedPeak(String theo_ion, double theo_mz) {
 
@@ -407,7 +402,7 @@ class PSM {
     b = theo_mz + matchErr;
 
     // Iterate over the peaks in PeakList
-    ArrayList<PeakClass> candMatches = new ArrayList<PeakClass>();
+    ArrayList<PeakClass> candMatches = new ArrayList<>();
     for (int i = 0; i < PeakList.N; i++) {
 
       if ((PeakList.mz[i] >= a) && (PeakList.mz[i] <= b)) {
@@ -420,7 +415,7 @@ class PSM {
     if (!candMatches.isEmpty()) {
 
       // identify the most intense peak in candMatches
-      Collections.sort(candMatches, PeakClass.comparator_intensity_hi2low);
+      candMatches.sort(PeakClass.comparator_intensity_hi2low);
 
       ret = candMatches.get(0);
       ret.matched = true;
@@ -435,11 +430,11 @@ class PSM {
 
   // Function creates all of the permutations for the sequence assigned to this PSM
   void generatePermutations(int RN) {
-    posPermutationScoreMap = new THashMap();
+    posPermutationScoreMap = new THashMap<>();
     posPermutationScoreMap = origPep.getPermutations(0);
 
     if (!isUnambiguous) {
-      negPermutationScoreMap = new THashMap();
+      negPermutationScoreMap = new THashMap<>();
       if (RN == 0) { // RN = runMode is selected to create decoys
         negPermutationScoreMap = origPep.getPermutations(1);
       }
@@ -594,7 +589,7 @@ class PSM {
 
     // collect all of the scores into a single arraylist and select the top
     // two matches to compute the delta score
-    ArrayList<Double> allScores = new ArrayList();
+    ArrayList<Double> allScores = new ArrayList<>();
     for (String curSeq : posPermutationScoreMap.keySet()) {
       double d = posPermutationScoreMap.get(curSeq);
       allScores.add(d);
@@ -625,8 +620,8 @@ class PSM {
       // We'll first try to find the top scores among the non-decoy
       // permutations
       for (Entry<String, Double> e : posPermutationScoreMap.entrySet()) {
-        String curSeq = (String) e.getKey();
-        double x = (double) e.getValue();
+        String curSeq = e.getKey();
+        double x = e.getValue();
         double d = Globals.round_dbl(x, 6);
 
         if ((d == score1) && (pep1.isEmpty())) {
@@ -645,8 +640,8 @@ class PSM {
       // if this is true, then you need to search among the decoys
       if (numAssigned != 2) {
         for (Entry<String, Double> e : negPermutationScoreMap.entrySet()) {
-          String curSeq = (String) e.getKey();
-          double x = (double) e.getValue();
+          String curSeq = e.getKey();
+          double x = e.getValue();
           double d = Globals.round_dbl(x, 6);
 
           if ((d == score1) && (pep1.isEmpty())) {
@@ -664,8 +659,7 @@ class PSM {
       }
     } else { // special case for unambiguous PSMs
       for (Entry<String, Double> e : posPermutationScoreMap.entrySet()) {
-        String curSeq = (String) e.getKey();
-        pep1 = curSeq;
+        pep1 = e.getKey();
       }
     }
 
@@ -774,7 +768,7 @@ class PSM {
 	  }
 
     ArrayList<PeakClass> mPK = score1pep.matchedPeaks;
-    Collections.sort(mPK, PeakClass.comparator_mz);
+    mPK.sort(PeakClass.comparator_mz);
     for (PeakClass pk : mPK) {
 		if (!pk.matched) {
 			continue;
@@ -805,7 +799,7 @@ class PSM {
 
     mPK.clear();
     mPK = score2pep.matchedPeaks;
-    Collections.sort(mPK, PeakClass.comparator_mz);
+    mPK.sort(PeakClass.comparator_mz);
     for (PeakClass pk : mPK) {
 		if (!pk.matched) {
 			continue;
@@ -833,7 +827,7 @@ class PSM {
   // to this PSM. The data is returned in a TAB-delimited format.
   String writeMatchedPks() {
 
-    String ret = "";
+    StringBuilder ret = new StringBuilder();
 
     score1pep.build_ion_ladders();
     score1pep.matchPeaks(PeakList);
@@ -846,7 +840,7 @@ class PSM {
 	  }
 
     ArrayList<PeakClass> mPK = score1pep.matchedPeaks;
-    Collections.sort(mPK, PeakClass.comparator_mz);
+    mPK.sort(PeakClass.comparator_mz);
     for (PeakClass pk : mPK) {
 		if (!pk.matched) {
 			continue;
@@ -858,9 +852,9 @@ class PSM {
       String Dscore = Double.toString(Globals.round_dbl(pk.distScore, 4));
       String score = Double.toString(Globals.round_dbl(pk.score, 4));
 
-      ret += specId + "\t1\t" + score1pep.modPeptide + "\t" + pk.matchedIonStr + "\t" +
-          mz + "\t" + relI + "\t" + Dscore + "\t" + Iscore + "\t" +
-          score + "\n";
+      ret.append(specId).append("\t1\t").append(score1pep.modPeptide).append("\t")
+          .append(pk.matchedIonStr).append("\t").append(mz).append("\t").append(relI).append("\t")
+          .append(Dscore).append("\t").append(Iscore).append("\t").append(score).append("\n");
     }
 
     score2pep.build_ion_ladders();
@@ -874,7 +868,7 @@ class PSM {
 
     mPK.clear();
     mPK = score2pep.matchedPeaks;
-    Collections.sort(mPK, PeakClass.comparator_mz);
+    mPK.sort(PeakClass.comparator_mz);
     for (PeakClass pk : mPK) {
 		if (!pk.matched) {
 			continue;
@@ -886,12 +880,12 @@ class PSM {
       String Dscore = Double.toString(Globals.round_dbl(pk.distScore, 4));
       String score = Double.toString(Globals.round_dbl(pk.score, 4));
 
-      ret += specId + "\t2\t" + score2pep.modPeptide + "\t" + pk.matchedIonStr + "\t" +
-          mz + "\t" + relI + "\t" + Dscore + "\t" + Iscore + "\t" +
-          score + "\n";
+      ret.append(specId).append("\t2\t").append(score2pep.modPeptide).append("\t")
+          .append(pk.matchedIonStr).append("\t").append(mz).append("\t").append(relI).append("\t")
+          .append(Dscore).append("\t").append(Iscore).append("\t").append(score).append("\n");
     }
 
-    return (ret);
+    return (ret.toString());
   }
 
 

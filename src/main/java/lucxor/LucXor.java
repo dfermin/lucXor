@@ -12,7 +12,6 @@ import gnu.trove.set.hash.TIntHashSet;
 import java.io.BufferedReader;
 import java.io.BufferedWriter;
 import java.io.File;
-import java.io.FileNotFoundException;
 import java.io.FileReader;
 import java.io.FileWriter;
 import java.io.IOException;
@@ -21,11 +20,9 @@ import java.util.concurrent.ExecutionException;
 import java.util.concurrent.ExecutorService;
 import java.util.concurrent.Executors;
 import java.util.concurrent.TimeUnit;
-import java.util.zip.DataFormatException;
 import javax.xml.parsers.ParserConfigurationException;
 import org.xml.sax.SAXException;
 import umich.ms.fileio.exceptions.FileParsingException;
-//import umich.ms.fileio.exceptions.FileParsingException;
 
 /**
  * @author dfermin
@@ -34,10 +31,9 @@ public class LucXor {
 
   private static long startTime;
   private static long endTime;
-  private static long elapsedTime;
 
   public static void main(String[] args)
-      throws ParserConfigurationException, SAXException, IOException, IllegalStateException, DataFormatException, CloneNotSupportedException, InterruptedException, ExecutionException, FileParsingException {
+      throws ParserConfigurationException, SAXException, IOException, IllegalStateException, InterruptedException, ExecutionException, FileParsingException {
 
     // Get the release version of the program from the ANT build.xml file
     //String releaseVersion = LucXor.class.getPackage().getImplementationVersion();
@@ -95,7 +91,7 @@ public class LucXor {
 
   // Function computes the elapsed run time of the program and reports it
   private static void reportElapsedTime() {
-    elapsedTime = endTime - startTime;
+    long elapsedTime = endTime - startTime;
 
     long milliseconds = TimeUnit.NANOSECONDS.toMillis(elapsedTime);
     int ss = (int) (milliseconds / 1000) % 60;
@@ -120,7 +116,7 @@ public class LucXor {
 
 
   // Function parses a tab-delimited file of PSMs
-  private static void parse_TSV_src() throws FileNotFoundException, IOException {
+  private static void parse_TSV_src() throws IOException {
     System.err.println("\nReading PSM from TSV file: " + Globals.inputFile.getAbsolutePath());
     PSM curPSM = null;
 
@@ -139,7 +135,7 @@ public class LucXor {
         }
 
       // Skip over the header line for the TSV file (if it has one)
-      if ((Globals.tsvHdr == 1) && (passedHdr == false)) {
+      if ((Globals.tsvHdr == 1) && (!passedHdr)) {
         passedHdr = true;
         continue;
       }
@@ -202,7 +198,7 @@ public class LucXor {
   // Function executes all the commands that are specific to the CID-mode
   // scoring algorithm
   private static void runCIDcode()
-      throws IOException, CloneNotSupportedException, InterruptedException, ExecutionException {
+      throws IOException, InterruptedException, ExecutionException {
 
     System.err.println("\nRunning in CID mode.\n");
 
@@ -215,7 +211,7 @@ public class LucXor {
           NCPU = 1;
       }
 
-    Globals.modelingMap_CID = new THashMap();
+    Globals.modelingMap_CID = new THashMap<>();
     int numPSM = 0; // track number of PSMs used for modeling
 
     // First make sure you have enough PSMs for each charge state to create
@@ -262,7 +258,7 @@ public class LucXor {
     // iterate over the charge states collecting data for all modeling PSMs
     System.err.println("(CID) Building Parametric Models from high-scoring PSMs...");
     for (int z = 2; z <= Globals.maxChargeState; z++) {
-      ArrayList<PeakClass> modelingPks = new ArrayList();
+      ArrayList<PeakClass> modelingPks = new ArrayList<>();
 
         if (badZ.contains(z)) {
             continue; // skip this charge state, you don't have enough data to model it
@@ -368,9 +364,9 @@ public class LucXor {
 
     System.gc(); // try and reclaim some memory
 
-    /***********************************************************************
-     // Score the PSMs
-     ************************************************************************/
+    //***********************************************************************
+    // Score the PSMs
+    //************************************************************************/
 
     for (int RN = 0; RN < 2; RN++) { // RN = run number, 0 = calc. FDR 1 = assign FDR estimates
 
@@ -449,7 +445,7 @@ public class LucXor {
         Globals.assignFLR();
       }
     } // end loop over RN
-    /*******************************************************/
+    //*******************************************************/
   }
 
 
@@ -465,11 +461,11 @@ public class LucXor {
           NCPU = Globals.numThreads + 1;
       }
 
-    Globals.modelingMap_HCD = new THashMap();
+    Globals.modelingMap_HCD = new THashMap<>();
 
     // First make sure you have enough PSMs for each charge state to create
     // an accurate model.
-    THashMap<Integer, Integer> chargeMap = new THashMap();
+    THashMap<Integer, Integer> chargeMap = new THashMap<>();
       for (int z = 2; z <= Globals.maxChargeState; z++) {
           chargeMap.put(z, 0);
       }
@@ -485,7 +481,7 @@ public class LucXor {
     }
 
     // remove charge states you can't model
-    THashSet<Integer> badZ = new THashSet();
+    THashSet<Integer> badZ = new THashSet<>();
     System.err.print("PSMs for modeling:\n------------------\n");
     for (int z = 2; z <= Globals.maxChargeState; z++) {
       int n = chargeMap.get(z);
@@ -512,7 +508,7 @@ public class LucXor {
     System.err.println("(HCD) Acquiring Non-Parametric Model features from high-scoring PSMs...");
 
     for (int z = 2; z <= Globals.maxChargeState; z++) {
-      ArrayList<PeakClass> modelingPks = new ArrayList();
+      ArrayList<PeakClass> modelingPks = new ArrayList<>();
 
         if (badZ.contains(z)) {
             continue; // skip this charge state you don't have enough data to model it
@@ -585,7 +581,7 @@ public class LucXor {
     }
 
     // Compute the statistics for the collected charge states
-    ArrayList<Integer> missedChargeStates = new ArrayList();
+    ArrayList<Integer> missedChargeStates = new ArrayList<>();
     int maxObsZ = 0;  // highest modeled charge state.
     for (int z = 2; z <= Globals.maxChargeState; z++) {
 
@@ -636,9 +632,9 @@ public class LucXor {
     // Clean up before you start scoring
     System.gc();
 
-    /*******************************************************************
-     // Score the PSMs
-     ********************************************************************/
+    //*******************************************************************
+    // Score the PSMs
+    //********************************************************************/
 
     for (int RN = 0; RN < 2; RN++) { // RN = run number
 
@@ -719,7 +715,7 @@ public class LucXor {
         Globals.assignFLR();
       }
     } // end loop over RN
-    /*******************************************************/
+    //*******************************************************/
   }
 
 

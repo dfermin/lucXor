@@ -14,22 +14,22 @@ import java.util.Collections;
 /**
  * @author dfermin
  */
-public class ModelData_CID {
+class ModelData_CID {
 
   // This is an adjustment factor for the standard deviation suggested by hwchoi
-  final double CID_ADJUST = 16.0 / 25.0;
-  int chargeState;
+  private final double CID_ADJUST = 16.0 / 25.0;
+  private final int chargeState;
   int numPSM; // holds number of PSMs used for this charge state
   double mu_int_B, mu_int_Y, mu_int_U;
   double var_int_B, var_int_Y, var_int_U;
   double mu_dist_B, mu_dist_Y, mu_dist_U;
   double var_dist_B, var_dist_Y, var_dist_U;
-  double[] b_intensity = null;
-  double[] b_distance = null;
-  double[] y_intensity = null;
-  double[] y_distance = null;
-  double[] u_intensity = null;
-  double[] u_distance = null;
+  private double[] b_intensity = null;
+  private double[] b_distance = null;
+  private double[] y_intensity = null;
+  private double[] y_distance = null;
+  private double[] u_intensity = null;
+  private double[] u_distance = null;
 
   public ModelData_CID(int z, ArrayList<PeakClass> peaks) {
     chargeState = z;
@@ -267,7 +267,6 @@ public class ModelData_CID {
   /***************
    * Function clears out arrays to make more memory available. You call this function AFTER you have all the
    * modeling parameters recorded.
-   * @param
    */
   public void clearArrays() {
 
@@ -285,10 +284,10 @@ public class ModelData_CID {
    */
   public void writeModelPks() throws IOException {
     File debugF = new File("debug_model_pks_CID.txt");
-    FileWriter fw = null;
-    BufferedWriter bw = null;
+    FileWriter fw;
+    BufferedWriter bw;
     String line;
-    double mz, dist, relI, normI;
+    double dist, normI;
 
     if (!debugF.exists()) {
       fw = new FileWriter(debugF);
@@ -300,43 +299,43 @@ public class ModelData_CID {
       bw = new BufferedWriter(fw);
     }
 
-    for (int b = 0; b < b_intensity.length; b++) {
-      normI = Globals.round_dbl(b_intensity[b], 4);
+    for (double bIntensity : b_intensity) {
+      normI = Globals.round_dbl(bIntensity, 4);
       line = Integer.toString(chargeState) + "\tyi\t" +
           Double.toString(normI) + "\n";
       bw.write(line);
     }
 
-    for (int y = 0; y < y_intensity.length; y++) {
-      normI = Globals.round_dbl(y_intensity[y], 4);
+    for (double yIntensity : y_intensity) {
+      normI = Globals.round_dbl(yIntensity, 4);
       line = Integer.toString(chargeState) + "\tyi\t" +
           Double.toString(normI) + "\n";
       bw.write(line);
     }
 
-    for (int n = 0; n < u_intensity.length; n++) {
-      normI = Globals.round_dbl(u_intensity[n], 4);
+    for (double uIntensity : u_intensity) {
+      normI = Globals.round_dbl(uIntensity, 4);
       line = Integer.toString(chargeState) + "\tni\t" +
           Double.toString(normI) + "\n";
       bw.write(line);
     }
 
-    for (int b = 0; b < b_distance.length; b++) {
-      dist = Globals.round_dbl(b_distance[b], 4);
+    for (double bDistance : b_distance) {
+      dist = Globals.round_dbl(bDistance, 4);
       line = Integer.toString(chargeState) + "\tbd\t" +
           Double.toString(dist) + "\n";
       bw.write(line);
     }
 
-    for (int y = 0; y < y_distance.length; y++) {
-      dist = Globals.round_dbl(y_distance[y], 4);
+    for (double yDistance : y_distance) {
+      dist = Globals.round_dbl(yDistance, 4);
       line = Integer.toString(chargeState) + "\tyd\t" +
           Double.toString(dist) + "\n";
       bw.write(line);
     }
 
-    for (int n = 0; n < u_distance.length; n++) {
-      dist = Globals.round_dbl(u_distance[n], 4);
+    for (double uDistance : u_distance) {
+      dist = Globals.round_dbl(uDistance, 4);
       line = Integer.toString(chargeState) + "\tnd\t" +
           Double.toString(dist) + "\n";
       bw.write(line);

@@ -11,7 +11,6 @@ import gnu.trove.map.hash.TIntObjectHashMap;
 import java.io.BufferedReader;
 import java.io.BufferedWriter;
 import java.io.File;
-import java.io.FileNotFoundException;
 import java.io.FileReader;
 import java.io.FileWriter;
 import java.io.IOException;
@@ -22,9 +21,6 @@ import java.util.HashMap;
 import java.util.Iterator;
 import java.util.List;
 import java.util.Map;
-import java.util.zip.DataFormatException;
-import javax.xml.parsers.ParserConfigurationException;
-import org.xml.sax.SAXException;
 import umich.ms.datatypes.LCMSData;
 import umich.ms.datatypes.LCMSDataSubset;
 import umich.ms.datatypes.scan.IScan;
@@ -38,9 +34,9 @@ import umich.ms.fileio.filetypes.mzxml.MZXMLFile;
 /**
  * @author dfermin
  */
-public class Globals {
+class Globals {
 
-  static File spectrumPath = null;
+  private static File spectrumPath = null;
   static String spectrumSuffix = null;
   static String matchedPkFile = null;
   static File inputFile = null;
@@ -63,13 +59,12 @@ public class Globals {
   static double ms2tol;
   static double modelTH;
   static double scoreTH;
-  static double decoyMass;
+  private static double decoyMass;
   static double minMZ;
   static double max_num_permutations;
   static double precursorNLmass;
   static double ntermMass;
   static double ctermMass;
-  static double minRelIntensity;
   static boolean writeMatchedPeaks;
 
   static ArrayList<PSM> PSM_list = null;
@@ -79,10 +74,10 @@ public class Globals {
   static THashMap<String, Double> varModMap = null; // variable mods observed in data
   static THashMap<String, Double> nlMap = null; // holds all neutral loss masses, k= list of amino acids v= NL mass
   static THashMap<String, Double> decoyNLmap = null;
-  static THashMap<Double, double[]> FLRestimateMap = null; // ary[0] = globalFLR, ary[1] = localFLR
+  private static THashMap<Double, double[]> FLRestimateMap = null; // ary[0] = globalFLR, ary[1] = localFLR
 
   static THashMap<String, Double> AAmassMap = null;
-  static THashMap<String, String> decoyAAMap = null;
+  private static THashMap<String, String> decoyAAMap = null;
 
   static THashMap<Integer, ModelData_CID> modelingMap_CID = null;
   static THashMap<Integer, ModelData_HCD> modelingMap_HCD = null;
@@ -90,7 +85,7 @@ public class Globals {
   static StatsFunctions SF = null; // class holds stats functions
 
 
-  static void parse_input_file(String str) throws FileNotFoundException, IOException {
+  static void parse_input_file(String str) throws IOException {
 
     File inF = new File(str);
     if (!inF.exists()) {
@@ -100,7 +95,6 @@ public class Globals {
 
     debugMode = 0; // 0 means no debugging output
     runMode = 0; // calculate FLR and rescore PSMs without decoys (2 iterations)
-    minRelIntensity = 0;
     minNumPSMsForModeling = 50;
     maxPepLen = 40;
     reduceNL = 0;
@@ -134,8 +128,7 @@ public class Globals {
       }
 
       if (line.startsWith("OUTPUT_FILE")) {
-        String s = parse_input_line(line);
-        outputFile = s;
+        outputFile = parse_input_line(line);
       }
 
       if (line.startsWith("INPUT_TYPE")) {
@@ -376,7 +369,7 @@ public class Globals {
   }
 
 
-  static String parse_input_line(String line) {
+  private static String parse_input_line(String line) {
     String ret = "";
     StringBuilder sb = new StringBuilder();
     int N = line.length();
@@ -399,7 +392,7 @@ public class Globals {
   }
 
 
-  static String[] parse_input_mod_line(String line) {
+  private static String[] parse_input_mod_line(String line) {
     String[] ret = new String[2];
 
     char aa = 0;
@@ -437,7 +430,7 @@ public class Globals {
   }
 
 
-  static String[] parse_NL_line(String line) {
+  private static String[] parse_NL_line(String line) {
     String[] ret = new String[2];
 
     line = line.replaceAll("#", "");
@@ -452,15 +445,15 @@ public class Globals {
 
 
   static void initialize() {
-    PSM_list = new ArrayList();
+    PSM_list = new ArrayList<>();
 
-    decoyAAMap = new THashMap();
-    AAmassMap = new THashMap();
-    targetModMap = new THashMap();
-    fixedModMap = new THashMap();
-    varModMap = new THashMap();
-    nlMap = new THashMap();
-    decoyNLmap = new THashMap();
+    decoyAAMap = new THashMap<>();
+    AAmassMap = new THashMap<>();
+    targetModMap = new THashMap<>();
+    fixedModMap = new THashMap<>();
+    varModMap = new THashMap<>();
+    nlMap = new THashMap<>();
+    decoyNLmap = new THashMap<>();
 
     ntermMass = 0d;
     ctermMass = 0d;
@@ -588,8 +581,7 @@ public class Globals {
     // First filter the data in varModMap.
     // We want to remove non-standard amino acid characters and remove
     // the amino acids that are in our 'targetModMap' variable.
-    HashMap<String, Double> tmp = new HashMap();
-    tmp.putAll(varModMap);
+    HashMap<String, Double> tmp = new HashMap<>(varModMap);
     varModMap.clear();
 
     for (String c : tmp.keySet()) {
@@ -624,7 +616,7 @@ public class Globals {
 
 
   static void read_in_spectra()
-      throws IOException, IllegalStateException, SAXException, ParserConfigurationException, DataFormatException, FileParsingException {
+      throws IOException, IllegalStateException, FileParsingException {
 
     System.err.println("\nReading spectra from " + Globals.spectrumPath.getCanonicalPath() + "  ("
         + Globals.spectrumSuffix.toUpperCase() + " format)");
@@ -633,9 +625,9 @@ public class Globals {
     Multimap<String, Integer> scanMap = ArrayListMultimap.create();
 
     int droppedPSMs = 0; // holds the number of PSMs for which no corresponding spectrum file could be found
-    Iterator iter = PSM_list.iterator();
+    Iterator<PSM> iter = PSM_list.iterator();
     while (iter.hasNext()) {
-      PSM p = (PSM) iter.next();
+      PSM p = iter.next();
       String pathStr = Globals.spectrumPath + "/" + p.srcFile;
       File f = new File(pathStr);
 
@@ -675,8 +667,7 @@ public class Globals {
 
 
   /****************
-   * Function reads in spectral data from mzML files
-   * @param scanMap
+   * Function reads in spectral data from mzML files.
    */
   private static void read_mzML(Multimap<String, Integer> scanMap) throws FileParsingException {
 
@@ -767,8 +758,8 @@ public class Globals {
 
   // Function reads in an MGF file and returns it as a HashMap
   private static TIntObjectHashMap<SpectrumClass> read_mgf(String specFile)
-      throws FileNotFoundException, IOException {
-    TIntObjectHashMap<SpectrumClass> ret = new TIntObjectHashMap<SpectrumClass>();
+      throws IOException {
+    TIntObjectHashMap<SpectrumClass> ret = new TIntObjectHashMap<>();
 
     File mgf = new File(specFile);
     BufferedReader br = new BufferedReader(new FileReader(mgf));
@@ -806,8 +797,8 @@ public class Globals {
       }
 
       if (line.startsWith("BEGIN IONS")) {
-        mzAL = new ArrayList<Double>();
-        intensityAL = new ArrayList<Double>();
+        mzAL = new ArrayList<>();
+        intensityAL = new ArrayList<>();
       }
 
       if (line.startsWith("TITLE=")) {
@@ -836,7 +827,7 @@ public class Globals {
 
   // Function to read spectra from mzXML file
   private static void read_mzXML(Multimap<String, Integer> scanMap)
-      throws IllegalStateException, IOException, SAXException, ParserConfigurationException, DataFormatException, FileParsingException {
+      throws IllegalStateException, FileParsingException {
 
     // Iterate over the file names
     for (String fn : scanMap.keySet()) {
@@ -1095,7 +1086,7 @@ public class Globals {
 
   // Record the global and local FLR values estimated for all of the delta scores
   public static void recordFLRestimates() {
-    FLRestimateMap = new THashMap();
+    FLRestimateMap = new THashMap<>();
 
     for (PSM p : Globals.PSM_list) {
       if (p.isDecoy) {
@@ -1112,7 +1103,7 @@ public class Globals {
   // Function assigns the global and local FLR for the current PSM from the FLRestimateMap
   public static void assignFLR() {
 
-    ArrayList<Double> obsDeltaScores = new ArrayList<Double>(FLRestimateMap.keySet());
+    ArrayList<Double> obsDeltaScores = new ArrayList<>(FLRestimateMap.keySet());
     Collections.sort(obsDeltaScores);  // sort them from low to high
     int N = obsDeltaScores.size();
     boolean assigned;

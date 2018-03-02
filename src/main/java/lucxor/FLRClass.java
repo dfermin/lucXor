@@ -25,30 +25,40 @@ import java.util.logging.Logger;
 /**
  * @author dfermin
  */
-public class FLRClass {
+class FLRClass {
 
-  final int NMARKS = 10001; // we want N+1 bins for the FLR
-  ArrayList<PSM> realPSMs, decoyPSMs;
+  private final int NMARKS = 10001; // we want N+1 bins for the FLR
+  final ArrayList<PSM> realPSMs;
+  final ArrayList<PSM> decoyPSMs;
 
   // f0 = decoy
   // f1 = real
-  THashMap<Integer, double[]> minorMapG, minorMapL;
-  double[] pos, neg;
-  double[] tickMarks, f0, f1;
-  double[] globalFDR, localFDR, globalFDR2, localFDR2;
+  private THashMap<Integer, double[]> minorMapG;
+  private THashMap<Integer, double[]> minorMapL;
+  private double[] pos;
+  private double[] neg;
+  private double[] tickMarks;
+  private double[] f0;
+  private double[] f1;
+  private double[] globalFDR;
+  private double[] localFDR;
   double maxDeltaScore;
   // variance of delta score for both distributions
-  double deltaScoreVar_pos, deltaScoreVar_neg;
+  private double deltaScoreVar_pos;
+  private double deltaScoreVar_neg;
   // mean of delta score for both distributions
-  double deltaScoreMu_pos, deltaScoreMu_neg;
+  private double deltaScoreMu_pos;
+  private double deltaScoreMu_neg;
   // bandwidth for histograms
-  double bw_real, bw_decoy;
-  int Nreal, Ndecoy;
+  private double bw_real;
+  private double bw_decoy;
+  private int Nreal;
+  private int Ndecoy;
 
 
   FLRClass() {
-    realPSMs = new ArrayList();
-    decoyPSMs = new ArrayList();
+    realPSMs = new ArrayList<>();
+    decoyPSMs = new ArrayList<>();
     maxDeltaScore = 0d;
     Nreal = 0;
     Ndecoy = 0;
@@ -86,9 +96,6 @@ public class FLRClass {
     // initialize other arrayLists
     localFDR = new double[Nreal];
     globalFDR = new double[Nreal];
-
-    localFDR2 = new double[Nreal];
-    globalFDR2 = new double[Nreal];
 
     calcDeltaScoreMean();
     calcDeltaScoreVar();
@@ -215,24 +222,10 @@ public class FLRClass {
       ExecutorService pool = Executors.newFixedThreadPool(Globals.numThreads);
 
       // Create a list to hold the tasks to be performed
-      List<Future<Double>> taskList = new ArrayList<Future<Double>>(Globals.numThreads);
+      List<Future<Double>> taskList = new ArrayList<>(Globals.numThreads);
 
       // break up the data in pos into thread chunks
-      for (int cpu = 0; cpu < Globals.numThreads; cpu++) {
-        int start = cpu * block;
-        int end = start + block;
-        if (cpu == (Globals.numThreads - 1)) {
-          end = dataAry.length;
-        }
-
-        double[] subAry = Arrays.copyOfRange(dataAry, start, end);
-
-        // construct the tasks to submit to the thread pool
-        Callable<Double> C = new NormalDensityWorkerThread(subAry, tic, bw);
-        Future<Double> task = pool.submit(C);
-        taskList.add(task); // put the "task" to be executed into the queue
-        subAry = null;
-      }
+      breakUpDataIntoThreadChunks(dataAry, bw, block, tic, pool, taskList);
 
       // Launch each task
       kernelResult = 0;
@@ -258,6 +251,25 @@ public class FLRClass {
       f1 = res;
     }
 
+  }
+
+  static void breakUpDataIntoThreadChunks(double[] dataAry, double bw, int block, double tic,
+      ExecutorService pool, List<Future<Double>> taskList) {
+    for (int cpu = 0; cpu < Globals.numThreads; cpu++) {
+      int start = cpu * block;
+      int end = start + block;
+      if (cpu == (Globals.numThreads - 1)) {
+        end = dataAry.length;
+      }
+
+      double[] subAry = Arrays.copyOfRange(dataAry, start, end);
+
+      // construct the tasks to submit to the thread pool
+      Callable<Double> C = new NormalDensityWorkerThread(subAry, tic, bw);
+      Future<Double> task = pool.submit(C);
+      taskList.add(task); // put the "task" to be executed into the queue
+      subAry = null;
+    }
   }
 
 
@@ -440,8 +452,8 @@ public class FLRClass {
   // Function prepares minorMaps for FDR data
   public void setMinorMaps() {
 
-    ArrayList<Double> scoreList = new ArrayList();
-    HashMap<Double, double[]> localMap = new HashMap();
+    ArrayList<Double> scoreList = new ArrayList<>();
+    HashMap<Double, double[]> localMap = new HashMap<>();
     double[] FDRary = null;
     double ds = 0d; // deltaScore
     double FDR = 0d;  // FDR
@@ -452,10 +464,10 @@ public class FLRClass {
 
       if (iter == 0) {
         FDRary = globalFDR;
-        minorMapG = new THashMap();
+        minorMapG = new THashMap<>();
       } else {
         FDRary = localFDR;
-        minorMapL = new THashMap();
+        minorMapL = new THashMap<>();
       }
 
       localMap.clear();
@@ -597,11 +609,7 @@ public class FLRClass {
 
             f_expect = f[curStart] + slope * (x[i] - x[curStart]);
 
-            if (f_expect > f[i]) {
-              cont = false;
-            } else {
-              cont = true;
-            }
+            cont = !(f_expect > f[i]);
             i++;
           }
 
@@ -623,7 +631,7 @@ public class FLRClass {
 
       curStart = 0;
       curEnd = curStart + 1;
-      while (isMinorPoint[curEnd] == false) {
+      while (!isMinorPoint[curEnd]) {
         curEnd++;
       }
 
@@ -644,7 +652,7 @@ public class FLRClass {
         if (curEnd >= N) {
           curEnd = N - 1;
         }
-        while ((isMinorPoint[curEnd] == false) && (curEnd < N)) {
+        while ((!isMinorPoint[curEnd]) && (curEnd < N)) {
           curEnd++;
         }
       }
@@ -682,9 +690,7 @@ public class FLRClass {
       realPSMs.get(i).localFDR = l_FDR;
     }
 
-    for (int i = 0; i < N; i++) {
-      PSM realPSM = realPSMs.get(i);
-
+    for (PSM realPSM : realPSMs) {
       for (PSM p : Globals.PSM_list) {
         if (p.specId.equalsIgnoreCase(realPSM.specId)) {
           p.globalFDR = realPSM.globalFDR;

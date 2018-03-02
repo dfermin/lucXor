@@ -9,7 +9,7 @@ import org.apache.commons.math3.util.FastMath;
 /**
  * Created by dfermin on 3/31/14.
  */
-public class SpectrumClass {
+class SpectrumClass {
 
   public int N; // number of peaks
   public int maxI_index; // the max. intensity peaks index in this.raw_intensity[]
@@ -19,13 +19,11 @@ public class SpectrumClass {
   public double[] mz = null;
   public double[] raw_intensity = null;
   public double[] rel_intensity = null;
-  public double[] norm_intensity = null;
+  private double[] norm_intensity = null;
 
 
-  /*************
+  /**
    * Default constructor we use for SpectrumClass
-   * @param mz_
-   * @param intensities_
    */
   public SpectrumClass(double[] mz_, double[] intensities_) {
     N = mz_.length;
@@ -98,7 +96,7 @@ public class SpectrumClass {
     double medianI = 0d;
 
     // Need to sort the peak intensities from low to high
-    ArrayList<Double> pksI = new ArrayList<Double>(N);
+    ArrayList<Double> pksI = new ArrayList<>(N);
       for (int i = 0; i < N; i++) {
           pksI.add(rel_intensity[i]);
       }
@@ -107,10 +105,9 @@ public class SpectrumClass {
 
     if (N % 2 == 0) { // even number of elements
       int a = mid - 1;
-      int b = mid;
 
       double aI = pksI.get(a);
-      double bI = pksI.get(b);
+      double bI = pksI.get(mid);
       medianI = (aI + bI) / 2.0;
     } else { // odd number of elements
       medianI = pksI.get(mid);
@@ -150,16 +147,9 @@ public class SpectrumClass {
 
   /*********
    * Returns true if the mz variable is empty or unset
-   * @return
    */
   public boolean isEmpty() {
-      if (null == this.mz) {
-          return true;
-      }
-      if (this.mz.length == 0) {
-          return true;
-      }
-    return false;
+    return null == this.mz || this.mz.length == 0;
   }
 
 

@@ -14,40 +14,18 @@ import java.util.Comparator;
 public class PeakClass {
 
   // Comparator to sort PeakClass objects based upon relative intensity from high to low
-  public static Comparator comparator_RAW_intensity_hi2low = new Comparator<PeakClass>() {
-    @Override
-    public int compare(PeakClass o1, PeakClass o2) {
-      return Double.compare(o2.raw_intensity, o1.raw_intensity);
-    }
-  };
+  public static Comparator<PeakClass> comparator_RAW_intensity_hi2low = (o1, o2) -> Double.compare(o2.raw_intensity, o1.raw_intensity);
   // Comparator to sort PeakClass objects based upon relative intensity from high to low
-  public static Comparator comparator_intensity_hi2low = new Comparator<PeakClass>() {
-    @Override
-    public int compare(PeakClass o1, PeakClass o2) {
-      return Double.compare(o2.rel_intensity, o1.rel_intensity);
-    }
-  };
+  public static final Comparator<PeakClass> comparator_intensity_hi2low = (o1, o2) -> Double.compare(o2.rel_intensity, o1.rel_intensity);
   // Comparator to sort PeakClass objects based upon relative intensity from low to high
-  public static Comparator comparator_intensity_low2hi = new Comparator<PeakClass>() {
-    @Override
-    public int compare(PeakClass o1, PeakClass o2) {
-      return Double.compare(o1.rel_intensity, o2.rel_intensity);
-    }
-  };
+  public static Comparator<PeakClass> comparator_intensity_low2hi = Comparator
+      .comparingDouble(o -> o.rel_intensity);
   // Comparator to sort PeakClass objects based upon mz values from low to high
-  public static Comparator comparator_mz = new Comparator<PeakClass>() {
-    @Override
-    public int compare(PeakClass o1, PeakClass o2) {
-      return Double.compare(o1.mz, o2.mz);
-    }
-  };
+  public static final Comparator<PeakClass> comparator_mz = Comparator.comparingDouble(o -> o.mz);
+
   // Comparator to sort PeakClass objects based upon mz dist values from low to high
-  public static Comparator comparator_mz_abs_dist = new Comparator<PeakClass>() {
-    @Override
-    public int compare(PeakClass o1, PeakClass o2) {
-      return Double.compare(Math.abs(o1.dist), Math.abs(o2.dist));
-    }
-  };
+  public static final Comparator<PeakClass> comparator_mz_abs_dist = Comparator
+      .comparingDouble(o -> Math.abs(o.dist));
   double mz;
   double raw_intensity;
   double rel_intensity; // intensity normalized to be between 0 - 100
@@ -92,7 +70,7 @@ public class PeakClass {
     this.dist = other.dist;
     this.score = other.score;
     this.matched = other.matched;
-    this.matchedIonStr = new String(other.matchedIonStr);
+    this.matchedIonStr = other.matchedIonStr;
     this.matchedIonMZ = other.matchedIonMZ;
   }
 
@@ -109,10 +87,7 @@ public class PeakClass {
       return false;
     }
     final PeakClass other = (PeakClass) obj;
-    if (Double.doubleToLongBits(this.mz) != Double.doubleToLongBits(other.mz)) {
-      return false;
-    }
-    return true;
+    return Double.doubleToLongBits(this.mz) == Double.doubleToLongBits(other.mz);
   }
 
   // clear any previously assigned score data to a peak.
