@@ -66,13 +66,13 @@ class PepXML extends DefaultHandler {
 				// if this is a valid AA character that is a variable modification, record it
 				// as a lower case character in the varModMap
 				if(varStatus.equalsIgnoreCase("y")) {
-					if(!globals.varModMap.containsKey(aa.toLowerCase())) {
-						globals.varModMap.put(aa.toLowerCase(), modMass);
+					if(!Globals.varModMap.containsKey(aa.toLowerCase())) {
+						Globals.varModMap.put(aa.toLowerCase(), modMass);
 					}
 				}
 				else {
-					if(!globals.fixedModMap.containsKey(aa.toUpperCase())) {
-						globals.fixedModMap.put(aa.toUpperCase(), modMass);
+					if(!Globals.fixedModMap.containsKey(aa.toUpperCase())) {
+						Globals.fixedModMap.put(aa.toUpperCase(), modMass);
 					}
 				}
 			}
@@ -85,8 +85,8 @@ class PepXML extends DefaultHandler {
 			
 			String aa = "x";
 			
-			if(terminus.equalsIgnoreCase("n")) globals.ntermMass = modMass;
-			if(terminus.equalsIgnoreCase("c")) globals.ctermMass = modMass;
+			if(terminus.equalsIgnoreCase("n")) Globals.ntermMass = modMass;
+			if(terminus.equalsIgnoreCase("c")) Globals.ctermMass = modMass;
 		}
 		
 		if(qName.equalsIgnoreCase("spectrum_query")) {
@@ -104,11 +104,11 @@ class PepXML extends DefaultHandler {
 		if(qName.equalsIgnoreCase("modification_info")) {
 			if(attr.getLocalName(0).equalsIgnoreCase("mod_nterm_mass")) {
 				double nterm = Double.valueOf(attr.getValue("mod_nterm_mass"));
-				curPSM.modCoordMap.put(constants.NTERM_MOD, nterm);
+				curPSM.modCoordMap.put(Constants.NTERM_MOD, nterm);
 			}
 			else if(attr.getLocalName(0).equalsIgnoreCase("mod_cterm_mass")) {
 				double cterm = Double.valueOf(attr.getValue("mod_cterm_mass"));
-				curPSM.modCoordMap.put(constants.CTERM_MOD, cterm);
+				curPSM.modCoordMap.put(Constants.CTERM_MOD, cterm);
 			}
 		}
 		
@@ -121,25 +121,25 @@ class PepXML extends DefaultHandler {
 		
 		if(qName.equalsIgnoreCase("search_score")) {
 			
-			if(globals.scoringMethod != constants.PEPPROPHET) {
+			if(Globals.scoringMethod != Constants.PEPPROPHET) {
 				for(int i = 0; i < attr.getLength() - 1; i++) {
 					int j = i + 1;
 					String k = attr.getValue(i);
 					double score = Double.valueOf( attr.getValue(j) );
 					
-					if(globals.scoringMethod == constants.NEGLOGEXPECT) {
+					if(Globals.scoringMethod == Constants.NEGLOGEXPECT) {
 						if(k.equalsIgnoreCase("expect")) curPSM.PSMscore = -1.0 * Math.log(score);
 					}
 					
-					if(globals.scoringMethod == constants.MASCOTIONSCORE) {
+					if(Globals.scoringMethod == Constants.MASCOTIONSCORE) {
 						if(k.equalsIgnoreCase("ionscore")) curPSM.PSMscore = score;
 					}
 
-                    if(globals.scoringMethod == constants.XTDHYPERSCORE) {
+                    if(Globals.scoringMethod == Constants.XTDHYPERSCORE) {
                         if(k.equalsIgnoreCase("hyperscore")) curPSM.PSMscore = score;
                     }
 
-                    if(globals.scoringMethod == constants.XCORR) {
+                    if(Globals.scoringMethod == Constants.XCORR) {
                         if (k.equalsIgnoreCase("xcorr")) curPSM.PSMscore = score;
                     }
 				}
@@ -148,7 +148,7 @@ class PepXML extends DefaultHandler {
 		}
 		
 		if(qName.equalsIgnoreCase("peptideprophet_result")) {
-			if(globals.scoringMethod == constants.PEPPROPHET) 
+			if(Globals.scoringMethod == Constants.PEPPROPHET)
 				curPSM.PSMscore = Double.valueOf(attr.getValue("probability"));
 		}
 	}
@@ -163,7 +163,7 @@ class PepXML extends DefaultHandler {
 				// The pepXML has the modifications for the search results multiple times
 				// (once per spectral file searched). We only need to record these modifications once
 				if(recordMods) {
-					globals.recordModsFromPepXML();
+					Globals.recordModsFromPepXML();
 					recordMods = false;
 				}
 		}
@@ -180,7 +180,7 @@ class PepXML extends DefaultHandler {
 			}
 			
 			// Skip PSMs that exceed the number of candidate permutations
-			if(curPSM.origPep.getNumPerm() > globals.max_num_permutations)
+			if(curPSM.origPep.getNumPerm() > Globals.max_num_permutations)
 				numBadChars = 100;
 
 			if(numBadChars == 0) {
@@ -189,7 +189,7 @@ class PepXML extends DefaultHandler {
 //                }
 
                 curPSM.process();
-				if(curPSM.isKeeper) globals.PSM_list.add(curPSM);
+				if(curPSM.isKeeper) Globals.PSM_list.add(curPSM);
                 curPSM = null;
 			}
 		}

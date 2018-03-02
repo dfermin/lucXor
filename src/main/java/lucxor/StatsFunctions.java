@@ -16,7 +16,7 @@ import org.paukov.combinatorics.ICombinatoricsVector;
  *
  * @author dfermin
  */
-public class statsFunctions {
+public class StatsFunctions {
 	
 	/***************
 	 * Function returns the number of combinations of (n choose k) 
@@ -96,10 +96,10 @@ public class statsFunctions {
 		System.err.println("\nComputing False Localization Rate (FLR)");
 		
 		// Identify maxDeltaScore
-		for(PSM psm : globals.PSM_list) {
+		for(PSM psm : Globals.PSM_list) {
 			if(psm.deltaScore > maxDeltaScore) maxDeltaScore = psm.deltaScore;
 
-			if(psm.deltaScore > constants.MIN_DELTA_SCORE) {
+			if(psm.deltaScore > Constants.MIN_DELTA_SCORE) {
 				if(psm.isDecoy) flr.decoyPSMs.add(psm);
 				else flr.realPSMs.add(psm);
 			}
@@ -109,8 +109,8 @@ public class statsFunctions {
 		flr.prepArrays();
 		
 		flr.initializeTickMarks();
-		flr.evalTickMarks(constants.REAL);
-		flr.evalTickMarks(constants.DECOY);
+		flr.evalTickMarks(Constants.REAL);
+		flr.evalTickMarks(Constants.DECOY);
 
 		flr.calcBothFDRs();
 		flr.setMinorMaps();

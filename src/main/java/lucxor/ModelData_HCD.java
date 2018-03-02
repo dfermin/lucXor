@@ -93,7 +93,7 @@ public class ModelData_HCD {
 
         // We will limit the size of the negative distribution to speed things up
         int limitN = (b + y);
-        if(limitN < constants.MIN_NUM_NEG_PKS) limitN += constants.MIN_NUM_NEG_PKS;
+        if(limitN < Constants.MIN_NUM_NEG_PKS) limitN += Constants.MIN_NUM_NEG_PKS;
 
         if(limitN > n) limitN = n; // prevents segfault on insufficient data for modeling
 
@@ -285,13 +285,13 @@ public class ModelData_HCD {
 		maxI = norm_ints[ (N-1) ];
 
 		double padding = 0.1;
-		if(minI < 0) t = minI + (globals.round_dbl(minI,4) * padding);
-		else t = minI - (globals.round_dbl(minI,4) * padding);
-		minI = globals.round_dbl(t,4);
+		if(minI < 0) t = minI + (Globals.round_dbl(minI,4) * padding);
+		else t = minI - (Globals.round_dbl(minI,4) * padding);
+		minI = Globals.round_dbl(t,4);
 		
-		if(maxI < 0) t = maxI - (globals.round_dbl(maxI,4) * padding);
-		else t = maxI + (globals.round_dbl(maxI,4) * padding);
-		maxI = globals.round_dbl(t,4);
+		if(maxI < 0) t = maxI - (Globals.round_dbl(maxI,4) * padding);
+		else t = maxI + (Globals.round_dbl(maxI,4) * padding);
+		maxI = Globals.round_dbl(t,4);
 		
 		
 		tickMarksInt = new double[ ntick ];
@@ -309,7 +309,7 @@ public class ModelData_HCD {
 		f_int = new double[ ntick ]; // this will hold the estimated height
 		
 		//how big a chunk of the norm_ints each task will process
-		int block = norm_ints.length / globals.numThreads;
+		int block = norm_ints.length / Globals.numThreads;
 		
 		
 		// Iterate over each tick mark
@@ -317,17 +317,17 @@ public class ModelData_HCD {
 			double tic = tickMarksInt[i];
 			
 			// Threadpool of executor objects
-			ExecutorService pool = Executors.newFixedThreadPool(globals.numThreads);
+			ExecutorService pool = Executors.newFixedThreadPool(Globals.numThreads);
 		
 			// Create a List to hold the tasks to be performed
-			List< Future<Double> > taskList = new ArrayList< Future<Double> >(globals.numThreads);
+			List< Future<Double> > taskList = new ArrayList< Future<Double> >(Globals.numThreads);
 		
 			
 			// break up the data in norm_ints into thread chunks
-			for(int cpu = 0; cpu < globals.numThreads; cpu++) {
+			for(int cpu = 0; cpu < Globals.numThreads; cpu++) {
 				int start = cpu * block;
 				int end   = start + block;
-				if(cpu == (globals.numThreads-1) ) end = norm_ints.length;
+				if(cpu == (Globals.numThreads-1) ) end = norm_ints.length;
 				
 				// get a subset of the data to submit to the worker thread
 				double[] subAry = Arrays.copyOfRange(norm_ints, start, end);
@@ -347,7 +347,7 @@ public class ModelData_HCD {
 			}
 			kernelResult /= (((double)N) * bw);
 			
-			if(kernelResult <= constants.TINY_NUM) kernelResult = constants.TINY_NUM;
+			if(kernelResult <= Constants.TINY_NUM) kernelResult = Constants.TINY_NUM;
 			
 			f_int[ i ] = kernelResult;
 			
@@ -395,13 +395,13 @@ public class ModelData_HCD {
 		
 		// we want to pad the extremes of the distribution to smooth out the curve
 		double padding = 0.1;
-		if(min_dist < 0) t = min_dist + (globals.round_dbl(min_dist, 4) * padding);
-		else t = min_dist - (globals.round_dbl(min_dist, 4) * padding);
-		min_dist = globals.round_dbl(t, 4);
+		if(min_dist < 0) t = min_dist + (Globals.round_dbl(min_dist, 4) * padding);
+		else t = min_dist - (Globals.round_dbl(min_dist, 4) * padding);
+		min_dist = Globals.round_dbl(t, 4);
 		
-		if(max_dist < 0) t = max_dist - (globals.round_dbl(max_dist, 4) * padding);
-		else t = max_dist + (globals.round_dbl(max_dist, 4) * padding);
-		max_dist = globals.round_dbl(t, 4);
+		if(max_dist < 0) t = max_dist - (Globals.round_dbl(max_dist, 4) * padding);
+		else t = max_dist + (Globals.round_dbl(max_dist, 4) * padding);
+		max_dist = Globals.round_dbl(t, 4);
 			
 		posTickMarksDist = new double[ ntick ];
 
@@ -417,7 +417,7 @@ public class ModelData_HCD {
 		f_ary = new double[ ntick ];
 
 		//how big a chunk of the norm_ints each task will process
-		int block = pos_dist.length / globals.numThreads;
+		int block = pos_dist.length / Globals.numThreads;
 		
 		
 		// Iterate over each tick mark
@@ -425,17 +425,17 @@ public class ModelData_HCD {
 			double tic = posTickMarksDist[i];
 			
 			// Threadpool of executor objects
-			ExecutorService pool = Executors.newFixedThreadPool(globals.numThreads);
+			ExecutorService pool = Executors.newFixedThreadPool(Globals.numThreads);
 
 			// Create a list to hold the tasks to be performed
-			List< Future<Double> > taskList = new ArrayList< Future<Double> >(globals.numThreads);
+			List< Future<Double> > taskList = new ArrayList< Future<Double> >(Globals.numThreads);
 
 			
 			// break up the data in D into thread chunks
-			for(int cpu = 0; cpu < globals.numThreads; cpu++) {
+			for(int cpu = 0; cpu < Globals.numThreads; cpu++) {
 				int start = cpu * block;
 				int end   = start + block;
-				if(cpu == (globals.numThreads-1)) end = pos_dist.length;
+				if(cpu == (Globals.numThreads-1)) end = pos_dist.length;
 				
 				double[] subAry = Arrays.copyOfRange(pos_dist, start, end);
 				
@@ -453,7 +453,7 @@ public class ModelData_HCD {
 			}
 			kernelResult /= (((double)N) * bw);
 			
-			if(kernelResult <= constants.TINY_NUM) kernelResult = constants.TINY_NUM;
+			if(kernelResult <= Constants.TINY_NUM) kernelResult = Constants.TINY_NUM;
 			
 			f_ary[ i ] = kernelResult;
 			
@@ -629,28 +629,28 @@ public class ModelData_HCD {
 		
 		
 		for(int b = 0; b < b_int.length; b++) {
-			normI = globals.round_dbl(b_int[b], 4);
+			normI = Globals.round_dbl(b_int[b], 4);
 			line = Integer.toString(chargeState) + "\tyi\t" +
 				   Double.toString(normI) + "\n";
 			bw.write(line);
 		}
 		
 		for(int y = 0; y < y_int.length; y++) {
-			normI = globals.round_dbl(y_int[y], 4);
+			normI = Globals.round_dbl(y_int[y], 4);
 			line = Integer.toString(chargeState) + "\tyi\t" +
 				   Double.toString(normI) + "\n";
 			bw.write(line);
 		}
 		
 		for(int n = 0; n < n_int.length; n++) {
-			normI = globals.round_dbl(n_int[n], 4);
+			normI = Globals.round_dbl(n_int[n], 4);
 			line = Integer.toString(chargeState) + "\tni\t" +
 				   Double.toString(normI) + "\n";
 			bw.write(line);
 		}
 		
 		for(int p = 0; p < pos_dist.length; p++) {
-			dist = globals.round_dbl(pos_dist[p], 4);
+			dist = Globals.round_dbl(pos_dist[p], 4);
 			line = Integer.toString(chargeState) + "\td\t" +
 				   Double.toString(dist) + "\n";
 			bw.write(line);
@@ -664,25 +664,25 @@ public class ModelData_HCD {
 		
 		String line = "Z = " + chargeState + ":  " +
 				      "b-ions Intensity: (mean, std): (" + 
-					   globals.round_dbl(bIntMean, 4) + ", " + 
-					   globals.round_dbl(Math.sqrt(bIntVar), 4) + ") N = " + 
+					   Globals.round_dbl(bIntMean, 4) + ", " +
+					   Globals.round_dbl(Math.sqrt(bIntVar), 4) + ") N = " +
 					   b_int.length + "\n" +
 					  "Z = " + chargeState + ":  " +
 				      "y-ions Intensity: (mean, std): (" + 
-					   globals.round_dbl(yIntMean, 4) + ", " + 
-					   globals.round_dbl(Math.sqrt(yIntVar), 4) + ") N = " + 
+					   Globals.round_dbl(yIntMean, 4) + ", " +
+					   Globals.round_dbl(Math.sqrt(yIntVar), 4) + ") N = " +
 					   y_int.length + "\n" +
 				
 					  "Z = " + chargeState + ":  " +
 				      "Matched Peak Distance: (mean, std): (" + 
-					   globals.round_dbl(posDistMean, 4) + ", " + 
-					   globals.round_dbl(Math.sqrt(posDistVar), 4) + ") N = " + 
+					   Globals.round_dbl(posDistMean, 4) + ", " +
+					   Globals.round_dbl(Math.sqrt(posDistVar), 4) + ") N = " +
 					   pos_dist.length + "\n" +
 					   
 					   "Z = " + chargeState + ":  " +
 					   "Noise peak Intensity: (mean, std): (" + 
-					   globals.round_dbl(negIntMean, 4) + ", " + 
-					   globals.round_dbl(Math.sqrt(negIntVar), 4) + ") N = " + 
+					   Globals.round_dbl(negIntMean, 4) + ", " +
+					   Globals.round_dbl(Math.sqrt(negIntVar), 4) + ") N = " +
 					   n_int.length + "\n";
 		
 		System.err.println(line);

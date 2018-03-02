@@ -48,31 +48,31 @@ public class LucXor {
 			System.exit(0);
 		}
 		
-		if(args[0].equalsIgnoreCase("-t")) globals.writeTemplateInputFile();
+		if(args[0].equalsIgnoreCase("-t")) Globals.writeTemplateInputFile();
 
         // Start recording the running of the program
         startTime = System.nanoTime();
 		
-		globals.initialize(); // Initialize global variables
+		Globals.initialize(); // Initialize global variables
 
-        globals.parse_input_file(args[0]);
+        Globals.parse_input_file(args[0]);
 
-		globals.loadUserMods();
+		Globals.loadUserMods();
 		
 		
 		// read in the score results
-		if(globals.inputType == constants.PEPXML) {
+		if(Globals.inputType == Constants.PEPXML) {
 			parse_pepXML();
 		}
 		else {
 			parse_TSV_src();
 		}
 
-		globals.read_in_spectra(); // Read in spectra for these PSMs
+		Globals.read_in_spectra(); // Read in spectra for these PSMs
 
-        if(globals.scoringAlgorithm == constants.CID) runCIDcode();
+        if(Globals.scoringAlgorithm == Constants.CID) runCIDcode();
 		
-    	if(globals.scoringAlgorithm == constants.HCD) runHCDcode();
+    	if(Globals.scoringAlgorithm == Constants.HCD) runHCDcode();
 
 		writeResults();
 
@@ -99,24 +99,24 @@ public class LucXor {
 
     // Function parses a pepXML file (this is the default input for luciphor)
 	private static void parse_pepXML() throws ParserConfigurationException, SAXException, IOException {
-		System.err.println("\nReading PSMs from pepXML file: " + globals.inputFile.getAbsolutePath());
-		PepXML p = new PepXML(globals.inputFile);
+		System.err.println("\nReading PSMs from pepXML file: " + Globals.inputFile.getAbsolutePath());
+		PepXML p = new PepXML(Globals.inputFile);
 
-		System.err.println(globals.PSM_list.size() + " Candidate PSMs read in.");
+		System.err.println(Globals.PSM_list.size() + " Candidate PSMs read in.");
 	}
 
 	
 	// Function parses a tab-delimited file of PSMs
 	private static void parse_TSV_src() throws FileNotFoundException, IOException {
-		System.err.println("\nReading PSM from TSV file: " + globals.inputFile.getAbsolutePath());
+		System.err.println("\nReading PSM from TSV file: " + Globals.inputFile.getAbsolutePath());
 		PSM curPSM = null;
 
-		if( !globals.inputFile.exists() ) {
-			System.err.println("ERROR: Unable to find " + globals.inputFile.getAbsolutePath());
+		if( !Globals.inputFile.exists() ) {
+			System.err.println("ERROR: Unable to find " + Globals.inputFile.getAbsolutePath());
 			System.exit(0);
 		}
 		
-		BufferedReader br = new BufferedReader(new FileReader(globals.inputFile));
+		BufferedReader br = new BufferedReader(new FileReader(Globals.inputFile));
 		String line;
         boolean passedHdr = false; // used only if the input file has a header line
 
@@ -124,7 +124,7 @@ public class LucXor {
 			if(line.startsWith("#")) continue;
 
             // Skip over the header line for the TSV file (if it has one)
-            if( (globals.tsvHdr == 1) && (passedHdr == false) ) {
+            if( (Globals.tsvHdr == 1) && (passedHdr == false) ) {
                 passedHdr = true;
                 continue;
             }
@@ -165,17 +165,17 @@ public class LucXor {
 			}
 
 			// Skip PSMs that exceed the number of candidate permutations
-			if(curPSM.origPep.getNumPerm() > globals.max_num_permutations) numBadChars = 100;
+			if(curPSM.origPep.getNumPerm() > Globals.max_num_permutations) numBadChars = 100;
 
 			if(numBadChars == 0) {
 				curPSM.process();
-				if(curPSM.isKeeper) globals.PSM_list.add(curPSM);
+				if(curPSM.isKeeper) Globals.PSM_list.add(curPSM);
 			}
 			curPSM = null;
 		}
 		br.close();
 
-		System.err.println("Read in " + globals.PSM_list.size() + " PSMs");
+		System.err.println("Read in " + Globals.PSM_list.size() + " PSMs");
 	}
 
 	
@@ -186,21 +186,21 @@ public class LucXor {
 		
 		System.err.println("\nRunning in CID mode.\n");
 
-        int NCPU = globals.numThreads;
+        int NCPU = Globals.numThreads;
         if(NCPU > 1) {
-            if (NCPU < Runtime.getRuntime().availableProcessors()) NCPU = globals.numThreads + 1;
+            if (NCPU < Runtime.getRuntime().availableProcessors()) NCPU = Globals.numThreads + 1;
         }
         else NCPU = 1;
 
 
-		globals.modelingMap_CID = new THashMap();
+		Globals.modelingMap_CID = new THashMap();
 		int numPSM = 0; // track number of PSMs used for modeling
 
 		// First make sure you have enough PSMs for each charge state to create
 		// an accurate model.
         TIntIntHashMap chargeMap = new TIntIntHashMap();
-		for(int z = 2; z <= globals.maxChargeState; z++) chargeMap.put(z,0);
-		for(PSM p : globals.PSM_list) {
+		for(int z = 2; z <= Globals.maxChargeState; z++) chargeMap.put(z,0);
+		for(PSM p : Globals.PSM_list) {
 			if(p.useForModel) {
                 int old = 1;
                 if(chargeMap.containsKey(p.charge)) old = chargeMap.get(p.charge) + 1;
@@ -212,19 +212,19 @@ public class LucXor {
 		// remove charge states you can't model
         TIntHashSet badZ = new TIntHashSet();
         System.err.print("PSMs for modeling:\n------------------\n");
-		for(int z = 2; z <= globals.maxChargeState; z++) {
+		for(int z = 2; z <= Globals.maxChargeState; z++) {
 			int n = chargeMap.get(z);
             System.err.println("+" + z + ": " + n + " PSMs");
 
-            if(n < globals.minNumPSMsForModeling) badZ.add(z);
+            if(n < Globals.minNumPSMsForModeling) badZ.add(z);
 		}
         System.err.print("\n");
 
         // Check to see if you have enough hi-scoring PSMs to construct an accurate model.
         // If not quit now
-        if( (numPSM < globals.minNumPSMsForModeling) || (badZ.size() == chargeMap.size()) ) {
-            System.err.println("You do not have enough PSMs with a score > " + globals.modelTH +
-                " to accurately model the data. (Minimum number of PSMs required per charge state: " + globals.minNumPSMsForModeling + ")\n" +
+        if( (numPSM < Globals.minNumPSMsForModeling) || (badZ.size() == chargeMap.size()) ) {
+            System.err.println("You do not have enough PSMs with a score > " + Globals.modelTH +
+                " to accurately model the data. (Minimum number of PSMs required per charge state: " + Globals.minNumPSMsForModeling + ")\n" +
                 "Exiting now.\n"
             );
             System.exit(0);
@@ -233,16 +233,16 @@ public class LucXor {
 		
 		// iterate over the charge states collecting data for all modeling PSMs
 		System.err.println("(CID) Building Parametric Models from high-scoring PSMs...");
-		for(int z = 2; z <= globals.maxChargeState; z++) {
+		for(int z = 2; z <= Globals.maxChargeState; z++) {
 			ArrayList<PeakClass> modelingPks = new ArrayList();
 			
 			if(badZ.contains(z)) continue; // skip this charge state, you don't have enough data to model it
 			
 			numPSM = 0; // track number of PSMs used for modeling
 
-            if((globals.numThreads == 1) || (globals.debugMode != 0)) {
+            if((Globals.numThreads == 1) || (Globals.debugMode != 0)) {
 
-                for (PSM p : globals.PSM_list) {
+                for (PSM p : Globals.PSM_list) {
                     if ((p.charge == z) && p.useForModel) {
                         p.generatePermutations(0); // generate both real permutations
                         p.matchAllPeaks();
@@ -252,10 +252,10 @@ public class LucXor {
             else { // multi-threaded modeling
 
                 // A pool of 'N' worker threads
-                final int NTHREADS = globals.numThreads;
+                final int NTHREADS = Globals.numThreads;
                 ExecutorService executor = Executors.newFixedThreadPool(NTHREADS);
                 int ctr = 1;
-                for (PSM p : globals.PSM_list) {
+                for (PSM p : Globals.PSM_list) {
                     if ((p.charge == z) && p.useForModel) {
                         Runnable worker = new ModelParameterWorkerThread(p, ctr++);
                         executor.execute(worker);
@@ -264,7 +264,7 @@ public class LucXor {
                 executor.shutdown();
 
                 // wait for all jobs to finish
-                executor.awaitTermination((long) constants.FUNCTION_TIME_LIMIT, TimeUnit.SECONDS);
+                executor.awaitTermination((long) Constants.FUNCTION_TIME_LIMIT, TimeUnit.SECONDS);
 
                 while (!executor.isShutdown()) {}
             } // end of multi-threaded approach
@@ -272,7 +272,7 @@ public class LucXor {
 
             // At this point, each PSM (whether you used threading or not) has all of it's
             // peaks classified as 'pos' or 'neg'. Record them into the modelingPks object
-            for(PSM p : globals.PSM_list) {
+            for(PSM p : Globals.PSM_list) {
                 if ((p.charge == z) && p.useForModel) {
                     if((null != p.posPeaks) && (!p.posPeaks.isEmpty())) {
                         modelingPks.addAll(p.posPeaks);
@@ -290,17 +290,17 @@ public class LucXor {
 			
 			ModelData_CID M = new ModelData_CID(z, modelingPks);
 
-            if(globals.debugMode == constants.WRITE_MODEL_PKS) M.writeModelPks();
+            if(Globals.debugMode == Constants.WRITE_MODEL_PKS) M.writeModelPks();
 
             M.numPSM = numPSM;
-			globals.modelingMap_CID.put(z, M);
+			Globals.modelingMap_CID.put(z, M);
 			M = null;
 			modelingPks.clear();
             modelingPks = null;
 		} // end loop over charge state for modeling
 
 
-        if(globals.modelingMap_CID.size() < 1) {
+        if(Globals.modelingMap_CID.size() < 1) {
             System.err.println("\nInsufficient data to construct model.\nExiting now.\n");
             System.exit(0);
         }
@@ -308,27 +308,27 @@ public class LucXor {
 		// Compute the statistics for the collected charge states
         TIntArrayList missedChargeStates = new TIntArrayList();
         int maxObsZ = 0;  // highest modeled charge state.
-		for(int z = 2; z <= globals.maxChargeState; z++) {
-			if(!globals.modelingMap_CID.containsKey(z)) {
+		for(int z = 2; z <= Globals.maxChargeState; z++) {
+			if(!Globals.modelingMap_CID.containsKey(z)) {
                 missedChargeStates.add(z);
                 continue;
             }
 			else {
-                ModelData_CID m = globals.modelingMap_CID.get(z);
+                ModelData_CID m = Globals.modelingMap_CID.get(z);
                 m.calcMean();
                 m.calcVar();
                 m.printSummaryStats();
                 m.clearArrays();
-                globals.modelingMap_CID.put(z, m);
+                Globals.modelingMap_CID.put(z, m);
                 m = null;
                 if(z > maxObsZ) maxObsZ = z;
             }
 		}
 
         // Back fill any missing charge states using the data for charge state 'maxObsZ'
-        ModelData_CID m = globals.modelingMap_CID.get(maxObsZ);
+        ModelData_CID m = Globals.modelingMap_CID.get(maxObsZ);
         for(int missedZ : missedChargeStates.toArray()) {
-            globals.modelingMap_CID.put(missedZ, m);
+            Globals.modelingMap_CID.put(missedZ, m);
         }
 		m = null;
 		missedChargeStates.clear();
@@ -342,26 +342,26 @@ public class LucXor {
 
         for(int RN = 0; RN < 2; RN++) { // RN = run number, 0 = calc. FDR 1 = assign FDR estimates
 
-            if(globals.runMode == constants.DEFAULT_RUN_MODE) {
+            if(Globals.runMode == Constants.DEFAULT_RUN_MODE) {
 
                 if(RN == 0)
                     System.err.println("\n[ " + RN + " ] Estimating FLR with decoys (" + NCPU + " threads)...");
                 if(RN == 1)
-                    System.err.println("\n[ " + RN + " ] Scoring " + globals.PSM_list.size() + " PSMs (" + NCPU + " threads)...");
+                    System.err.println("\n[ " + RN + " ] Scoring " + Globals.PSM_list.size() + " PSMs (" + NCPU + " threads)...");
             }
             else {
-                System.err.println("\nScoring " + globals.PSM_list.size() + " PSMs (" + NCPU + " threads)...");
+                System.err.println("\nScoring " + Globals.PSM_list.size() + " PSMs (" + NCPU + " threads)...");
             }
 
             // for single threaded analysis
-            if((globals.numThreads == 1) || (globals.debugMode != 0)) {
+            if((Globals.numThreads == 1) || (Globals.debugMode != 0)) {
                 int ctr = 1;
-                for(PSM p : globals.PSM_list) {
+                for(PSM p : Globals.PSM_list) {
 
                     p.generatePermutations(RN);
                     p.scorePermutations();
 
-                    if(globals.debugMode == constants.WRITE_SCORED_PKS) p.debug_writeScoredPeaks();
+                    if(Globals.debugMode == Constants.WRITE_SCORED_PKS) p.debug_writeScoredPeaks();
 
                     ctr++;
 
@@ -372,17 +372,17 @@ public class LucXor {
             else { // multi-threaded scoring
 
                 // A pool of 'N' worker threads to do the work
-                final int NTHREADS = globals.numThreads;
+                final int NTHREADS = Globals.numThreads;
                 ExecutorService executor = Executors.newFixedThreadPool(NTHREADS);
                 int ctr = 1;
-                for(PSM p : globals.PSM_list) {
+                for(PSM p : Globals.PSM_list) {
                     Runnable worker = new ScoringWorkerThread(p, RN, ctr++);
                     executor.execute(worker);
                 }
                 executor.shutdown();
 
                 // wait for all jobs to finish
-                executor.awaitTermination((long) constants.FUNCTION_TIME_LIMIT, TimeUnit.SECONDS);
+                executor.awaitTermination((long) Constants.FUNCTION_TIME_LIMIT, TimeUnit.SECONDS);
 
                 while( !executor.isTerminated() ) {}
             }
@@ -391,11 +391,11 @@ public class LucXor {
 
             // first iteration is done, compute the FLR from the PSMs
             if(RN == 0) {
-                globals.SF.calcFLR();
+                Globals.SF.calcFLR();
 
-                if(globals.runMode == constants.DEFAULT_RUN_MODE) {
-                    globals.recordFLRestimates();
-                    globals.clearPSMs();
+                if(Globals.runMode == Constants.DEFAULT_RUN_MODE) {
+                    Globals.recordFLRestimates();
+                    Globals.clearPSMs();
                 }
                 else { // you are done, exit loop over RN variable
                     RN = 2;
@@ -404,7 +404,7 @@ public class LucXor {
             }
 
             if(RN == 1) { // now assign FLRs to each PSM
-                globals.assignFLR();
+                Globals.assignFLR();
             }
         } // end loop over RN
         /*******************************************************/
@@ -421,16 +421,16 @@ public class LucXor {
 
         int numPSM = 0; // track number of PSMs used for modeling
 
-        int NCPU = globals.numThreads;
-        if(NCPU < Runtime.getRuntime().availableProcessors()) NCPU = globals.numThreads + 1;
+        int NCPU = Globals.numThreads;
+        if(NCPU < Runtime.getRuntime().availableProcessors()) NCPU = Globals.numThreads + 1;
 
-		globals.modelingMap_HCD = new THashMap();
+		Globals.modelingMap_HCD = new THashMap();
 		
 		// First make sure you have enough PSMs for each charge state to create
 		// an accurate model.
 		THashMap<Integer, Integer> chargeMap = new THashMap();
-		for(int z = 2; z <= globals.maxChargeState; z++) chargeMap.put(z,0);
-		for(PSM p : globals.PSM_list) {
+		for(int z = 2; z <= Globals.maxChargeState; z++) chargeMap.put(z,0);
+		for(PSM p : Globals.PSM_list) {
 			if(p.useForModel) {
                 int old = 1;
                 if(chargeMap.containsKey(p.charge)) old = chargeMap.get(p.charge) + 1;
@@ -442,19 +442,19 @@ public class LucXor {
 		// remove charge states you can't model
 		THashSet<Integer> badZ = new THashSet();
         System.err.print("PSMs for modeling:\n------------------\n");
-        for(int z = 2; z <= globals.maxChargeState; z++) {
+        for(int z = 2; z <= Globals.maxChargeState; z++) {
 			int n = chargeMap.get(z);
             System.err.println("+" + z + ": " + n + " PSMs");
 
-            if(n < globals.minNumPSMsForModeling) badZ.add(z);
+            if(n < Globals.minNumPSMsForModeling) badZ.add(z);
 		}
         System.err.print("\n");
 
         // Check to see if you have enough hi-scoring PSMs to construct an accurate model.
         // If not quit now
-        if( (numPSM < globals.minNumPSMsForModeling) || (badZ.size() == chargeMap.size()) ) {
-            System.err.println("You do not have enough PSMs with a score > " + globals.modelTH +
-                    " to accurately model the data. (Minimum number of PSMs required per charge state: " + globals.minNumPSMsForModeling + ")\n" +
+        if( (numPSM < Globals.minNumPSMsForModeling) || (badZ.size() == chargeMap.size()) ) {
+            System.err.println("You do not have enough PSMs with a score > " + Globals.modelTH +
+                    " to accurately model the data. (Minimum number of PSMs required per charge state: " + Globals.minNumPSMsForModeling + ")\n" +
                     "Exiting now.\n"
             );
             System.exit(0);
@@ -464,15 +464,15 @@ public class LucXor {
 		// iterate over the charge states collecting data for all modeling PSMs
 		System.err.println("(HCD) Acquiring Non-Parametric Model features from high-scoring PSMs...");
 
-		for(int z = 2; z <= globals.maxChargeState; z++) {
+		for(int z = 2; z <= Globals.maxChargeState; z++) {
             ArrayList<PeakClass> modelingPks = new ArrayList();
 			
 			if(badZ.contains(z)) continue; // skip this charge state you don't have enough data to model it
 			
 			numPSM = 0; // track number of PSMs used for modeling
 
-            if((globals.numThreads == 1) || (globals.debugMode != 0)) {
-                for(PSM p : globals.PSM_list) {
+            if((Globals.numThreads == 1) || (Globals.debugMode != 0)) {
+                for(PSM p : Globals.PSM_list) {
                     if ((p.charge == z) && p.useForModel) {
                         p.generatePermutations(0); // generate real permutations
                         p.matchAllPeaks();
@@ -481,10 +481,10 @@ public class LucXor {
             }
             else { // multi-threaded modeling
                 // A pool of 'N' worker threads
-                final int NTHREADS = globals.numThreads;
+                final int NTHREADS = Globals.numThreads;
                 ExecutorService executor = Executors.newFixedThreadPool(NTHREADS);
                 int ctr = 1;
-                for (PSM p : globals.PSM_list) {
+                for (PSM p : Globals.PSM_list) {
                     if ((p.charge == z) && p.useForModel) {
                         Runnable worker = new ModelParameterWorkerThread(p, ctr++);
                         executor.execute(worker);
@@ -493,7 +493,7 @@ public class LucXor {
                 executor.shutdown();
 
                 // wait for all jobs to finish
-                executor.awaitTermination((long) constants.FUNCTION_TIME_LIMIT, TimeUnit.SECONDS);
+                executor.awaitTermination((long) Constants.FUNCTION_TIME_LIMIT, TimeUnit.SECONDS);
 
                 while (!executor.isShutdown()) {}
             } // end of multi-threaded approach
@@ -501,7 +501,7 @@ public class LucXor {
 
             // At this point, each PSM (whether you used threading or not) has all of it's
             // peaks classified as 'pos' or 'neg'. Record them into the modelingPks object
-			for(PSM p : globals.PSM_list) {
+			for(PSM p : Globals.PSM_list) {
 				if((p.charge == z) && p.useForModel) {
 					if( (null != p.posPeaks) && (!p.posPeaks.isEmpty()) ) {
                         modelingPks.addAll(p.posPeaks);
@@ -519,16 +519,16 @@ public class LucXor {
 			
 			ModelData_HCD M = new ModelData_HCD(z, modelingPks);
 			M.numPSM = numPSM;
-			globals.modelingMap_HCD.put(z, M);
+			Globals.modelingMap_HCD.put(z, M);
 			
-			if(globals.debugMode == constants.WRITE_MODEL_PKS) M.writeModelPks();
+			if(Globals.debugMode == Constants.WRITE_MODEL_PKS) M.writeModelPks();
 			
 			M = null;
 			modelingPks = null;
 		} // end for loop over charge state for modeling
 
 
-        if(globals.modelingMap_HCD.size() < 1) {
+        if(Globals.modelingMap_HCD.size() < 1) {
             System.err.println("\nInsufficient data to construct model.\nExiting now.\n");
             System.exit(0);
         }
@@ -536,14 +536,14 @@ public class LucXor {
 		// Compute the statistics for the collected charge states
         ArrayList<Integer> missedChargeStates = new ArrayList();
         int maxObsZ = 0;  // highest modeled charge state.
-		for(int z = 2; z <= globals.maxChargeState; z++) {
+		for(int z = 2; z <= Globals.maxChargeState; z++) {
 
-			if(!globals.modelingMap_HCD.containsKey(z)) {
+			if(!Globals.modelingMap_HCD.containsKey(z)) {
                 missedChargeStates.add(z);
                 continue;
             }
 			else {
-                ModelData_HCD m = globals.modelingMap_HCD.get(z);
+                ModelData_HCD m = Globals.modelingMap_HCD.get(z);
 
                 m.calcMean();
                 m.calcVar();
@@ -559,7 +559,7 @@ public class LucXor {
                 m.estimateNP_posDist();
                 System.err.print("\n");  // makes for prettier output
 
-                globals.modelingMap_HCD.put(z, m);
+                Globals.modelingMap_HCD.put(z, m);
                 m = null;
                 if(z > maxObsZ) maxObsZ = z;
             }
@@ -567,16 +567,16 @@ public class LucXor {
 
 		
 		// Back fill model data for missing charge states
-        ModelData_HCD m = globals.modelingMap_HCD.get(maxObsZ);
+        ModelData_HCD m = Globals.modelingMap_HCD.get(maxObsZ);
         for(int missedZ : missedChargeStates) {
-            globals.modelingMap_HCD.put(missedZ, m);
+            Globals.modelingMap_HCD.put(missedZ, m);
         }
         m = null;
         missedChargeStates.clear();
 
 		// for debugging
-		if(globals.debugMode == constants.WRITE_HCD_NONPARAM) {
-			for(ModelData_HCD hcd : globals.modelingMap_HCD.values()) {
+		if(Globals.debugMode == Constants.WRITE_HCD_NONPARAM) {
+			for(ModelData_HCD hcd : Globals.modelingMap_HCD.values()) {
 				hcd.write_density_data(1); // intensity
 				hcd.write_density_data(2); // distance
 			}
@@ -592,27 +592,27 @@ public class LucXor {
 
         for(int RN = 0; RN < 2; RN++) { // RN = run number
 
-            if(globals.runMode == constants.DEFAULT_RUN_MODE) {
+            if(Globals.runMode == Constants.DEFAULT_RUN_MODE) {
 
                 if(RN == 0)
                     System.err.println("\n[ " + RN + " ] Estimating FLR with decoys (" + NCPU + " threads)...");
                 if(RN == 1)
-                    System.err.println("\n[ " + RN + " ] Scoring " + globals.PSM_list.size() + " PSMs (" + NCPU + " threads)...");
+                    System.err.println("\n[ " + RN + " ] Scoring " + Globals.PSM_list.size() + " PSMs (" + NCPU + " threads)...");
             }
             else {
-                System.err.println("\nScoring " + globals.PSM_list.size() + " PSMs (" + NCPU + " threads)...");
+                System.err.println("\nScoring " + Globals.PSM_list.size() + " PSMs (" + NCPU + " threads)...");
             }
 
 
             // for single threaded analysis
-            if((globals.numThreads == 1) || (globals.debugMode != 0)) {
+            if((Globals.numThreads == 1) || (Globals.debugMode != 0)) {
                 int ctr = 1;
-                for(PSM p : globals.PSM_list) {
+                for(PSM p : Globals.PSM_list) {
 
                     p.generatePermutations(RN);
                     p.scorePermutations();
 
-                    if(globals.debugMode == constants.WRITE_SCORED_PKS) p.debug_writeScoredPeaks();
+                    if(Globals.debugMode == Constants.WRITE_SCORED_PKS) p.debug_writeScoredPeaks();
 
                     ctr++;
 
@@ -621,10 +621,10 @@ public class LucXor {
                 }
             }
             else { // multi-threaded scoring
-                final int NTHREADS = globals.numThreads;
+                final int NTHREADS = Globals.numThreads;
                 ExecutorService executor = Executors.newFixedThreadPool(NTHREADS);
                 int ctr = 1;
-                for(PSM p : globals.PSM_list) {
+                for(PSM p : Globals.PSM_list) {
                     p.generatePermutations(RN);
                     Runnable worker = new ScoringWorkerThread(p, RN, ctr++);
                     executor.execute(worker);
@@ -632,8 +632,8 @@ public class LucXor {
                 executor.shutdown();
 
                 // wait for all jobs to finish
-                executor.awaitTermination((long) constants.FUNCTION_TIME_LIMIT, TimeUnit.SECONDS);
-//                if( !executor.awaitTermination((long) constants.FUNCTION_TIME_LIMIT, TimeUnit.SECONDS) ) {
+                executor.awaitTermination((long) Constants.FUNCTION_TIME_LIMIT, TimeUnit.SECONDS);
+//                if( !executor.awaitTermination((long) Constants.FUNCTION_TIME_LIMIT, TimeUnit.SECONDS) ) {
 //                    System.err.println("\nThread queue failed to terminate nicely\n");
 //                    executor.shutdownNow();
 //                }
@@ -644,11 +644,11 @@ public class LucXor {
 
             // first iteration is done, compute the FLR from the PSMs
             if(RN == 0) {
-                globals.SF.calcFLR();
+                Globals.SF.calcFLR();
 
-                if(globals.runMode == constants.DEFAULT_RUN_MODE) {
-                    globals.recordFLRestimates();
-                    globals.clearPSMs();
+                if(Globals.runMode == Constants.DEFAULT_RUN_MODE) {
+                    Globals.recordFLRestimates();
+                    Globals.clearPSMs();
                 }
                 else { // you are done, exit loop over RN variable
                     RN = 2; // this will guarantee that you'll exit the loop
@@ -657,7 +657,7 @@ public class LucXor {
             }
 
             if(RN == 1) { // now assign FLRs to each PSM
-                globals.assignFLR();
+                Globals.assignFLR();
             }
         } // end loop over RN
         /*******************************************************/
@@ -670,11 +670,11 @@ public class LucXor {
 	private static void writeResults() throws IOException {
 		
 		// set the output file's name
-		if(globals.outputFile.equalsIgnoreCase("luciphor_results.tsv")) {
-			globals.outputFile = "luciphor_results." + globals.timeStamp + ".tsv";
+		if(Globals.outputFile.equalsIgnoreCase("luciphor_results.tsv")) {
+			Globals.outputFile = "luciphor_results." + Globals.timeStamp + ".tsv";
 		}
 
-        File outF = new File(globals.outputFile);
+        File outF = new File(Globals.outputFile);
         System.err.println("\nResults written to '" + outF.getAbsoluteFile() + "'");
 
         // You will only need these variables when the user wants the matched
@@ -683,11 +683,11 @@ public class LucXor {
         FileWriter fwPks = null;
         BufferedWriter bwPks = null;
 
-        if(globals.writeMatchedPeaks) {
+        if(Globals.writeMatchedPeaks) {
             String suffixDir = outF.getParent();
-            globals.matchedPkFile = suffixDir + "/luciphor_matchedPks." + globals.timeStamp +".tsv";
-            System.err.print("Matched peaks will be written to '" + globals.matchedPkFile + "'\n");
-            matchedPksF = new File(globals.matchedPkFile);
+            Globals.matchedPkFile = suffixDir + "/luciphor_matchedPks." + Globals.timeStamp +".tsv";
+            System.err.print("Matched peaks will be written to '" + Globals.matchedPkFile + "'\n");
+            matchedPksF = new File(Globals.matchedPkFile);
             fwPks  = new FileWriter(matchedPksF.getAbsoluteFile());
             bwPks = new BufferedWriter(fwPks);
 
@@ -708,19 +708,19 @@ public class LucXor {
 				   + "numPPS\t"
 				   + "numRPS\t";
 		
-		switch(globals.scoringMethod) {
-			case constants.MASCOTIONSCORE:
+		switch(Globals.scoringMethod) {
+			case Constants.MASCOTIONSCORE:
 				hdr += "MascotIonScore\t";
 				break;
-			case constants.NEGLOGEXPECT:
+			case Constants.NEGLOGEXPECT:
 				hdr += "negLogExpect\t";
 				break;
-			case constants.PEPPROPHET:
+			case Constants.PEPPROPHET:
 				hdr += "pepProphet\t";
 				break;
 		}
 
-        if(globals.runMode == constants.REPORT_DECOYS) hdr += "isDecoy1\tisDecoy2\t";
+        if(Globals.runMode == Constants.REPORT_DECOYS) hdr += "isDecoy1\tisDecoy2\t";
 
 		hdr += "deltaScore\t"
 			+ "pep1score\tpep2score\t"
@@ -728,13 +728,13 @@ public class LucXor {
 		
 		bw.write(hdr);
 
-		for(PSM psm : globals.PSM_list) {
+		for(PSM psm : Globals.PSM_list) {
 			bw.write( psm.getResults() );
-            if(globals.writeMatchedPeaks) bwPks.write( psm.writeMatchedPks() );
+            if(Globals.writeMatchedPeaks) bwPks.write( psm.writeMatchedPks() );
 		}
 		
 		bw.close();
-        if(globals.writeMatchedPeaks) bwPks.close();
+        if(Globals.writeMatchedPeaks) bwPks.close();
 		
 	}
 	

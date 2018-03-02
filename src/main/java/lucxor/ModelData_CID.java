@@ -81,7 +81,7 @@ public class ModelData_CID {
 
         // We will limit the size of the negative distribution to speed things up
         int limitN = (Nb + Ny);
-        if(limitN < constants.MIN_NUM_NEG_PKS) limitN += constants.MIN_NUM_NEG_PKS;
+        if(limitN < Constants.MIN_NUM_NEG_PKS) limitN += Constants.MIN_NUM_NEG_PKS;
 
         if(limitN > Nu) limitN = Nu; // prevents segfault on insufficient data for modeling
         u_intensity = new double[ limitN ];
@@ -214,43 +214,43 @@ public class ModelData_CID {
 		
 		System.err.print(
 			"+" + chargeState + "\tb-ions Intensity (mu, sigma): (" +
-			globals.round_dbl(mu_int_B, 4) + ", " +
-			globals.round_dbl(Math.sqrt(var_int_B), 4) + ") N = " +
+			Globals.round_dbl(mu_int_B, 4) + ", " +
+			Globals.round_dbl(Math.sqrt(var_int_B), 4) + ") N = " +
 			b_intensity.length + "\n"
 		);
 		
 		System.err.print(
 			"+" + chargeState + "\ty-ions Intensity (mu, sigma): (" +
-			globals.round_dbl(mu_int_Y, 4) + ", " +
-			globals.round_dbl(Math.sqrt(var_int_Y), 4) + ") N = " +
+			Globals.round_dbl(mu_int_Y, 4) + ", " +
+			Globals.round_dbl(Math.sqrt(var_int_Y), 4) + ") N = " +
 			y_intensity.length + "\n"
 		);
 		
 		System.err.print(
 			"+" + chargeState + "\tNoise Intensity (mu, sigma): (" +
-			globals.round_dbl(mu_int_U, 4) + ", " +
-			globals.round_dbl(Math.sqrt(var_int_U), 4) + ") N = " +
+			Globals.round_dbl(mu_int_U, 4) + ", " +
+			Globals.round_dbl(Math.sqrt(var_int_U), 4) + ") N = " +
 			u_intensity.length + "\n\n"
 		);
 		
 		System.err.print(
 			"+" + chargeState + "\tb-ions m/z Accuracy (mu, sigma): (" +
-			globals.round_dbl(mu_dist_B, 4) + ", " +
-			globals.round_dbl(Math.sqrt(var_dist_B), 4) + ") N = " +
+			Globals.round_dbl(mu_dist_B, 4) + ", " +
+			Globals.round_dbl(Math.sqrt(var_dist_B), 4) + ") N = " +
 			b_distance.length + "\n"
 		);
 		
 		System.err.print(
 			"+" + chargeState + "\ty-ions m/z Accuracy (mu, sigma): (" +
-			globals.round_dbl(mu_dist_Y, 4) + ", " +
-			globals.round_dbl(Math.sqrt(var_dist_Y), 4) + ") N = " +
+			Globals.round_dbl(mu_dist_Y, 4) + ", " +
+			Globals.round_dbl(Math.sqrt(var_dist_Y), 4) + ") N = " +
 			y_distance.length + "\n"
 		);
 		
 		System.err.print(
 			"+" + chargeState + "\tNoise Distance (mu, sigma): (" +
-			globals.round_dbl(mu_dist_U, 4) + ", " +
-			globals.round_dbl(Math.sqrt(var_dist_U), 4) + ") N = " +
+			Globals.round_dbl(mu_dist_U, 4) + ", " +
+			Globals.round_dbl(Math.sqrt(var_dist_U), 4) + ") N = " +
 			u_distance.length + "\n\n"
 		);
 	}
@@ -295,42 +295,42 @@ public class ModelData_CID {
 
 
         for(int b = 0; b < b_intensity.length; b++) {
-            normI = globals.round_dbl(b_intensity[b], 4);
+            normI = Globals.round_dbl(b_intensity[b], 4);
             line = Integer.toString(chargeState) + "\tyi\t" +
                     Double.toString(normI) + "\n";
             bw.write(line);
         }
 
         for(int y = 0; y < y_intensity.length; y++) {
-            normI = globals.round_dbl(y_intensity[y], 4);
+            normI = Globals.round_dbl(y_intensity[y], 4);
             line = Integer.toString(chargeState) + "\tyi\t" +
                     Double.toString(normI) + "\n";
             bw.write(line);
         }
 
         for(int n = 0; n < u_intensity.length; n++) {
-            normI = globals.round_dbl(u_intensity[n], 4);
+            normI = Globals.round_dbl(u_intensity[n], 4);
             line = Integer.toString(chargeState) + "\tni\t" +
                     Double.toString(normI) + "\n";
             bw.write(line);
         }
 
         for(int b = 0; b < b_distance.length; b++) {
-            dist = globals.round_dbl(b_distance[b], 4);
+            dist = Globals.round_dbl(b_distance[b], 4);
             line = Integer.toString(chargeState) + "\tbd\t" +
                     Double.toString(dist) + "\n";
             bw.write(line);
         }
 
         for(int y = 0; y < y_distance.length; y++) {
-            dist = globals.round_dbl(y_distance[y], 4);
+            dist = Globals.round_dbl(y_distance[y], 4);
             line = Integer.toString(chargeState) + "\tyd\t" +
                     Double.toString(dist) + "\n";
             bw.write(line);
         }
 
         for(int n = 0; n < u_distance.length; n++) {
-            dist = globals.round_dbl(u_distance[n], 4);
+            dist = Globals.round_dbl(u_distance[n], 4);
             line = Integer.toString(chargeState) + "\tnd\t" +
                     Double.toString(dist) + "\n";
             bw.write(line);

@@ -61,14 +61,14 @@ class Peptide {
         for(int pos : modCoordMap.keys()) {
 			double mass = modCoordMap.get(pos);
 
-			if( (pos == constants.NTERM_MOD) || (pos == constants.CTERM_MOD) ) modPosMap.put(pos, mass);
+			if( (pos == Constants.NTERM_MOD) || (pos == Constants.CTERM_MOD) ) modPosMap.put(pos, mass);
 			else {
 				String C = Character.toString(peptide.charAt(pos));
 				String c = C.toLowerCase();
 				
-				if( globals.fixedModMap.containsKey(C)) continue;
-				else if( globals.targetModMap.containsKey(C) ) modPosMap.put(pos, mass);
-				else if( globals.varModMap.containsKey(c)) nonTargetMods.put(pos, c); // record position of mod.
+				if( Globals.fixedModMap.containsKey(C)) continue;
+				else if( Globals.targetModMap.containsKey(C) ) modPosMap.put(pos, mass);
+				else if( Globals.varModMap.containsKey(c)) nonTargetMods.put(pos, c); // record position of mod.
 			}
 		}
 		
@@ -85,7 +85,7 @@ class Peptide {
 			}
 			else if(modPosMap.containsKey(i)) { // this residue is a target site
 				String c = AA;
-				if( !globals.isDecoyResidue(c) ) AA = c.toLowerCase();
+				if( !Globals.isDecoyResidue(c) ) AA = c.toLowerCase();
 			}
 			
 			modPeptide += AA;
@@ -96,7 +96,7 @@ class Peptide {
 		numPPS = 0;
 		for(int i = 0; i < pepLen; i++) {
 			String AA = Character.toString(peptide.charAt(i));
-			if(globals.targetModMap.containsKey(AA)) numPPS++;
+			if(Globals.targetModMap.containsKey(AA)) numPPS++;
 		}
 		
 		// Determine how many reported target-mod sites this peptide has
@@ -104,14 +104,14 @@ class Peptide {
 		for(int i = 0; i < pepLen; i++) {
 			String aa = Character.toString(modPeptide.charAt(i));
 			int score = 0;
-			if(globals.targetModMap.containsKey(aa.toUpperCase())) score++;
+			if(Globals.targetModMap.containsKey(aa.toUpperCase())) score++;
 			if(Character.isLowerCase(aa.charAt(0))) score++;
 			
 			if(score == 2) numRPS++;
 		}
 		
 		
-		numPermutations = globals.SF.combinatorial(numPPS, numRPS);
+		numPermutations = Globals.SF.combinatorial(numPPS, numRPS);
 		calcNumDecoyPermutations();
 		
 		if(numPPS == numRPS) is_unambiguous = true;
@@ -130,14 +130,14 @@ class Peptide {
 		
 		// deal with the N-terminus and C-terminus values
 		if(curSeq.startsWith("[")) {
-			modPosMap.put(constants.NTERM_MOD, globals.ntermMass);
+			modPosMap.put(Constants.NTERM_MOD, Globals.ntermMass);
 			modPeptide = curSeq;
 		}
 		else modPeptide = curSeq;
 		
 		
 		if(curSeq.endsWith("]")) {
-			modPosMap.put(constants.CTERM_MOD, globals.ctermMass);
+			modPosMap.put(Constants.CTERM_MOD, Globals.ctermMass);
 		}
 	}
 
@@ -149,7 +149,7 @@ class Peptide {
 
 		// Append N-term modification (if any is present)
 		if(modPeptide.startsWith("[")) {
-			int d = (int) Math.round(globals.ntermMass);
+			int d = (int) Math.round(Globals.ntermMass);
 			ret = "n[" + String.valueOf( d ) + "]";
             pepLen_local += 1; // need this to capture last residue in this function
 		}
@@ -162,14 +162,14 @@ class Peptide {
 
             // this is a modified amino acid
             if(Character.isLowerCase(modPeptide.charAt(i))) {
-                ret += globals.getTPPresidue(aa);
+                ret += Globals.getTPPresidue(aa);
             }
 			else ret += aa;
 		}
 		
 		// Append C-term modification (if any is present)
 		if(modPeptide.endsWith("]")) {
-			int d = (int) Math.round(globals.ctermMass);
+			int d = (int) Math.round(Globals.ctermMass);
 			ret += "c[" + String.valueOf(d) + "]";
 		}
 		
@@ -190,8 +190,8 @@ class Peptide {
 		
 		final int minLen = 2; // minimum number of residues a fragment must contain
 		
-		if(modPosMap.containsKey(constants.NTERM_MOD)) ntermM = globals.ntermMass;
-		if(modPosMap.containsKey(constants.CTERM_MOD)) ctermM = globals.ctermMass;
+		if(modPosMap.containsKey(Constants.NTERM_MOD)) ntermM = Globals.ntermMass;
+		if(modPosMap.containsKey(Constants.CTERM_MOD)) ctermM = Globals.ctermMass;
 		
 		for(double Z = 1.0; Z < (double) charge; Z++) {
 			for(int i = 1; i < pepLen; i++) { // starting at 1 ensures our shortest fragment ion is 2 char long
@@ -206,12 +206,12 @@ class Peptide {
 				if(prefix.length() >= minLen) {
 					b = "b" + prefix_len + ":" + prefix;
 					
-					bm = globals.getFragmentIonMass(b, Z, 0.0) + ntermM;
+					bm = Globals.getFragmentIonMass(b, Z, 0.0) + ntermM;
 					bmz = bm / Z;
 					
 					if(Z > 1.0) b += "/+" + Integer.toString((int)Z);
 					
-					if(bmz > globals.minMZ) {
+					if(bmz > Globals.minMZ) {
 						b_ions.put(b, bmz);
 
 						// Determine if this ion sequence can under go a neutral loss
@@ -223,12 +223,12 @@ class Peptide {
 
 				if( (suffix.length() >= minLen) && !suffix.equalsIgnoreCase(modPeptide)) {
 					y = "y" + suffix_len + ":" + suffix;
-					ym = globals.getFragmentIonMass(y, Z, constants.WATER) + ctermM;
+					ym = Globals.getFragmentIonMass(y, Z, Constants.WATER) + ctermM;
 					ymz = ym / Z;
 					
 					if(Z > 1.0) y += "/+" + Integer.toString((int)Z);
 					
-					if(ymz > globals.minMZ) {
+					if(ymz > Globals.minMZ) {
 						y_ions.put(y, ymz);
 
 						// Determine if this ion sequence can under go a neutral loss
@@ -252,8 +252,8 @@ class Peptide {
 		
 		String x = ion.substring(start, end);
 
-        if( !globals.isDecoySeq(x) ) {
-            for(String nlr : globals.nlMap.keySet()) {
+        if( !Globals.isDecoySeq(x) ) {
+            for(String nlr : Globals.nlMap.keySet()) {
 
                 String candResidues = nlr.substring( 0, nlr.indexOf("-") );
                 int numCandRes = 0;
@@ -264,32 +264,32 @@ class Peptide {
                 }
 
                 if(numCandRes > 0) { // this ion contains residues that can result in a NL
-                    double nl_mass = globals.nlMap.get(nlr);
+                    double nl_mass = Globals.nlMap.get(nlr);
                     String NL_tag = nlr.substring( nlr.indexOf("-") );
 
                     String nl_str = ion + NL_tag;
                     double mass = orig_ion_mass + nl_mass;
-                    double mz = globals.round_dbl((mass / z), 4);
+                    double mz = Globals.round_dbl((mass / z), 4);
 
-                    if(mz > globals.minMZ) {
+                    if(mz > Globals.minMZ) {
                         if(ion.startsWith("b")) b_ions.put(nl_str, mz);
                         if(ion.startsWith("y")) y_ions.put(nl_str, mz);
                     }
                 }
-            } // end loop globals.nlMap
+            } // end loop Globals.nlMap
         }
         else {
             // The 'ion' string variable must contain at least 1 decoy residue modification
             // if you got to this point of the code.
-            for(Entry<String, Double> e : globals.decoyNLmap.entrySet()) {
+            for(Entry<String, Double> e : Globals.decoyNLmap.entrySet()) {
                 String NL_tag = e.getKey();
                 double nl_mass = e.getValue();
 
                 String nl_str = ion + NL_tag;
                 double mass = orig_ion_mass + nl_mass;
-                double mz = globals.round_dbl((mass / z), 4);
+                double mz = Globals.round_dbl((mass / z), 4);
 
-                if(mz > globals.minMZ) {
+                if(mz > Globals.minMZ) {
                     if(ion.startsWith("b")) b_ions.put(nl_str, mz);
                     if(ion.startsWith("y")) y_ions.put(nl_str, mz);
                 }
@@ -305,11 +305,11 @@ class Peptide {
 		
 		for(int i = 0; i < pepLen; i++) {
 			String aa = Character.toString( peptide.charAt(i) );
-			if( !globals.targetModMap.containsKey(aa) ) ctr++;
+			if( !Globals.targetModMap.containsKey(aa) ) ctr++;
 		}
 		
 		if(ctr >= p) { // you have enough non-target reidues to make a decoy peptide
-			numDecoyPermutations = globals.SF.combinatorial(ctr, k);
+			numDecoyPermutations = Globals.SF.combinatorial(ctr, k);
 		}
 		else numDecoyPermutations = 0;
 	}
@@ -322,12 +322,12 @@ class Peptide {
 	
 	void printIons() {
 		for(String p : b_ions.keySet()) {
-			double m = globals.round_dbl(b_ions.get(p), 4);
+			double m = Globals.round_dbl(b_ions.get(p), 4);
 			System.out.println(modPeptide + "\t" + p + "\t" + m);
 		}
 		
 		for(String p : y_ions.keySet()) {
-			double m = globals.round_dbl(y_ions.get(p), 4);
+			double m = Globals.round_dbl(y_ions.get(p), 4);
 			System.out.println(modPeptide + "\t" + p + "\t" + m);
 		}
 	}
@@ -346,16 +346,16 @@ class Peptide {
 			// Get candidate "true" sites to modify
 			for(i = 0; i < pepLen; i++) {
 				String aa = Character.toString( peptide.charAt(i) );
-				if( globals.targetModMap.containsKey(aa) ) candModSites.add(i);
+				if( Globals.targetModMap.containsKey(aa) ) candModSites.add(i);
 			}
 			
 			// For the given candidate sites that can undergo modifications,
 			// generate all possible permutations involving them.
-			x = globals.SF.getAllCombinations(candModSites, numRPS);
+			x = Globals.SF.getAllCombinations(candModSites, numRPS);
 			
 			for(TIntList a : x) {
 				String modPep = "";
-				if(modPosMap.containsKey(constants.NTERM_MOD)) modPep = "[";
+				if(modPosMap.containsKey(Constants.NTERM_MOD)) modPep = "[";
 				
 				for(i = 0; i < pepLen; i++) {
 					String aa = Character.toString( peptide.charAt(i) ).toLowerCase();
@@ -369,7 +369,7 @@ class Peptide {
 					else modPep += aa.toUpperCase();
 				}
 				
-				if(modPosMap.containsKey(constants.CTERM_MOD)) modPep = "]";
+				if(modPosMap.containsKey(Constants.CTERM_MOD)) modPep = "]";
 				
 				ret.put(modPep, 0d);
 			}
@@ -380,7 +380,7 @@ class Peptide {
 				String AA = Character.toString( peptide.charAt(i) );
 				String aa = AA.toLowerCase();
                 int score = 0;
-                if( !globals.targetModMap.containsKey(AA) ) score++;
+                if( !Globals.targetModMap.containsKey(AA) ) score++;
 
                 if( !this.nonTargetMods.containsKey(aa) ) score++;
 
@@ -389,17 +389,17 @@ class Peptide {
 			
 			// For the given candidate sites that can undergo modifications,
 			// generate all possible permutations involving them.
-			x = globals.SF.getAllCombinations(candModSites, numRPS);
+			x = Globals.SF.getAllCombinations(candModSites, numRPS);
 			
 			for(TIntList a : x) {
 				String modPep = "";
-				if(modPosMap.containsKey(constants.NTERM_MOD)) modPep = "[";
+				if(modPosMap.containsKey(Constants.NTERM_MOD)) modPep = "[";
 				
 				for(i = 0; i < pepLen; i++) {
 					String aa = Character.toString( peptide.charAt(i) ).toLowerCase();
 					
 					if(a.contains(i)) { // site to be modified
-						String decoyChar = globals.getDecoySymbol( peptide.charAt(i) );
+						String decoyChar = Globals.getDecoySymbol( peptide.charAt(i) );
 						modPep += decoyChar;
 					}
 					else if( nonTargetMods.containsKey(i) ) {
@@ -408,7 +408,7 @@ class Peptide {
 					else modPep += aa.toUpperCase();
 				}
 				
-				if(modPosMap.containsKey(constants.CTERM_MOD)) modPep = "]";
+				if(modPosMap.containsKey(Constants.CTERM_MOD)) modPep = "]";
 				ret.put(modPep, 0d);
 			}
 		}
@@ -435,7 +435,7 @@ class Peptide {
 			score = 0;
 		}
 		else {
-            ModelData_CID MD = globals.modelingMap_CID.get(this.charge);
+            ModelData_CID MD = Globals.modelingMap_CID.get(this.charge);
 
             // Now compute the scores for these peaks
             double intensityM = 0;
@@ -448,17 +448,17 @@ class Peptide {
 
             for(PeakClass pk : matchedPeaks) {
 
-                intensityU = globals.SF.log_gaussianProb(MD.mu_int_U, MD.var_int_U, pk.norm_intensity);
-                distU = globals.SF.log_gaussianProb(MD.mu_dist_U, MD.var_dist_U, pk.dist);
+                intensityU = Globals.SF.log_gaussianProb(MD.mu_int_U, MD.var_int_U, pk.norm_intensity);
+                distU = Globals.SF.log_gaussianProb(MD.mu_dist_U, MD.var_dist_U, pk.dist);
 
                 if(pk.matchedIonStr.startsWith("b")) {
-                    intensityM = globals.SF.log_gaussianProb(MD.mu_int_B, MD.var_int_B, pk.norm_intensity);
-                    distM = globals.SF.log_gaussianProb(MD.mu_dist_B, MD.var_dist_B, pk.dist);
+                    intensityM = Globals.SF.log_gaussianProb(MD.mu_int_B, MD.var_int_B, pk.norm_intensity);
+                    distM = Globals.SF.log_gaussianProb(MD.mu_dist_B, MD.var_dist_B, pk.dist);
                 }
 
                 if(pk.matchedIonStr.startsWith("y")) {
-                    intensityM = globals.SF.log_gaussianProb(MD.mu_int_Y, MD.var_int_Y, pk.norm_intensity);
-                    distM = globals.SF.log_gaussianProb(MD.mu_dist_Y, MD.var_dist_Y, pk.dist);
+                    intensityM = Globals.SF.log_gaussianProb(MD.mu_int_Y, MD.var_int_Y, pk.norm_intensity);
+                    distM = Globals.SF.log_gaussianProb(MD.mu_dist_Y, MD.var_dist_Y, pk.dist);
                 }
 
                 Iscore = intensityM - intensityU;
@@ -490,7 +490,7 @@ class Peptide {
 		int score = 0;
 		for(int i = 0; i < pepLen; i++) {
 			String aa = Character.toString( modPeptide.charAt(i) );
-			if(globals.isDecoyResidue(aa)) score++;
+			if(Globals.isDecoyResidue(aa)) score++;
 		}
 		
 		if(score > 0) ret = true;
@@ -508,7 +508,7 @@ class Peptide {
             score = 0;
         }
         else {
-            ModelData_HCD MD = globals.modelingMap_HCD.get(this.charge);
+            ModelData_HCD MD = Globals.modelingMap_HCD.get(this.charge);
 
             double matchErr = 0;
             double decoyPadding = 1;
@@ -560,7 +560,7 @@ class Peptide {
      * @param obsPeakList
      */
     public void matchPeaks(SpectrumClass obsPeakList) {
-//        if( !globals.modelingMap_CID.containsKey(this.charge) ) {
+//        if( !Globals.modelingMap_CID.containsKey(this.charge) ) {
 //            System.err.println("\nError! " + peptide + "/+" + this.charge +
 //                    ": a CID Model does not exist for this charge state!\nExiting now.\n");
 //            System.exit(0);
@@ -585,20 +585,20 @@ class Peptide {
         for(String theo_ion : y_ions.keySet()) {
             double theo_mz  = y_ions.get(theo_ion);
 
-            if(globals.ms2tol_units == constants.PPM_UNITS) {
-                double ppmErr = globals.ms2tol / constants.PPM;
+            if(Globals.ms2tol_units == Constants.PPM_UNITS) {
+                double ppmErr = Globals.ms2tol / Constants.PPM;
                 matchErr = theo_mz * ppmErr;
             }
-            else matchErr = globals.ms2tol;
+            else matchErr = Globals.ms2tol;
 
             matchErr *= 0.5; // split in half
-            a = globals.round_dbl((theo_mz - matchErr), 4);
-            b = globals.round_dbl((theo_mz + matchErr), 4);
+            a = Globals.round_dbl((theo_mz - matchErr), 4);
+            b = Globals.round_dbl((theo_mz + matchErr), 4);
 
             // Hold candidate matching peaks here
            ArrayList<PeakClass> cand = new ArrayList<PeakClass>();
             for(int i = 0; i < obsPeakList.N; i++) {
-                double obsMZ = globals.round_dbl( obsPeakList.mz[i], 4 );
+                double obsMZ = Globals.round_dbl( obsPeakList.mz[i], 4 );
 
                 if( (obsMZ >= a) && (obsMZ <= b) ) {
                     cand.add( obsPeakList.getPeakClassInstance(i) );
@@ -630,20 +630,20 @@ class Peptide {
         for(String theo_ion : b_ions.keySet()) {
             double theo_mz  = b_ions.get(theo_ion);
 
-            if(globals.ms2tol_units == constants.PPM_UNITS) {
-                double ppmErr = globals.ms2tol / constants.PPM;
+            if(Globals.ms2tol_units == Constants.PPM_UNITS) {
+                double ppmErr = Globals.ms2tol / Constants.PPM;
                 matchErr = theo_mz * ppmErr;
             }
-            else matchErr = globals.ms2tol;
+            else matchErr = Globals.ms2tol;
 
             matchErr *= 0.5; // split in half
-            a = globals.round_dbl((theo_mz - matchErr), 4);
-            b = globals.round_dbl((theo_mz + matchErr), 4);
+            a = Globals.round_dbl((theo_mz - matchErr), 4);
+            b = Globals.round_dbl((theo_mz + matchErr), 4);
 
             // Hold candidate matching peaks here
             ArrayList<PeakClass> cand = new ArrayList<PeakClass>();
             for(int i = 0; i < obsPeakList.N; i++) {
-                double obsMZ = globals.round_dbl( obsPeakList.mz[i], 4 );
+                double obsMZ = Globals.round_dbl( obsPeakList.mz[i], 4 );
 
                 if( (obsMZ >= a) && (obsMZ <= b) ) {
                     cand.add( obsPeakList.getPeakClassInstance(i) );
