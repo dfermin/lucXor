@@ -827,13 +827,13 @@ class Globals {
     // Iterate over the file names
     for (String fn : mapFilesToPsms.keySet()) {
       String fileName = new File(fn).getName();
-      System.err.print(fileName + ":  "); // beginning of info line
+      System.err.printf("%n%s: ...", fileName); // beginning of info line
 
-      int ctr = 0;
-
+      final TreeMap<Integer, PSM> psmsOfInterest = mapFilesToPsms.get(fn);
       Integer threads = numThreads >= 0 ? numThreads : null;
 
-      try (MZXMLFile mzxml = new MZXMLFile(fn, false)) {
+      // read in the mzML file
+      try (MZXMLFile mzxml = new MZXMLFile(fn)) {
         mzxml.setNumThreadsForParsing(threads);
         mzxml.setParsingTimeout(60L); // 1 minute before it times out trying to read a file
         LCMSData lcmsData = new LCMSData(mzxml);
@@ -842,32 +842,20 @@ class Globals {
         IScanCollection scans = lcmsData.getScans();
         ScanIndex ms2ScanIndex = scans.getMapMsLevel2index().get(2);
 
-        if ((ms2ScanIndex == null) || (ms2ScanIndex.getNum2scan().isEmpty())) {
-          System.err
-              .println(
-                  "\nERROR: Globals.read_mzXML(): Unable to read MS2 scans from '" + fn + "'\n");
-          System.exit(0);
-        }
+        for (Entry<Integer, PSM> psmEntry : psmsOfInterest.entrySet()) {
+          final Integer scanNum = psmEntry.getKey();
+          final PSM psm = psmEntry.getValue();
+          final IScan scan = ms2ScanIndex.getNum2scan().get(scanNum);
+          if (scan == null) {
 
-        for (Map.Entry<Integer, IScan> num2scan : ms2ScanIndex.getNum2scan().entrySet()) {
-          int scanNum = num2scan.getKey();
-          IScan scan = num2scan.getValue();
-          double[] mz = scan.getSpectrum().getMZs();
-          double[] intensities = scan.getSpectrum().getIntensities();
-
-          SpectrumClass curSpectrum = new SpectrumClass(mz, intensities);
-
-          // assign this spectrum to it's PSM
-          for (PSM p : PSM_list) {
-            if ((p.srcFile.equalsIgnoreCase(fileName)) && (p.scanNum == scanNum)) {
-              p.recordSpectra(curSpectrum);
-              ctr++;
-              break;
-            }
+            continue;
           }
+          SpectrumClass x = new SpectrumClass(scan.getSpectrum().getMZs(),
+              scan.getSpectrum().getIntensities());
+          psm.recordSpectra(x);
         }
       }
-      System.err.println(ctr + " spectra read in.");  // end of info line
+      System.err.printf("\r%s: Done%n", fileName); // beginning of info line
     }
   }
 
