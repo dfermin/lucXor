@@ -21,8 +21,8 @@ class Peptide {
   String peptide;
   String modPeptide;
   int charge;
-  private TIntDoubleHashMap modPosMap = null; // total mass of each modified amino acid
-  THashMap<Integer, String> nonTargetMods = null; // holds the mod coordinates for non-target mods
+  private TIntDoubleHashMap modPosMap; // total mass of each modified amino acid
+  THashMap<Integer, String> nonTargetMods; // holds the mod coordinates for non-target mods
   private THashMap<String, Double> b_ions = null;
   private THashMap<String, Double> y_ions = null;
 
@@ -30,9 +30,9 @@ class Peptide {
   int numRPS; // number of _R_eported _P_hospho_S_ites
   int numPPS; // number of _P_otential _P_hospho_S_ites
 
-  private double numPermutations = 0;
+  private double numPermutations;
   private double numDecoyPermutations = 0;
-  double score = 0;
+  double score;
 
   ArrayList<PeakClass> matchedPeaks;
 
@@ -193,9 +193,9 @@ class Peptide {
     b_ions = new THashMap<>();
     y_ions = new THashMap<>();
 
-    String b = null, y = null;
-    double bm = 0d, ym = 0d; // ion mass
-    double bmz = 0d, ymz = 0d; // ion mass divided by charge z
+    String b, y;
+    double bm, ym; // ion mass
+    double bmz, ymz; // ion mass divided by charge z
     double ntermM = 0d, ctermM = 0d;
 
     final int minLen = 2; // minimum number of residues a fragment must contain
@@ -370,7 +370,7 @@ class Peptide {
     THashMap<String, Double> ret = new THashMap<>();
     TIntArrayList candModSites = new TIntArrayList();
     ArrayList<TIntArrayList> x;
-    int i = 0;
+    int i;
 
     if (permType == 0) { // generate forward (positive) permutations
 
@@ -484,11 +484,11 @@ class Peptide {
 
       // Now compute the scores for these peaks
       double intensityM = 0;
-      double intensityU = 0;
+      double intensityU;
       double distM = 0;
-      double distU = 0;
-      double Iscore = 0d;
-      double Dscore = 0d;
+      double distU;
+      double Iscore;
+      double Dscore;
       score = 0;
 
       for (PeakClass pk : matchedPeaks) {
@@ -510,7 +510,7 @@ class Peptide {
         Dscore = distM - distU;
 
         double intense_wt = 1.0 / (1.0 + FastMath.exp(-Iscore));
-        double x = 0d;
+        double x;
 
         if (Double.isNaN(Dscore) || Double.isInfinite(Dscore)) {
           x = 0;
@@ -534,21 +534,14 @@ class Peptide {
 
   // Function returns true if the modPeptide assigned to this object is a decoy
   boolean isDecoyPep() {
-    boolean ret = false;
-
-    int score = 0;
     for (int i = 0; i < pepLen; i++) {
       String aa = Character.toString(modPeptide.charAt(i));
       if (Globals.isDecoyResidue(aa)) {
-        score++;
+        return true;
       }
     }
 
-    if (score > 0) {
-      ret = true;
-    }
-
-    return ret;
+    return false;
   }
 
 
@@ -562,22 +555,16 @@ class Peptide {
     } else {
       ModelData_HCD MD = Globals.modelingMap_HCD.get(this.charge);
 
-      double matchErr = 0;
-      double decoyPadding = 1;
-      double a = 0, b = 0;
-
       // we double the error window size for decoys. Otherwise they may not get matched peaks
-      if (isDecoyPep()) {
-        decoyPadding = 2.0;
-      }
+      isDecoyPep();
 
       // Now compute the scores for these peaks
-      double intensityM = 0;
-      double intensityU = 0;
-      double distM = 0;
-      double distU = 0;
-      double Iscore = 0d;
-      double Dscore = 0d;
+      double intensityM;
+      double intensityU;
+      double distM;
+      double distU;
+      double Iscore;
+      double Dscore;
       score = 0;
 
       for (PeakClass pk : matchedPeaks) {
@@ -624,8 +611,8 @@ class Peptide {
 //            System.exit(0);
 //        }
 
-    double matchErr = 0;
-    double a = 0, b = 0;
+    double matchErr;
+    double a, b;
 
     matchedPeaks = new ArrayList<>();
 
@@ -677,7 +664,6 @@ class Peptide {
           if (Math.abs(oldPK.dist) > (Math.abs(pk.dist))) {
             bestMatchMap.put(pk.mz, pk);
           }
-          oldPK = null;
         } else {
           bestMatchMap.put(pk.mz, pk);
         }
@@ -725,7 +711,6 @@ class Peptide {
           if (Math.abs(oldPK.dist) > (Math.abs(pk.dist))) {
             bestMatchMap.put(pk.mz, pk);
           }
-          oldPK = null;
         } else {
           bestMatchMap.put(pk.mz, pk);
         }
@@ -738,6 +723,5 @@ class Peptide {
       matchedPeaks.add(bestMatchMap.get(mz));
     }
     bestMatchMap.clear();
-    bestMatchMap = null;
   }
 }

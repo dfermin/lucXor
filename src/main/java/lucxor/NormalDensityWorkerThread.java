@@ -31,7 +31,7 @@ class NormalDensityWorkerThread implements Callable<Double> {
   @Override
   public Double call() {
     double sum = 0;
-    double x = 0;
+    double x;
 
     for (double d : ary) {
       x = (tic - d) / this.bw;

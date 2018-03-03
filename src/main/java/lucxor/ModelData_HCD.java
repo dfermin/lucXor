@@ -12,7 +12,6 @@ import java.util.ArrayList;
 import java.util.Arrays;
 import java.util.Collections;
 import java.util.List;
-import java.util.concurrent.Callable;
 import java.util.concurrent.ExecutionException;
 import java.util.concurrent.ExecutorService;
 import java.util.concurrent.Executors;
@@ -106,16 +105,13 @@ class ModelData_HCD {
 
     n_int = new double[limitN];
     Collections.shuffle(negPks);
-    n = 0;
     for (n = 0; n < limitN; n++) {
       PeakClass pk = negPks.get(n);
       n_int[n] = pk.norm_intensity;
     }
 
     posPks.clear();
-    posPks = null;
     negPks.clear();
-    negPks = null;
   }
 
 
@@ -182,9 +178,8 @@ class ModelData_HCD {
   // Compute the mean for pos and neg data. This function must be called
   // *before* the calcVar function
   public void calcMean() {
-    double mean = 0;
-    double N = 0;
-    double sum = 0;
+    double N;
+    double sum;
 
     //********** B-ions ********/
     N = (double) b_int.length;
@@ -266,13 +261,13 @@ class ModelData_HCD {
   // Function computes the estimated parameters for the non-parametric model
   // for the intensity of the peaks assigned to this ModelData object
   void estimateNP_intensity(char ionType) throws InterruptedException, ExecutionException {
-    int N = 0;
-    double[] norm_ints = null;
-    double[] tickMarksInt = null;
-    double[] f_int = null;
+    int N;
+    double[] norm_ints;
+    double[] tickMarksInt;
+    double[] f_int;
     double minI, maxI;
-    double variance = 0, bw = 0;
-    double kernelResult = 0;
+    double variance, bw;
+    double kernelResult;
     double t;
 
     switch (ionType) {
@@ -384,10 +379,10 @@ class ModelData_HCD {
   // for the m/z distances for the positive peaks in this model object
   void estimateNP_posDist() throws InterruptedException, ExecutionException {
 
-    int N = 0;
-    double min_dist = 0, max_dist = 0;
-    double variance = 0, bw = 0;
-    double kernelResult = 0;
+    int N;
+    double min_dist, max_dist;
+    double variance = 0, bw;
+    double kernelResult;
     double t;
     double[] f_ary;
 
@@ -467,7 +462,7 @@ class ModelData_HCD {
 
 
   public double normalDensity(double curTickMark, double curScore, double h) {
-    double res = 0;
+    double res;
 
     double x = (curTickMark - curScore) / h;
 
@@ -479,7 +474,7 @@ class ModelData_HCD {
   // Function computes the mode of the given list of values
   private double getMode(double[] ary) {
 
-    double mode = 0;
+    double mode;
     int Nbins = ntick;
     double binWidth = 0.0001;
     final double LIMIT = 0.1;
@@ -526,17 +521,14 @@ class ModelData_HCD {
 
     switch (ionType) {
       case 'b':
-        N = bTickMarksInt.length;
         tickMarksInt = bTickMarksInt;
         f_int = f_int_b;
         break;
       case 'y':
-        N = yTickMarksInt.length;
         tickMarksInt = yTickMarksInt;
         f_int = f_int_y;
         break;
       case 'n':
-        N = negTickMarksInt.length;
         tickMarksInt = negTickMarksInt;
         f_int = f_int_neg;
         break;
@@ -617,8 +609,8 @@ class ModelData_HCD {
 
   void writeModelPks() throws IOException {
     File debugF = new File("debug_model_pks_HCD.txt");
-    FileWriter fw = null;
-    BufferedWriter bw = null;
+    FileWriter fw;
+    BufferedWriter bw;
     String line;
     double mz, dist, relI, normI;
 
@@ -698,8 +690,8 @@ class ModelData_HCD {
   public void write_density_data(int dataType) throws IOException {
 
     String outName = null;
-    FileWriter fw = null;
-    BufferedWriter bw = null;
+    FileWriter fw;
+    BufferedWriter bw;
 
     switch (dataType) {
       case 1:

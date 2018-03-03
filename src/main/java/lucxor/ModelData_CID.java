@@ -24,12 +24,12 @@ class ModelData_CID {
   double var_int_B, var_int_Y, var_int_U;
   double mu_dist_B, mu_dist_Y, mu_dist_U;
   double var_dist_B, var_dist_Y, var_dist_U;
-  private double[] b_intensity = null;
-  private double[] b_distance = null;
-  private double[] y_intensity = null;
-  private double[] y_distance = null;
-  private double[] u_intensity = null;
-  private double[] u_distance = null;
+  private double[] b_intensity;
+  private double[] b_distance;
+  private double[] y_intensity;
+  private double[] y_distance;
+  private double[] u_intensity;
+  private double[] u_distance;
 
   public ModelData_CID(int z, ArrayList<PeakClass> peaks) {
     chargeState = z;
@@ -99,7 +99,6 @@ class ModelData_CID {
       u_distance[i] = pk.dist;
     }
     negPks.clear();
-    negPks = null;
 
   }
 
@@ -146,7 +145,6 @@ class ModelData_CID {
     mu_dist_Y = (sum / N);
 
     sum = 0;
-    N = (double) u_distance.length;
     for (double d : u_distance) {
       sum += d;
     }

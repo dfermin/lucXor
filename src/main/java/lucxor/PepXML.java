@@ -27,19 +27,23 @@ class PepXML extends DefaultHandler {
   private final String AA_alphabet = "ACDEFGHIKLMNPQRSTVWY";
   private PSM curPSM = null;
   private boolean recordMods;
+  private File inputPepXml = null;
 
   // Default constructor for this class
-  PepXML(File inputXML) throws ParserConfigurationException, SAXException, IOException {
-
+  public PepXML() {
     variableMods = new HashMap<>();
     fixedMods = new HashMap<>();
     recordMods = true; // changes to false after the end of first search_summary section
+  }
 
+  public void load(File inputPepXml) throws ParserConfigurationException, SAXException, IOException {
+    if (this.inputPepXml != null)
+      throw new IllegalStateException("Calling load() twice on PepXML instance is not allowed.");
+    this.inputPepXml = inputPepXml;
     SAXParserFactory factory = SAXParserFactory.newInstance();
     factory.setValidating(false);
     SAXParser parser = factory.newSAXParser();
-    parser
-        .parse(inputXML, this); // this class itself is the default handler, hence the use of 'this'
+    parser.parse(inputPepXml, this); // this class itself is the default handler, hence the use of 'this'
   }
 
   public void startElement(String uri, String localName, String qName, Attributes attr) {
@@ -59,8 +63,9 @@ class PepXML extends DefaultHandler {
       }
     }
 
-    // This is for handling the modification description lines at the beginning of a pepXML file
+
     if (qName.equalsIgnoreCase("aminoacid_modification")) {
+      // This is for handling the modification description lines at the beginning of a pepXML file
       String aa = attr.getValue("aminoacid");
       double modMass = Double.valueOf(attr.getValue("massdiff"));
       String varStatus = attr.getValue("variable");
@@ -78,10 +83,10 @@ class PepXML extends DefaultHandler {
           }
         }
       }
-    }
 
-    // for handling terminal modifications (this is found in the top portion of the pepXML file)
-    if (qName.equalsIgnoreCase("terminal_modification")) {
+
+    } else if (qName.equalsIgnoreCase("terminal_modification")) {
+      // for handling terminal modifications (this is found in the top portion of the pepXML file)
       String terminus = attr.getValue("terminus");
       double modMass = Double.valueOf(attr.getValue("massdiff"));
 
@@ -93,21 +98,21 @@ class PepXML extends DefaultHandler {
       if (terminus.equalsIgnoreCase("c")) {
         Globals.ctermMass = modMass;
       }
-    }
 
-    if (qName.equalsIgnoreCase("spectrum_query")) {
+
+    } else if (qName.equalsIgnoreCase("spectrum_query")) {
       curPSM = new PSM();
 
       curPSM.specId = attr.getValue("spectrum");
       curPSM.scanNum = Integer.valueOf(attr.getValue("start_scan"));
       curPSM.charge = Integer.valueOf(attr.getValue("assumed_charge"));
-    }
 
-    if (qName.equalsIgnoreCase("search_hit")) {
+
+    } else if (qName.equalsIgnoreCase("search_hit")) {
       curPSM.origPep.peptide = attr.getValue("peptide");
-    }
 
-    if (qName.equalsIgnoreCase("modification_info")) {
+
+    } else if (qName.equalsIgnoreCase("modification_info")) {
       if (attr.getLocalName(0).equalsIgnoreCase("mod_nterm_mass")) {
         double nterm = Double.valueOf(attr.getValue("mod_nterm_mass"));
         curPSM.modCoordMap.put(Constants.NTERM_MOD, nterm);
@@ -115,16 +120,14 @@ class PepXML extends DefaultHandler {
         double cterm = Double.valueOf(attr.getValue("mod_cterm_mass"));
         curPSM.modCoordMap.put(Constants.CTERM_MOD, cterm);
       }
-    }
-
-    // record the mass of a modified amino acid residue
-    if (qName.equalsIgnoreCase("mod_aminoacid_mass")) {
+    } else if (qName.equalsIgnoreCase("mod_aminoacid_mass")) {
+      // record the mass of a modified amino acid residue
       int pos = Integer.valueOf(attr.getValue("position")) - 1; // ensures zero-based coordiantes
       double mass = Double.valueOf(attr.getValue("mass"));
       curPSM.modCoordMap.put(pos, mass);
-    }
 
-    if (qName.equalsIgnoreCase("search_score")) {
+
+    } else if (qName.equalsIgnoreCase("search_score")) {
 
       if (Globals.scoringMethod != Constants.PEPPROPHET) {
         for (int i = 0; i < attr.getLength() - 1; i++) {
@@ -158,9 +161,9 @@ class PepXML extends DefaultHandler {
         }
 
       }
-    }
 
-    if (qName.equalsIgnoreCase("peptideprophet_result")) {
+
+    } else if (qName.equalsIgnoreCase("peptideprophet_result")) {
       if (Globals.scoringMethod == Constants.PEPPROPHET) {
         curPSM.PSMscore = Double.valueOf(attr.getValue("probability"));
       }
@@ -178,9 +181,7 @@ class PepXML extends DefaultHandler {
         Globals.recordModsFromPepXML();
         recordMods = false;
       }
-    }
-
-    if (qName.equalsIgnoreCase("search_hit")) { // end of record
+    } else if (qName.equalsIgnoreCase("search_hit")) { // end of record
 
       // skip PSMs with non-standard amino acid characters
       String x = curPSM.origPep.peptide;
@@ -198,10 +199,6 @@ class PepXML extends DefaultHandler {
       }
 
       if (numBadChars == 0) {
-//                if(curPSM.specId.equalsIgnoreCase("QE_140625_01_IS117_Phosphoproteome.59296.59296.2")) {
-//                    int debug = 0;
-//                }
-
         curPSM.process();
         if (curPSM.isKeeper) {
           Globals.PSM_list.add(curPSM);

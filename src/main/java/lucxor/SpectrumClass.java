@@ -64,7 +64,6 @@ class SpectrumClass {
     }
 
     candPks.clear();
-    candPks = null;
 
     // compute relative intensity and prep remaining arrays
     for (int i = 0; i < N; i++) {
@@ -93,7 +92,7 @@ class SpectrumClass {
    */
   public void medianNormalizeSpectra() {
     int mid = N / 2;
-    double medianI = 0d;
+    double medianI;
 
     // Need to sort the peak intensities from low to high
     ArrayList<Double> pksI = new ArrayList<>(N);

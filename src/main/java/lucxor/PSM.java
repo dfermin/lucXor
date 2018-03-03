@@ -35,7 +35,7 @@ class PSM {
   boolean isDecoy; // true means the top match for this PSM is a decoy
   private boolean isUnambiguous; // true means the number potential PTM sites is equal to the number of reported PTM sites
 
-  TIntDoubleHashMap modCoordMap = null; // holds modified amino acid positions
+  TIntDoubleHashMap modCoordMap; // holds modified amino acid positions
 
   private THashMap<String, Double> posPermutationScoreMap = null;
   private THashMap<String, Double> negPermutationScoreMap = null;
@@ -44,7 +44,7 @@ class PSM {
   ArrayList<PeakClass> posPeaks = null;
   ArrayList<PeakClass> negPeaks = null;
 
-  private SpectrumClass PeakList = null;
+  private SpectrumClass PeakList;
 
 
   final Peptide origPep;
@@ -71,48 +71,48 @@ class PSM {
 
     // Determine if the PSM is to be kept and if it should be used for modeling
     int keepingScore = 0;
-	  if (origPep.numPPS > 0) {
-		  keepingScore++;
-	  }
-	  if (origPep.numRPS > 0) {
-		  keepingScore++;
-	  }
-	  if (PSMscore >= Globals.scoreTH) {
-		  keepingScore++;
-	  }
-	  if (charge <= Globals.maxChargeState) {
-		  keepingScore++;
-	  }
-	  if (origPep.pepLen <= Globals.maxPepLen) {
-		  keepingScore++;
-	  }
+    if (origPep.numPPS > 0) {
+      keepingScore++;
+    }
+    if (origPep.numRPS > 0) {
+      keepingScore++;
+    }
+    if (PSMscore >= Globals.scoreTH) {
+      keepingScore++;
+    }
+    if (charge <= Globals.maxChargeState) {
+      keepingScore++;
+    }
+    if (origPep.pepLen <= Globals.maxPepLen) {
+      keepingScore++;
+    }
 
-	  if (origPep.numPPS == origPep.numRPS) {
-		  isUnambiguous = true;
-	  }
+    if (origPep.numPPS == origPep.numRPS) {
+      isUnambiguous = true;
+    }
 
-	  if (keepingScore == 5) {
-		  isKeeper = true;
-	  }
+    if (keepingScore == 5) {
+      isKeeper = true;
+    }
 
-	  if (isKeeper && (PSMscore >= Globals.modelTH)) {
-		  useForModel = true;
-	  }
+    if (isKeeper && (PSMscore >= Globals.modelTH)) {
+      useForModel = true;
+    }
 
     if (isKeeper) {
       // We will reconstruct the specId here to remove left-padded zeros
       String suffix = "";
 
       if (Globals.inputType == Constants.PEPXML) {
-		  if (Globals.spectrumSuffix.equalsIgnoreCase("mzXML")) {
-			  suffix = "mzXML";
-		  }
-		  if (Globals.spectrumSuffix.equalsIgnoreCase("mzML")) {
-			  suffix = "mzML";
-		  }
-		  if (Globals.spectrumSuffix.equalsIgnoreCase("mgf")) {
-			  suffix = "mgf";
-		  }
+        if (Globals.spectrumSuffix.equalsIgnoreCase("mzXML")) {
+          suffix = "mzXML";
+        }
+        if (Globals.spectrumSuffix.equalsIgnoreCase("mzML")) {
+          suffix = "mzML";
+        }
+        if (Globals.spectrumSuffix.equalsIgnoreCase("mgf")) {
+          suffix = "mgf";
+        }
 
         /*
          ** Some scans might have a name formatted like this:
@@ -160,9 +160,9 @@ class PSM {
     PeakList = S;
 
     // reduce the impact of the neutral loss peak (if any)
-	  if (Globals.reduceNL == 1) {
-		  reduceNLpeak();
-	  }
+    if (Globals.reduceNL == 1) {
+      reduceNLpeak();
+    }
 
     // normalize the peak intensities to the median
     PeakList.medianNormalizeSpectra();
@@ -178,9 +178,9 @@ class PSM {
 
     // Do not perform this NL reduction if the peptide doesn't contain
     // a serine or theronine
-	  if (!origPep.peptide.contains("S") && !origPep.peptide.contains("T")) {
-		  return;
-	  }
+    if (!origPep.peptide.contains("S") && !origPep.peptide.contains("T")) {
+      return;
+    }
 
     // Find the most intense peak in the spectrum
     double maxPk_mz = PeakList.mz[PeakList.maxI_index];
@@ -196,11 +196,9 @@ class PSM {
 
       // identify the second-most intense peak in the spectrum
       double new_maxI = 0d;
-      int new_maxI_index = 0;
       for (int i = 0; i < PeakList.N; i++) {
         if (PeakList.raw_intensity[i] > new_maxI) {
           new_maxI = PeakList.raw_intensity[i];
-          new_maxI_index = i;
         }
       }
       PeakList.maxI = new_maxI;
@@ -233,7 +231,7 @@ class PSM {
     int startAt = 0;
 
     for (int i = startAt; i < modPep.length(); i++) {
-      double mass = 0;
+      double mass;
       char c = modPep.charAt(i);
 
       // record decoy-modified residues
@@ -252,9 +250,9 @@ class PSM {
     // any residues that are already modified for this peptide. These
     // are residues that cannot be used for building decoys
     for (int p : origPep.nonTargetMods.keySet()) {
-		if ((p == Constants.NTERM_MOD) || (p == Constants.CTERM_MOD)) {
-			continue;
-		}
+      if ((p == Constants.NTERM_MOD) || (p == Constants.CTERM_MOD)) {
+        continue;
+      }
 
       String aa = origPep.nonTargetMods.get(p);
       double mass = Globals.AAmassMap.get(aa);
@@ -302,9 +300,9 @@ class PSM {
       double theo_mz = all_ions.get(theo_ion);
 
       PeakClass matchedPk = getMatchedPeak(theo_ion, theo_mz);
-		if (null == matchedPk) {
-			continue; // no match was found for this theoretical peak
-		}
+      if (null == matchedPk) {
+        continue; // no match was found for this theoretical peak
+      }
 
       if (candMatchedPks.containsKey(matchedPk.mz)) {
         ArrayList<PeakClass> ary = candMatchedPks.get(matchedPk.mz);
@@ -325,7 +323,6 @@ class PSM {
       posPeaks.add(ary.get(0));
     }
     candMatchedPks.clear();
-    candMatchedPks = null;
 
     // This can happen if there are no matched peaks
     // identified for this spectrum due to the exclusion of neutral loss ions
@@ -347,7 +344,7 @@ class PSM {
 
       if (!posPeaks.contains(negPk)) {
 
-        double finalDist = 0;
+        double finalDist;
 
         // record the distance of this unmatched peak to the nearest peak in 'posPeaks'
         ArrayList<Double> dist = new ArrayList<>(posPeaks.size());
@@ -385,16 +382,16 @@ class PSM {
 
     PeakClass ret = null;
 
-    double matchErr = 0;
-    double a = 0, b = 0;
+    double matchErr;
+    double a, b;
 
     // Compute the fragment error tolerance that will be used
-	  if (Globals.ms2tol_units == Constants.PPM_UNITS) {
-		  double ppmErr = Globals.ms2tol / Constants.PPM;
-		  matchErr = theo_mz * ppmErr;
-	  } else {
-		  matchErr = Globals.ms2tol;
-	  }
+    if (Globals.ms2tol_units == Constants.PPM_UNITS) {
+      double ppmErr = Globals.ms2tol / Constants.PPM;
+      matchErr = theo_mz * ppmErr;
+    } else {
+      matchErr = Globals.ms2tol;
+    }
 
     matchErr *= 0.5; // split in half
 
@@ -454,138 +451,105 @@ class PSM {
 
   // Function scores every candidate sequence associated with this PSM
   void scorePermutations() throws IOException {
-    TIntDoubleHashMap mcp = null;
-
-    File debugF = null;
-    FileWriter fw = null;
-    BufferedWriter bw = null;
-    String line;
 
     if (Thread.interrupted()) { // this code just prevents excessive run times
       killThreadResults();
       return;
     }
 
+    File debugF = null;
     if (Globals.debugMode == Constants.WRITE_PERM_SCORES) {
       debugF = new File("all_scores.debug");
-
-      if (!debugF.exists()) {
-        fw = new FileWriter(debugF);
-        bw = new BufferedWriter(fw);
-        bw.write("specId\torigModPep\tcurPermutation\tisDecoy\tscore\n");
-      } else {
-        fw = new FileWriter(debugF, true); // open for appending
-        bw = new BufferedWriter(fw);
-      }
-    }
-
-    if (Globals.debugMode == Constants.WRITE_ALL_MATCHED_PK_SCORES) {
+    } else if (Globals.debugMode == Constants.WRITE_ALL_MATCHED_PK_SCORES) {
       debugF = new File("all_matched_pks.debug");
-
-      if (!debugF.exists()) {
-        fw = new FileWriter(debugF);
-        bw = new BufferedWriter(fw);
-        bw.write(
-            "specId\tcurPermutation\tisDecoy\tionSeq\tmz\tintensity\tmzDist\tIscore\tDscore\tscore\n");
-      } else {
-        fw = new FileWriter(debugF, true); // open for appending
-        bw = new BufferedWriter(fw);
-      }
     }
 
-    // Scores for forward sequences
-    for (String curSeq : posPermutationScoreMap.keySet()) {
-
-      mcp = this.getModMap(curSeq);
-
-      Peptide curPep = new Peptide();
-      curPep.initialize(origPep.peptide, curSeq, charge, mcp);
-      curPep.build_ion_ladders();
-      curPep.numPPS = origPep.numPPS;
-      curPep.numRPS = origPep.numRPS;
-
-      curPep.matchPeaks(PeakList); // match all the peaks you can for this peptide permutation
-
-		if (Globals.scoringAlgorithm == Constants.CID) {
-			curPep.calcScore_CID();
-		}
-		if (Globals.scoringAlgorithm == Constants.HCD) {
-			curPep.calcScore_HCD();
-		}
-
-      if (Globals.debugMode == Constants.WRITE_PERM_SCORES) {
-        line = specId + "\t" + origPep.modPeptide + "\t" +
-            curPep.modPeptide + "\t0\t" + curPep.score + "\n";
-        bw.write(line);
-      }
-
-      if (Globals.debugMode == Constants.WRITE_ALL_MATCHED_PK_SCORES) {
-        for (PeakClass pk : curPep.matchedPeaks) {
-          line = specId + "\t" + curSeq + "\t" + Globals.isDecoySeq(curSeq) + "\t" +
-              pk.matchedIonStr + "\t" + pk.mz + "\t" +
-              pk.rel_intensity + "\t" + pk.dist + "\t" +
-              pk.intensityScore + "\t" + pk.distScore + "\t" + pk.score + "\n";
-          bw.write(line);
+    BufferedWriter bw = null;
+    TIntDoubleHashMap mcp;
+    try {
+      if (debugF != null) {
+        boolean existed = debugF.exists();
+        bw = new BufferedWriter(new FileWriter(debugF, existed));
+        if (!existed) {
+          if (Globals.debugMode == Constants.WRITE_PERM_SCORES) {
+            bw.write("specId\torigModPep\tcurPermutation\tisDecoy\tscore\n");
+          } else if (Globals.debugMode == Constants.WRITE_ALL_MATCHED_PK_SCORES) {
+            bw.write(
+                "specId\tcurPermutation\tisDecoy\tionSeq\tmz\tintensity\tmzDist\tIscore\tDscore\tscore\n");
+          }
         }
-        bw.write("\n");
       }
 
-      posPermutationScoreMap.put(curSeq, curPep.score);
-      curPep = null;
-      mcp = null;
-    }
+      // Scores for forward sequences
+      String line;
+      for (String curSeq : posPermutationScoreMap.keySet()) {
 
-    if (!isUnambiguous) { // at least 2 possible permutations exist for this PSM
-
-      // Scores for decoy sequences
-      for (String curSeq : negPermutationScoreMap.keySet()) {
         mcp = this.getModMap(curSeq);
 
         Peptide curPep = new Peptide();
-        mcp = this.getModMap(curSeq);
-        curPep.initialize(origPep.modPeptide, curSeq, charge, mcp);
+        curPep.initialize(origPep.peptide, curSeq, charge, mcp);
         curPep.build_ion_ladders();
         curPep.numPPS = origPep.numPPS;
         curPep.numRPS = origPep.numRPS;
 
-        curPep.matchPeaks(PeakList);
+        curPep.matchPeaks(PeakList); // match all the peaks you can for this peptide permutation
 
-		  if (Globals.scoringAlgorithm == Constants.CID) {
-			  curPep.calcScore_CID();
-		  }
-		  if (Globals.scoringAlgorithm == Constants.HCD) {
-			  curPep.calcScore_HCD();
-		  }
+        if (Globals.scoringAlgorithm == Constants.CID) {
+          curPep.calcScore_CID();
+        }
+        if (Globals.scoringAlgorithm == Constants.HCD) {
+          curPep.calcScore_HCD();
+        }
 
-        if (Globals.debugMode == Constants.WRITE_PERM_SCORES) {
+        if (Globals.debugMode == Constants.WRITE_PERM_SCORES && bw != null) {
           line = specId + "\t" + origPep.modPeptide + "\t" +
-              curPep.modPeptide + "\t1\t" + curPep.score + "\n";
+              curPep.modPeptide + "\t0\t" + curPep.score + "\n";
           bw.write(line);
         }
 
-        if (Globals.debugMode == Constants.WRITE_ALL_MATCHED_PK_SCORES) {
-          for (PeakClass pk : curPep.matchedPeaks) {
-            line = specId + "\t" + curSeq + "\t" + Globals.isDecoySeq(curSeq) + "\t" +
-                pk.matchedIonStr + "\t" + pk.mz + "\t" +
-                pk.rel_intensity + "\t" + pk.dist + "\t" +
-                pk.intensityScore + "\t" + pk.distScore + "\t" + pk.score + "\n";
+        writeAllMatchedPkScores(bw, curSeq, curPep);
+
+        posPermutationScoreMap.put(curSeq, curPep.score);
+      }
+
+      if (!isUnambiguous) { // at least 2 possible permutations exist for this PSM
+
+        // Scores for decoy sequences
+        for (String curSeq : negPermutationScoreMap.keySet()) {
+          Peptide curPep = new Peptide();
+          mcp = this.getModMap(curSeq);
+          curPep.initialize(origPep.modPeptide, curSeq, charge, mcp);
+          curPep.build_ion_ladders();
+          curPep.numPPS = origPep.numPPS;
+          curPep.numRPS = origPep.numRPS;
+
+          curPep.matchPeaks(PeakList);
+
+          if (Globals.scoringAlgorithm == Constants.CID) {
+            curPep.calcScore_CID();
+          }
+          if (Globals.scoringAlgorithm == Constants.HCD) {
+            curPep.calcScore_HCD();
+          }
+
+          if (Globals.debugMode == Constants.WRITE_PERM_SCORES && bw != null) {
+            line = specId + "\t" + origPep.modPeptide + "\t" +
+                curPep.modPeptide + "\t1\t" + curPep.score + "\n";
             bw.write(line);
           }
-          bw.write("\n");
-        }
 
-        negPermutationScoreMap.put(curSeq, curPep.score);
-        curPep = null;
-        mcp = null;
+          writeAllMatchedPkScores(bw, curSeq, curPep);
+
+          negPermutationScoreMap.put(curSeq, curPep.score);
+        }
+      }
+
+    } finally {
+      if (bw != null) {
+        bw.close();
       }
     }
-
-	  if (Globals.debugMode == Constants.WRITE_PERM_SCORES) {
-		  bw.close();
-	  }
-	  if (Globals.debugMode == Constants.WRITE_ALL_MATCHED_PK_SCORES) {
-		  bw.close();
-	  }
+    // *************  debug writer closed here
 
     // collect all of the scores into a single arraylist and select the top
     // two matches to compute the delta score
@@ -607,9 +571,9 @@ class PSM {
 
     double score1 = Globals.round_dbl(allScores.get(0), 6);
     double score2 = 0;
-	  if (!isUnambiguous) {
-		  score2 = Globals.round_dbl(allScores.get(1), 6);
-	  }
+    if (!isUnambiguous) {
+      score2 = Globals.round_dbl(allScores.get(1), 6);
+    }
 
     String pep1 = "";
     String pep2 = "";
@@ -632,9 +596,9 @@ class PSM {
           numAssigned++;
         }
 
-		  if (numAssigned == 2) {
-			  break;
-		  }
+        if (numAssigned == 2) {
+          break;
+        }
       }
 
       // if this is true, then you need to search among the decoys
@@ -652,9 +616,9 @@ class PSM {
             numAssigned++;
           }
 
-			if (numAssigned == 2) {
-				break;
-			}
+          if (numAssigned == 2) {
+            break;
+          }
         }
       }
     } else { // special case for unambiguous PSMs
@@ -669,7 +633,6 @@ class PSM {
     score1pep.initialize(origPep.peptide, pep1, charge, mcp);
     score1pep.score = score1;
     isDecoy = score1pep.isDecoyPep(); // determine if this PSM is a decoy hit
-    mcp = null;
 
     if (isUnambiguous) {
       // This is an unambiguous case.
@@ -679,7 +642,6 @@ class PSM {
       score2pep = new Peptide();
       score2pep.initialize(origPep.peptide, pep1, charge, mcp);
       score2pep.score = 0;
-      mcp = null;
       deltaScore = score1;
     } else {
       // Record second best match
@@ -688,8 +650,22 @@ class PSM {
       score2pep = new Peptide();
       score2pep.initialize(origPep.peptide, pep2, charge, mcp);
       score2pep.score = score2;
-      mcp = null;
       deltaScore = score1 - score2;
+    }
+  }
+
+  private void writeAllMatchedPkScores(BufferedWriter bw, String curSeq, Peptide curPep)
+      throws IOException {
+    String line;
+    if (Globals.debugMode == Constants.WRITE_ALL_MATCHED_PK_SCORES) {
+      for (PeakClass pk : curPep.matchedPeaks) {
+        line = specId + "\t" + curSeq + "\t" + Globals.isDecoySeq(curSeq) + "\t" +
+            pk.matchedIonStr + "\t" + pk.mz + "\t" +
+            pk.rel_intensity + "\t" + pk.dist + "\t" +
+            pk.intensityScore + "\t" + pk.distScore + "\t" + pk.score + "\n";
+        bw.write(line);
+      }
+      bw.write("\n");
     }
   }
 
@@ -714,9 +690,9 @@ class PSM {
 
     ret += Double.toString(PSMscore) + "\t";
 
-	  if (Globals.runMode == Constants.REPORT_DECOYS) {
-		  ret += (score1pep.isDecoyPep() ? 1 : 0) + "\t" + (score2pep.isDecoyPep() ? 1 : 0) + "\t";
-	  }
+    if (Globals.runMode == Constants.REPORT_DECOYS) {
+      ret += (score1pep.isDecoyPep() ? 1 : 0) + "\t" + (score2pep.isDecoyPep() ? 1 : 0) + "\t";
+    }
 
     ret += Double.toString(deltaScore) + "\t";
 
@@ -735,14 +711,14 @@ class PSM {
   // to this PSM. The data is written in a TAB-delimited format.
   void debug_writeScoredPeaks() throws IOException {
 
-    String tsvFileName = "";
-	  if (Globals.inputType == Constants.PEPXML) {
-		  tsvFileName = specId + ".tsv";
-	  } else {
-		  int i = srcFile.lastIndexOf(Globals.spectrumSuffix);
-		  String k = String.format("%05d", scanNum) + Integer.toString(charge);
-		  tsvFileName = srcFile.substring(0, i) + k + ".tsv";
-	  }
+    String tsvFileName;
+    if (Globals.inputType == Constants.PEPXML) {
+      tsvFileName = specId + ".tsv";
+    } else {
+      int i = srcFile.lastIndexOf(Globals.spectrumSuffix);
+      String k = String.format("%05d", scanNum) + Integer.toString(charge);
+      tsvFileName = srcFile.substring(0, i) + k + ".tsv";
+    }
 
     // With the next 4 lines you create output directory if necessary
     String outDirName = "debug_scored_peaks." + Globals.dateStamp;
@@ -760,19 +736,19 @@ class PSM {
     score1pep.build_ion_ladders();
     score1pep.matchPeaks(PeakList);
 
-	  if (Globals.scoringAlgorithm == Constants.CID) {
-		  score1pep.calcScore_CID();
-	  }
-	  if (Globals.scoringAlgorithm == Constants.HCD) {
-		  score1pep.calcScore_HCD();
-	  }
+    if (Globals.scoringAlgorithm == Constants.CID) {
+      score1pep.calcScore_CID();
+    }
+    if (Globals.scoringAlgorithm == Constants.HCD) {
+      score1pep.calcScore_HCD();
+    }
 
     ArrayList<PeakClass> mPK = score1pep.matchedPeaks;
     mPK.sort(PeakClass.comparator_mz);
     for (PeakClass pk : mPK) {
-		if (!pk.matched) {
-			continue;
-		}
+      if (!pk.matched) {
+        continue;
+      }
 
       String mz = Double.toString(Globals.round_dbl(pk.mz, 4));
       String relI = Double.toString(Globals.round_dbl(pk.rel_intensity, 4));
@@ -790,20 +766,20 @@ class PSM {
 
     score2pep.build_ion_ladders();
     score2pep.matchPeaks(PeakList);
-	  if (Globals.scoringAlgorithm == Constants.CID) {
-		  score2pep.calcScore_CID();
-	  }
-	  if (Globals.scoringAlgorithm == Constants.HCD) {
-		  score2pep.calcScore_HCD();
-	  }
+    if (Globals.scoringAlgorithm == Constants.CID) {
+      score2pep.calcScore_CID();
+    }
+    if (Globals.scoringAlgorithm == Constants.HCD) {
+      score2pep.calcScore_HCD();
+    }
 
     mPK.clear();
     mPK = score2pep.matchedPeaks;
     mPK.sort(PeakClass.comparator_mz);
     for (PeakClass pk : mPK) {
-		if (!pk.matched) {
-			continue;
-		}
+      if (!pk.matched) {
+        continue;
+      }
 
       String mz = Double.toString(Globals.round_dbl(pk.mz, 4));
       String relI = Double.toString(Globals.round_dbl(pk.rel_intensity, 4));
@@ -832,19 +808,19 @@ class PSM {
     score1pep.build_ion_ladders();
     score1pep.matchPeaks(PeakList);
 
-	  if (Globals.scoringAlgorithm == Constants.CID) {
-		  score1pep.calcScore_CID();
-	  }
-	  if (Globals.scoringAlgorithm == Constants.HCD) {
-		  score1pep.calcScore_HCD();
-	  }
+    if (Globals.scoringAlgorithm == Constants.CID) {
+      score1pep.calcScore_CID();
+    }
+    if (Globals.scoringAlgorithm == Constants.HCD) {
+      score1pep.calcScore_HCD();
+    }
 
     ArrayList<PeakClass> mPK = score1pep.matchedPeaks;
     mPK.sort(PeakClass.comparator_mz);
     for (PeakClass pk : mPK) {
-		if (!pk.matched) {
-			continue;
-		}
+      if (!pk.matched) {
+        continue;
+      }
 
       String mz = Double.toString(Globals.round_dbl(pk.mz, 4));
       String relI = Double.toString(Globals.round_dbl(pk.rel_intensity, 4));
@@ -859,20 +835,20 @@ class PSM {
 
     score2pep.build_ion_ladders();
     score2pep.matchPeaks(PeakList);
-	  if (Globals.scoringAlgorithm == Constants.CID) {
-		  score2pep.calcScore_CID();
-	  }
-	  if (Globals.scoringAlgorithm == Constants.HCD) {
-		  score2pep.calcScore_HCD();
-	  }
+    if (Globals.scoringAlgorithm == Constants.CID) {
+      score2pep.calcScore_CID();
+    }
+    if (Globals.scoringAlgorithm == Constants.HCD) {
+      score2pep.calcScore_HCD();
+    }
 
     mPK.clear();
     mPK = score2pep.matchedPeaks;
     mPK.sort(PeakClass.comparator_mz);
     for (PeakClass pk : mPK) {
-		if (!pk.matched) {
-			continue;
-		}
+      if (!pk.matched) {
+        continue;
+      }
 
       String mz = Double.toString(Globals.round_dbl(pk.mz, 4));
       String relI = Double.toString(Globals.round_dbl(pk.rel_intensity, 4));

@@ -15,6 +15,7 @@ import java.io.File;
 import java.io.FileReader;
 import java.io.FileWriter;
 import java.io.IOException;
+import java.nio.file.Paths;
 import java.util.ArrayList;
 import java.util.concurrent.ExecutionException;
 import java.util.concurrent.ExecutorService;
@@ -23,6 +24,7 @@ import java.util.concurrent.TimeUnit;
 import javax.xml.parsers.ParserConfigurationException;
 import org.xml.sax.SAXException;
 import umich.ms.fileio.exceptions.FileParsingException;
+import umich.ms.fileio.filetypes.pepxml.PepXmlParser;
 
 /**
  * @author dfermin
@@ -66,6 +68,7 @@ public class LucXor {
     Globals.loadUserMods();
 
     // read in the score results
+    // TODO: XXX: ACHTUNG: UNCOMMENT THIS SECTION, COMMENTED OUT FOR DEBUGGING
     if (Globals.inputType == Constants.PEPXML) {
       parse_pepXML();
     } else {
@@ -109,7 +112,21 @@ public class LucXor {
   private static void parse_pepXML()
       throws ParserConfigurationException, SAXException, IOException {
     System.err.println("\nReading PSMs from pepXML file: " + Globals.inputFile.getAbsolutePath());
-    PepXML p = new PepXML(Globals.inputFile);
+
+
+    PepXML p = new PepXML();
+    p.load(Globals.inputFile);
+
+//    try {
+//      System.out.printf("Reading with PepXmlParser%n");
+//      timeLo = System.nanoTime();
+//      PepXmlParser.parse(Paths.get(Globals.inputFile.getAbsolutePath()));
+//      timeHi = System.nanoTime();
+//      System.out.printf("Reading with PepXmlParser took %.2fs%n", (timeHi-timeLo)/1e9);
+//
+//    } catch (FileParsingException e) {
+//      e.printStackTrace();
+//    }
 
     System.err.println(Globals.PSM_list.size() + " Candidate PSMs read in.");
   }
@@ -118,7 +135,7 @@ public class LucXor {
   // Function parses a tab-delimited file of PSMs
   private static void parse_TSV_src() throws IOException {
     System.err.println("\nReading PSM from TSV file: " + Globals.inputFile.getAbsolutePath());
-    PSM curPSM = null;
+    PSM curPSM;
 
     if (!Globals.inputFile.exists()) {
       System.err.println("ERROR: Unable to find " + Globals.inputFile.getAbsolutePath());
@@ -150,7 +167,6 @@ public class LucXor {
       curPSM.origPep.peptide = vars[4].toUpperCase();
 
       if (vars.length < 6) { // no modifications so skip this PSM
-        curPSM = null;
         continue;
       }
 
@@ -187,7 +203,6 @@ public class LucXor {
           Globals.PSM_list.add(curPSM);
         }
       }
-      curPSM = null;
     }
     br.close();
 
@@ -284,9 +299,7 @@ public class LucXor {
 
       M.numPSM = numPSM;
       Globals.modelingMap_CID.put(z, M);
-      M = null;
       modelingPks.clear();
-      modelingPks = null;
     } // end loop over charge state for modeling
 
     if (Globals.modelingMap_CID.size() < 1) {
@@ -308,7 +321,6 @@ public class LucXor {
         m.printSummaryStats();
         m.clearArrays();
         Globals.modelingMap_CID.put(z, m);
-        m = null;
         if (z > maxObsZ) {
           maxObsZ = z;
         }
@@ -320,7 +332,6 @@ public class LucXor {
     for (int missedZ : missedChargeStates.toArray()) {
       Globals.modelingMap_CID.put(missedZ, m);
     }
-    m = null;
     missedChargeStates.clear();
 
     System.gc(); // try and reclaim some memory
@@ -398,7 +409,6 @@ public class LucXor {
           Globals.recordFLRestimates();
           Globals.clearPSMs();
         } else { // you are done, exit loop over RN variable
-          RN = 2;
           break;
         }
       }
@@ -545,8 +555,6 @@ public class LucXor {
         M.writeModelPks();
       }
 
-      M = null;
-      modelingPks = null;
     } // end for loop over charge state for modeling
 
     if (Globals.modelingMap_HCD.size() < 1) {
@@ -580,7 +588,6 @@ public class LucXor {
         System.err.print("\n");  // makes for prettier output
 
         Globals.modelingMap_HCD.put(z, m);
-        m = null;
         if (z > maxObsZ) {
           maxObsZ = z;
         }
@@ -592,7 +599,6 @@ public class LucXor {
     for (int missedZ : missedChargeStates) {
       Globals.modelingMap_HCD.put(missedZ, m);
     }
-    m = null;
     missedChargeStates.clear();
 
     // for debugging
@@ -678,7 +684,6 @@ public class LucXor {
           Globals.recordFLRestimates();
           Globals.clearPSMs();
         } else { // you are done, exit loop over RN variable
-          RN = 2; // this will guarantee that you'll exit the loop
           break;
         }
       }

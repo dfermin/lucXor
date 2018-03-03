@@ -20,7 +20,7 @@ class StatsFunctions {
    * Function returns the number of combinations of (n choose k)
    */
   public double combinatorial(double n, double k) {
-    double ret = 1.0;
+    double ret;
 
     // n = number of characters in alphabet
     // k = desired length of the words to be construted
@@ -76,7 +76,6 @@ class StatsFunctions {
       }
 
       ret.add(curList);
-      curList = null;
     }
 
     return ret;
@@ -84,9 +83,7 @@ class StatsFunctions {
 
 
   double log_gaussianProb(double mu, double sigma2, double x) {
-    double ret = 0d;
-    ret = -0.5 * Math.pow((x - mu), 2.0) / sigma2 - 0.5 * Math.log((2.0 * Math.PI * sigma2));
-    return ret;
+    return -0.5 * Math.pow((x - mu), 2.0) / sigma2 - 0.5 * Math.log((2.0 * Math.PI * sigma2));
   }
 
 

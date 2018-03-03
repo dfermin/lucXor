@@ -14,13 +14,21 @@ import java.io.File;
 import java.io.FileReader;
 import java.io.FileWriter;
 import java.io.IOException;
+import java.nio.file.Files;
+import java.nio.file.Path;
+import java.nio.file.Paths;
 import java.text.SimpleDateFormat;
 import java.util.ArrayList;
 import java.util.Collections;
 import java.util.HashMap;
+import java.util.HashSet;
 import java.util.Iterator;
 import java.util.List;
 import java.util.Map;
+import java.util.Map.Entry;
+import java.util.Set;
+import java.util.TreeMap;
+import java.util.stream.Collectors;
 import umich.ms.datatypes.LCMSData;
 import umich.ms.datatypes.LCMSDataSubset;
 import umich.ms.datatypes.scan.IScan;
@@ -76,7 +84,10 @@ class Globals {
   static THashMap<String, Double> decoyNLmap = null;
   private static THashMap<Double, double[]> FLRestimateMap = null; // ary[0] = globalFLR, ary[1] = localFLR
 
+  // TODO: ACHTUNG: XXX: Delete this monstrosity (replace with Char->Stirng?)
   static THashMap<String, Double> AAmassMap = null;
+
+  // TODO: ACHTUNG: XXX: Delete this monstrosity (replace with Char->Stirng?)
   private static THashMap<String, String> decoyAAMap = null;
 
   static THashMap<Integer, ModelData_CID> modelingMap_CID = null;
@@ -370,7 +381,6 @@ class Globals {
 
 
   private static String parse_input_line(String line) {
-    String ret = "";
     StringBuilder sb = new StringBuilder();
     int N = line.length();
 
@@ -384,11 +394,10 @@ class Globals {
       if (c == ' ') {
         continue;
       }
-
       sb.append(c);
     }
-    ret = sb.toString();
-    return ret;
+
+    return sb.toString();
   }
 
 
@@ -397,7 +406,7 @@ class Globals {
 
     char aa = 0;
     StringBuilder sb = new StringBuilder();
-    double mass = 0d;
+    double mass;
     int N = line.length();
 
     int b = line.indexOf("=") + 1;
@@ -595,7 +604,6 @@ class Globals {
       }
       varModMap.put(c, mass);
     }
-    tmp = null;
 
     for (String c : varModMap.keySet()) {
       String C = c.toUpperCase();
@@ -606,7 +614,7 @@ class Globals {
 
 
   public static double round_dbl(double value, int numPlaces) {
-    double ret = 0;
+    double ret;
     double N = Math.pow(10, numPlaces);
 
     ret = (double) Math.round((value * N)) / N;
@@ -622,46 +630,60 @@ class Globals {
         + Globals.spectrumSuffix.toUpperCase() + " format)");
     System.err.println("This can take a while so please be patient.");
 
-    Multimap<String, Integer> scanMap = ArrayListMultimap.create();
-
-    int droppedPSMs = 0; // holds the number of PSMs for which no corresponding spectrum file could be found
-    Iterator<PSM> iter = PSM_list.iterator();
-    while (iter.hasNext()) {
-      PSM p = iter.next();
-      String pathStr = Globals.spectrumPath + "/" + p.srcFile;
-      File f = new File(pathStr);
-
-      if (!f.exists()) {
-        droppedPSMs++;
-        iter.remove(); // remove this PSM since we will not be able to get it's spectrum
-      } else {
-        scanMap.put(f.getAbsolutePath(), p.scanNum);
-      }
+    final List<String> rawFileNames = PSM_list.stream()
+        .map(psm -> psm.srcFile).distinct().sorted()
+        .collect(Collectors.toList());
+    System.err.printf("Input PSMs originated from %d spectral data files:%n", rawFileNames.size());
+    rawFileNames.forEach(file -> System.out.printf("\t%s%n", file));
+    // test file paths
+    final Set<String> rawPathNonExistent = rawFileNames.stream()
+        .filter(file -> !Files.exists(Paths.get(Globals.spectrumPath.toString(), file)))
+        .collect(Collectors.toSet());
+    if (!rawPathNonExistent.isEmpty()) {
+      System.err.printf("Files don't exist, PSMs from them will be skipped:%n");
+      rawPathNonExistent.forEach(path -> System.out.printf("\t%s%n", path));
     }
 
-    if (Globals.spectrumSuffix.equalsIgnoreCase("mgf")) {
-      TIntObjectHashMap<SpectrumClass> curSpectra = null;
+    // map whatever paths are in PSMs list to absolute paths
+    final Map<String, Path> mapPaths = rawFileNames.stream()
+        .filter(file -> !rawPathNonExistent.contains(file))
+        .collect(Collectors.toMap(f -> f, f -> Paths.get(Globals.spectrumPath.toString(), f).toAbsolutePath()));
 
-      for (String specFile : scanMap.keySet()) {
-        curSpectra = read_mgf(specFile);
-        String fn = new File(specFile).getName(); // get just the file name of specFile
+    TreeMap<String, TreeMap<Integer, PSM>> mapFilesToPsms = new TreeMap<>();
+    final ArrayList<PSM> psmsKept = new ArrayList<>(PSM_list.size());
+    PSM_list.stream()
+        .filter(psm -> !rawPathNonExistent.contains(psm.srcFile))
+        .forEach(psm -> {
+          psmsKept.add(psm);
+          TreeMap<Integer, PSM> map = mapFilesToPsms.get(psm.srcFile);
+          if (map == null) map = new TreeMap<>();
+          map.put(psm.scanNum, psm);
+          mapFilesToPsms.put(mapPaths.get(psm.srcFile).toString(), map);
+        });
+    PSM_list = psmsKept;
+
+    if (Globals.spectrumSuffix.equalsIgnoreCase("mgf")) {
+
+      for (String specFile : mapFilesToPsms.keySet()) {
+        TIntObjectHashMap<SpectrumClass> curSpectra = read_mgf(specFile);
+        String fileName = new File(specFile).getName(); // get just the file name of specFile
         int assignedSpectraCtr = 0;
 
         // Assign the spectra to their respective PSMs
         for (PSM p : PSM_list) {
-          if (p.srcFile.equalsIgnoreCase(fn)) {
+          if (p.srcFile.equalsIgnoreCase(fileName)) {
             if (curSpectra.containsKey(p.scanNum)) {
               p.recordSpectra(curSpectra.get(p.scanNum));
               assignedSpectraCtr++;
             }
           }
         }
-        System.err.println(fn + ": " + assignedSpectraCtr + " spectra read in.");
+        System.err.println(fileName + ": " + assignedSpectraCtr + " spectra read in.");
       }
     } else if (Globals.spectrumSuffix.equalsIgnoreCase("mzXML")) {
-      read_mzXML(scanMap);
+      read_mzXML(mapFilesToPsms);
     } else if (Globals.spectrumSuffix.equalsIgnoreCase("mzML")) {
-      read_mzML(scanMap);
+      read_mzML(mapFilesToPsms);
     }
   }
 
@@ -669,63 +691,40 @@ class Globals {
   /****************
    * Function reads in spectral data from mzML files.
    */
-  private static void read_mzML(Multimap<String, Integer> scanMap) throws FileParsingException {
+  private static void read_mzML(TreeMap<String, TreeMap<Integer, PSM>> mapFilesToPsms) throws FileParsingException {
 
     // Iterate over the file names
-    for (String fn : scanMap.keySet()) {
-      String baseFN = new File(fn).getName();
-      System.err.print("\n" + baseFN + ":  "); // beginning of info line
+    for (String fn : mapFilesToPsms.keySet()) {
+      String fileName = new File(fn).getName();
+      System.err.printf("%n%s: ...", fileName); // beginning of info line
 
-      int ctr = 0;
-      int iter = 0;
-      List<Integer> scanNums = (List<Integer>) scanMap.get(fn);
-      Collections.sort(scanNums); // order scan numbers
+      final TreeMap<Integer, PSM> psmsOfInterest = mapFilesToPsms.get(fn);
+      Integer threads = numThreads >= 0 ? numThreads : null;
 
-      // read in the mzXML file
-      String mzML_path = Globals.spectrumPath + "/" + baseFN;
+      // read in the mzML file
+      try (MZMLFile mzml = new MZMLFile(fn)) {
+        mzml.setNumThreadsForParsing(threads);
+        mzml.setParsingTimeout(60L); // 1 minute before it times out trying to read a file
+        LCMSData lcmsData = new LCMSData(mzml);
 
-      final MZMLFile curMZML = new MZMLFile(mzML_path);
+        lcmsData.load(LCMSDataSubset.MS2_WITH_SPECTRA);
+        IScanCollection scans = lcmsData.getScans();
+        ScanIndex ms2ScanIndex = scans.getMapMsLevel2index().get(2);
 
-      for (int scanNum : scanNums) {
-        iter++;
-        if (iter % 100 == 0) {
-          System.err.print("\r" + baseFN + ":  " + iter + "... "); // beginning of info line
-        }
-        final IScan scan = curMZML.parseScan(scanNum, true);
-        final ISpectrum spectrum = scan.getSpectrum();
-        int N = spectrum.getMZs().length;
-        if (N == 0) {
-          continue; // no valid spectrum for this scan number
-        }
+        for (Entry<Integer, PSM> psmEntry : psmsOfInterest.entrySet()) {
+          final Integer scanNum = psmEntry.getKey();
+          final PSM psm = psmEntry.getValue();
+          final IScan scan = ms2ScanIndex.getNum2scan().get(scanNum);
+          if (scan == null) {
 
-        double[] mz = spectrum.getMZs();
-        double[] intensities = spectrum.getIntensities();
-
-        // If this happens, there is something wrong with the spectrum so skip it
-        if (mz.length != intensities.length) {
-          System.err.print(
-              "\nERROR:" + baseFN + " Scan: " + scanNum +
-                  "\n# of mz values != # intensity values: " +
-                  mz.length + " != " + intensities.length +
-                  "\nSkipping this scan...\n"
-          );
-          continue;
-        }
-
-        SpectrumClass X = new SpectrumClass(mz, intensities);
-
-        // assign this spectrum to it's PSM
-        for (PSM p : PSM_list) {
-          if (p.srcFile.equalsIgnoreCase(baseFN) && (p.scanNum == scanNum)) {
-            p.recordSpectra(X);
-            ctr++;
-            break;
+            continue;
           }
+          SpectrumClass x = new SpectrumClass(scan.getSpectrum().getMZs(),
+              scan.getSpectrum().getIntensities());
+          psm.recordSpectra(x);
         }
-        X = null;
       }
-      System.err.print(
-          "\r" + baseFN + ":  " + ctr + " spectra read in.            "); // end of file reading
+      System.err.printf("%s: Done%n", fileName); // beginning of info line
     }
 
   }
@@ -765,7 +764,7 @@ class Globals {
     BufferedReader br = new BufferedReader(new FileReader(mgf));
     String line;
     int scanNum = 0;
-    SpectrumClass S = null;
+    SpectrumClass S;
     ArrayList<Double> mzAL = null, intensityAL = null;
 
     while ((line = br.readLine()) != null) {
@@ -789,10 +788,7 @@ class Globals {
 
           mzAL = null;
           intensityAL = null;
-          mz = null;
-          I = null;
         }
-        S = null;
         scanNum = 0;
       }
 
@@ -826,55 +822,51 @@ class Globals {
 
 
   // Function to read spectra from mzXML file
-  private static void read_mzXML(Multimap<String, Integer> scanMap)
-      throws IllegalStateException, FileParsingException {
+  private static void read_mzXML(TreeMap<String, TreeMap<Integer, PSM>> mapFilesToPsms) throws FileParsingException {
 
     // Iterate over the file names
-    for (String fn : scanMap.keySet()) {
-      String baseFN = new File(fn).getName();
-      System.err.print(baseFN + ":  "); // beginning of info line
+    for (String fn : mapFilesToPsms.keySet()) {
+      String fileName = new File(fn).getName();
+      System.err.print(fileName + ":  "); // beginning of info line
 
       int ctr = 0;
-      List<Integer> scanNums = (List<Integer>) scanMap.get(fn);
-      Collections.sort(scanNums); // order the scan numbers
 
-      int N = numThreads;
-      if (numThreads > 1) {
-        N -= 1;
-      }
+      Integer threads = numThreads >= 0 ? numThreads : null;
 
-      final MZXMLFile mzxml = new MZXMLFile(fn, false);
-      mzxml.setNumThreadsForParsing(N);
-      mzxml.setParsingTimeout(60L); // 1 minute before it times out trying to read a file
-      final LCMSData lcmsData = new LCMSData(mzxml);
-      lcmsData.load(LCMSDataSubset.MS2_WITH_SPECTRA);
-      final IScanCollection scans = lcmsData.getScans();
-      final ScanIndex ms2ScanIndex = scans.getMapMsLevel2index().get(2);
+      try (MZXMLFile mzxml = new MZXMLFile(fn, false)) {
+        mzxml.setNumThreadsForParsing(threads);
+        mzxml.setParsingTimeout(60L); // 1 minute before it times out trying to read a file
+        LCMSData lcmsData = new LCMSData(mzxml);
 
-      if ((ms2ScanIndex == null) || (ms2ScanIndex.getNum2scan().isEmpty())) {
-        System.err
-            .println("\nERROR: Globals.read_mzXML(): Unable to read MS2 scans from '" + fn + "'\n");
-        System.exit(0);
-      }
+        lcmsData.load(LCMSDataSubset.MS2_WITH_SPECTRA);
+        IScanCollection scans = lcmsData.getScans();
+        ScanIndex ms2ScanIndex = scans.getMapMsLevel2index().get(2);
 
-      for (Map.Entry<Integer, IScan> num2scan : ms2ScanIndex.getNum2scan().entrySet()) {
-        int scanNum = num2scan.getKey();
-        IScan scan = num2scan.getValue();
-        double[] mz = scan.getSpectrum().getMZs();
-        double[] intensities = scan.getSpectrum().getIntensities();
+        if ((ms2ScanIndex == null) || (ms2ScanIndex.getNum2scan().isEmpty())) {
+          System.err
+              .println(
+                  "\nERROR: Globals.read_mzXML(): Unable to read MS2 scans from '" + fn + "'\n");
+          System.exit(0);
+        }
 
-        SpectrumClass curSpectrum = new SpectrumClass(mz, intensities);
+        for (Map.Entry<Integer, IScan> num2scan : ms2ScanIndex.getNum2scan().entrySet()) {
+          int scanNum = num2scan.getKey();
+          IScan scan = num2scan.getValue();
+          double[] mz = scan.getSpectrum().getMZs();
+          double[] intensities = scan.getSpectrum().getIntensities();
 
-        // assign this spectrum to it's PSM
-        for (PSM p : PSM_list) {
-          if ((p.srcFile.equalsIgnoreCase(baseFN)) && (p.scanNum == scanNum)) {
-            p.recordSpectra(curSpectrum);
-            ctr++;
-            break;
+          SpectrumClass curSpectrum = new SpectrumClass(mz, intensities);
+
+          // assign this spectrum to it's PSM
+          for (PSM p : PSM_list) {
+            if ((p.srcFile.equalsIgnoreCase(fileName)) && (p.scanNum == scanNum)) {
+              p.recordSpectra(curSpectrum);
+              ctr++;
+              break;
+            }
           }
         }
       }
-
       System.err.println(ctr + " spectra read in.");  // end of info line
     }
   }
@@ -902,7 +894,7 @@ class Globals {
   // character modification
   static String getTPPresidue(String c) {
     String ret = "";
-    String orig = "";
+    String orig;
 
     if (c.equalsIgnoreCase("[")) {
       int d = (int) Math.round(Globals.ntermMass) + 1; // adds a proton
@@ -1112,8 +1104,7 @@ class Globals {
       assigned = false;
 
       // iterate over the delta scores until you find the value closest to this one
-      int i = 0;
-      for (i = 1; i < N; i++) {
+      for (int i = 1; i < N; i++) {
         double curDS = obsDeltaScores.get(i);
         if (curDS > obs_ds) { // hit the limit, get the *previous* delta score
           double[] d = FLRestimateMap.get(obsDeltaScores.get((i - 1)));
