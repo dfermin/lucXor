@@ -90,8 +90,6 @@ class PepXML extends DefaultHandler {
       String terminus = attr.getValue("terminus");
       double modMass = Double.valueOf(attr.getValue("massdiff"));
 
-      String aa = "x";
-
       if (terminus.equalsIgnoreCase("n")) {
         Globals.ntermMass = modMass;
       }

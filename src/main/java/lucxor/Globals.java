@@ -88,7 +88,7 @@ class Globals {
   static THashMap<String, Double> AAmassMap = null;
 
   // TODO: ACHTUNG: XXX: Delete this monstrosity (replace with Char->Stirng?)
-  private static THashMap<String, String> decoyAAMap = null;
+  private static THashMap<Character, String> decoyAAMap = null;
 
   static THashMap<Integer, ModelData_CID> modelingMap_CID = null;
   static THashMap<Integer, ModelData_HCD> modelingMap_HCD = null;
@@ -498,26 +498,26 @@ class Globals {
     AAmassMap.put("Y", 163.06333);
     AAmassMap.put("V", 99.06841);
 
-    decoyAAMap.put("2", "A");
-    decoyAAMap.put("3", "R");
-    decoyAAMap.put("4", "N");
-    decoyAAMap.put("5", "D");
-    decoyAAMap.put("6", "C");
-    decoyAAMap.put("7", "E");
-    decoyAAMap.put("8", "Q");
-    decoyAAMap.put("9", "G");
-    decoyAAMap.put("0", "H");
-    decoyAAMap.put("@", "I");
-    decoyAAMap.put("#", "L");
-    decoyAAMap.put("$", "K");
-    decoyAAMap.put("%", "M");
-    decoyAAMap.put("&", "F");
-    decoyAAMap.put(";", "P");
-    decoyAAMap.put("?", "W");
-    decoyAAMap.put("~", "V");
-    decoyAAMap.put("^", "S");
-    decoyAAMap.put("*", "T");
-    decoyAAMap.put("=", "Y");
+    decoyAAMap.put('2', "A");
+    decoyAAMap.put('3', "R");
+    decoyAAMap.put('4', "N");
+    decoyAAMap.put('5', "D");
+    decoyAAMap.put('6', "C");
+    decoyAAMap.put('7', "E");
+    decoyAAMap.put('8', "Q");
+    decoyAAMap.put('9', "G");
+    decoyAAMap.put('0', "H");
+    decoyAAMap.put('@', "I");
+    decoyAAMap.put('#', "L");
+    decoyAAMap.put('$', "K");
+    decoyAAMap.put('%', "M");
+    decoyAAMap.put('&', "F");
+    decoyAAMap.put(';', "P");
+    decoyAAMap.put('?', "W");
+    decoyAAMap.put('~', "V");
+    decoyAAMap.put('^', "S");
+    decoyAAMap.put('*', "T");
+    decoyAAMap.put('=', "Y");
   }
 
 
@@ -553,7 +553,7 @@ class Globals {
     }
 
     // Now add the decoy masses to the AAmassMap
-    for (String c : decoyAAMap.keySet()) {
+    for (Character c : decoyAAMap.keySet()) {
       String trueAA = decoyAAMap.get(c);
 
       if (varModMap.containsKey(trueAA)) {
@@ -564,7 +564,7 @@ class Globals {
       }
 
       double mass = AAmassMap.get(trueAA) + Globals.decoyMass;
-      AAmassMap.put(c, mass);
+      AAmassMap.put(c.toString(), mass);
     }
 
   }
@@ -696,16 +696,17 @@ class Globals {
     // Iterate over the file names
     for (String fn : mapFilesToPsms.keySet()) {
       String fileName = new File(fn).getName();
-      System.err.printf("%n%s: ...", fileName); // beginning of info line
+      System.err.printf("\n%s: ...", fileName); // beginning of info line
 
       final TreeMap<Integer, PSM> psmsOfInterest = mapFilesToPsms.get(fn);
       Integer threads = numThreads >= 0 ? numThreads : null;
 
       // read in the mzML file
+      LCMSData lcmsData = null;
       try (MZMLFile mzml = new MZMLFile(fn)) {
         mzml.setNumThreadsForParsing(threads);
         mzml.setParsingTimeout(60L); // 1 minute before it times out trying to read a file
-        LCMSData lcmsData = new LCMSData(mzml);
+        lcmsData = new LCMSData(mzml);
 
         lcmsData.load(LCMSDataSubset.MS2_WITH_SPECTRA);
         IScanCollection scans = lcmsData.getScans();
@@ -723,8 +724,10 @@ class Globals {
               scan.getSpectrum().getIntensities());
           psm.recordSpectra(x);
         }
+      } finally {
+        if (lcmsData != null) lcmsData.releaseMemory();
       }
-      System.err.printf("%s: Done%n", fileName); // beginning of info line
+      System.err.printf("\r%s: Done\n", fileName); // beginning of info line
     }
 
   }
@@ -827,16 +830,18 @@ class Globals {
     // Iterate over the file names
     for (String fn : mapFilesToPsms.keySet()) {
       String fileName = new File(fn).getName();
-      System.err.printf("%n%s: ...", fileName); // beginning of info line
+      System.err.printf("\n%s: ...", fileName); // beginning of info line
 
       final TreeMap<Integer, PSM> psmsOfInterest = mapFilesToPsms.get(fn);
       Integer threads = numThreads >= 0 ? numThreads : null;
 
       // read in the mzML file
+      LCMSData lcmsData = null;
       try (MZXMLFile mzxml = new MZXMLFile(fn)) {
         mzxml.setNumThreadsForParsing(threads);
         mzxml.setParsingTimeout(60L); // 1 minute before it times out trying to read a file
-        LCMSData lcmsData = new LCMSData(mzxml);
+        lcmsData = new LCMSData(mzxml);
+
 
         lcmsData.load(LCMSDataSubset.MS2_WITH_SPECTRA);
         IScanCollection scans = lcmsData.getScans();
@@ -854,27 +859,30 @@ class Globals {
               scan.getSpectrum().getIntensities());
           psm.recordSpectra(x);
         }
+      } finally {
+        if (lcmsData != null) lcmsData.releaseMemory();
       }
-      System.err.printf("\r%s: Done%n", fileName); // beginning of info line
+      System.err.printf("\r%s: Done\n", fileName); // beginning of info line
     }
   }
 
 
   // Function returns the decoy 'key' from the decoy map for the given residue
   static String getDecoySymbol(char c) {
-    String ret = "";
     String srcChar = Character.toString(c);
 
-    for (String k : decoyAAMap.keySet()) {
+    // TODO: ACHTUNG: Continue here, change the underlying map and this whole method.
+
+    for (Character k : decoyAAMap.keySet()) {
       String v = decoyAAMap.get(k);
 
       if (v.equalsIgnoreCase(srcChar)) {
-        ret = k;
-        break;
+        return k.toString();
+        //break;
       }
     }
 
-    return ret;
+    return "";
   }
 
 
@@ -908,38 +916,28 @@ class Globals {
 
   // Function returns true if the given sequence contains decoy characters
   static boolean isDecoySeq(String seq) {
-    boolean ret = false;
 
-    int score = 0;
     for (int i = 0; i < seq.length(); i++) {
-      String c = Character.toString(seq.charAt(i));
-      if (c.equalsIgnoreCase("[")) {
+      char c = seq.charAt(i);
+      if (Character.compare('[', c) == 0) {
         continue; // n-term mod symbol
       }
-      if (c.equalsIgnoreCase("]")) {
+      if (Character.compare(']', c) == 0) {
         continue; // c-term mod symbol
       }
 
-      if (isDecoyResidue(c)) {
-        score++;
+      if (isDecoyResidue(Character.toString(c))) {
+        return true;
       }
     }
 
-    if (score > 0) {
-      ret = true;
-    }
-
-    return ret;
+    return false;
   }
 
 
   // Function returns true if the given residue is from the decoy list
   static boolean isDecoyResidue(String AA) {
-    boolean ret = false;
-    if (decoyAAMap.containsKey(AA)) {
-      ret = true;
-    }
-    return ret;
+    return decoyAAMap.containsKey(AA);
   }
 
 

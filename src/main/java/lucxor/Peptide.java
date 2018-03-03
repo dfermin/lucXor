@@ -37,8 +37,8 @@ class Peptide {
   ArrayList<PeakClass> matchedPeaks;
 
   Peptide() {
-    modPosMap = new TIntDoubleHashMap();
-    nonTargetMods = new THashMap<>();
+    modPosMap = new TIntDoubleHashMap(2);
+    nonTargetMods = new THashMap<>(2);
     charge = 0;
     numPermutations = 0;
     score = 0;
@@ -190,8 +190,9 @@ class Peptide {
 
 
   void build_ion_ladders() {
-    b_ions = new THashMap<>();
-    y_ions = new THashMap<>();
+    int ionSeriesLen = charge * pepLen;
+    b_ions = new THashMap<>(ionSeriesLen);
+    y_ions = new THashMap<>(ionSeriesLen);
 
     String b, y;
     double bm, ym; // ion mass
@@ -207,9 +208,8 @@ class Peptide {
       ctermM = Globals.ctermMass;
     }
 
-    for (double Z = 1.0; Z < (double) charge; Z++) {
-      for (int i = 1; i < pepLen;
-          i++) { // starting at 1 ensures our shortest fragment ion is 2 char long
+    for (int Z = 1; Z < charge; Z++) {
+      for (int i = 1; i < pepLen; i++) { // starting at 1 ensures our shortest fragment ion is 2 char long
 
         String prefix = modPeptide.substring(0, i);
         String suffix = modPeptide.substring(i);
@@ -224,7 +224,7 @@ class Peptide {
           bmz = bm / Z;
 
           if (Z > 1.0) {
-            b += "/+" + Integer.toString((int) Z);
+            b += "/+" + Integer.toString(Z);
           }
 
           if (bmz > Globals.minMZ) {

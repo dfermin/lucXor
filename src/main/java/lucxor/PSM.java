@@ -55,7 +55,7 @@ class PSM {
   // default constructor
   PSM() {
     origPep = new Peptide();
-    modCoordMap = new TIntDoubleHashMap();
+    modCoordMap = new TIntDoubleHashMap(2);
     isKeeper = false;
     useForModel = false;
     isDecoy = false;
@@ -427,7 +427,6 @@ class PSM {
 
   // Function creates all of the permutations for the sequence assigned to this PSM
   void generatePermutations(int RN) {
-    posPermutationScoreMap = new THashMap<>();
     posPermutationScoreMap = origPep.getPermutations(0);
 
     if (!isUnambiguous) {

@@ -15,7 +15,6 @@ import java.io.File;
 import java.io.FileReader;
 import java.io.FileWriter;
 import java.io.IOException;
-import java.nio.file.Paths;
 import java.util.ArrayList;
 import java.util.concurrent.ExecutionException;
 import java.util.concurrent.ExecutorService;
@@ -24,7 +23,6 @@ import java.util.concurrent.TimeUnit;
 import javax.xml.parsers.ParserConfigurationException;
 import org.xml.sax.SAXException;
 import umich.ms.fileio.exceptions.FileParsingException;
-import umich.ms.fileio.filetypes.pepxml.PepXmlParser;
 
 /**
  * @author dfermin
@@ -68,7 +66,6 @@ public class LucXor {
     Globals.loadUserMods();
 
     // read in the score results
-    // TODO: XXX: ACHTUNG: UNCOMMENT THIS SECTION, COMMENTED OUT FOR DEBUGGING
     if (Globals.inputType == Constants.PEPXML) {
       parse_pepXML();
     } else {
@@ -342,44 +339,11 @@ public class LucXor {
 
     for (int RN = 0; RN < 2; RN++) { // RN = run number, 0 = calc. FDR 1 = assign FDR estimates
 
-      if (Globals.runMode == Constants.DEFAULT_RUN_MODE) {
-
-        if (RN == 0) {
-          System.err
-              .println("\n[ " + RN + " ] Estimating FLR with decoys (" + NCPU
-                  + " threads)...");
-        }
-        if (RN == 1) {
-          System.err.println(
-              "\n[ " + RN + " ] Scoring " + Globals.PSM_list.size() + " PSMs (" + NCPU
-                  + " threads)...");
-        }
-      } else {
-        System.err
-            .println("\nScoring " + Globals.PSM_list.size() + " PSMs (" + NCPU + " threads)...");
-      }
+      printRunInfo(NCPU, RN);
 
       // for single threaded analysis
       if ((Globals.numThreads == 1) || (Globals.debugMode != 0)) {
-        int ctr = 1;
-        for (PSM p : Globals.PSM_list) {
-
-          p.generatePermutations(RN);
-          p.scorePermutations();
-
-          if (Globals.debugMode == Constants.WRITE_SCORED_PKS) {
-            p.debug_writeScoredPeaks();
-          }
-
-          ctr++;
-
-          if ((ctr % 100) == 0) {
-            System.err.print(ctr + " ");
-          }
-          if ((ctr % 1000) == 0) {
-            System.err.print("\n");
-          }
-        }
+        scorePermutationsAndWriteScoredPeaks(RN);
       } else { // multi-threaded scoring
 
         // A pool of 'N' worker threads to do the work
@@ -418,6 +382,48 @@ public class LucXor {
       }
     } // end loop over RN
     //*******************************************************/
+  }
+
+  private static void scorePermutationsAndWriteScoredPeaks(int RN) throws IOException {
+
+    int ctr = 0;
+    for (PSM p : Globals.PSM_list) {
+
+      p.generatePermutations(RN);
+      p.scorePermutations();
+
+      if (Globals.debugMode == Constants.WRITE_SCORED_PKS) {
+        p.debug_writeScoredPeaks();
+      }
+
+
+      ctr++;
+      if ((ctr % 100) == 0) {
+        System.err.print(ctr + " ");
+      }
+      if ((ctr % 1000) == 0) {
+        System.err.print("\n");
+      }
+    }
+  }
+
+  private static void printRunInfo(int NCPU, int RN) {
+    if (Globals.runMode == Constants.DEFAULT_RUN_MODE) {
+
+      if (RN == 0) {
+        System.err
+            .println("\n[ " + RN + " ] Estimating FLR with decoys (" + NCPU
+                + " threads)...");
+      }
+      if (RN == 1) {
+        System.err.println(
+            "\n[ " + RN + " ] Scoring " + Globals.PSM_list.size() + " PSMs (" + NCPU
+                + " threads)...");
+      }
+    } else {
+      System.err
+          .println("\nScoring " + Globals.PSM_list.size() + " PSMs (" + NCPU + " threads)...");
+    }
   }
 
   private static int RecordClassifiedPeaks(int numPSM, int z, ArrayList<PeakClass> modelingPks) {
@@ -615,48 +621,17 @@ public class LucXor {
     //*******************************************************************
     // Score the PSMs
     //********************************************************************/
-
     for (int RN = 0; RN < 2; RN++) { // RN = run number
 
-      if (Globals.runMode == Constants.DEFAULT_RUN_MODE) {
-
-        if (RN == 0) {
-          System.err
-              .println("\n[ " + RN + " ] Estimating FLR with decoys (" + NCPU
-                  + " threads)...");
-        }
-        if (RN == 1) {
-          System.err.println(
-              "\n[ " + RN + " ] Scoring " + Globals.PSM_list.size() + " PSMs (" + NCPU
-                  + " threads)...");
-        }
-      } else {
-        System.err
-            .println("\nScoring " + Globals.PSM_list.size() + " PSMs (" + NCPU + " threads)...");
-      }
+      printRunInfo(NCPU, RN);
 
       // for single threaded analysis
       if ((Globals.numThreads == 1) || (Globals.debugMode != 0)) {
-        int ctr = 1;
-        for (PSM p : Globals.PSM_list) {
+        System.err.println("Scoring single-threaded");
+        scorePermutationsAndWriteScoredPeaks(RN);
 
-          p.generatePermutations(RN);
-          p.scorePermutations();
-
-          if (Globals.debugMode == Constants.WRITE_SCORED_PKS) {
-            p.debug_writeScoredPeaks();
-          }
-
-          ctr++;
-
-          if ((ctr % 100) == 0) {
-            System.err.print(ctr + " ");
-          }
-          if ((ctr % 1000) == 0) {
-            System.err.print("\n");
-          }
-        }
       } else { // multi-threaded scoring
+        System.err.println("Scoring multi-threaded");
         final int NTHREADS = Globals.numThreads;
         ExecutorService executor = Executors.newFixedThreadPool(NTHREADS);
         int ctr = 1;
