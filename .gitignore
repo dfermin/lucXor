@@ -12,6 +12,8 @@
 /dist/
 
 
+**.class
+
 # Created by https://www.gitignore.io/api/maven
 
 ### Maven ###
