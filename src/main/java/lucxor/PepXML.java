@@ -16,6 +16,7 @@ import java.util.stream.Collectors;
 import javax.xml.parsers.ParserConfigurationException;
 import javax.xml.parsers.SAXParser;
 import javax.xml.parsers.SAXParserFactory;
+import jdk.nashorn.internal.objects.Global;
 import org.xml.sax.Attributes;
 import org.xml.sax.SAXException;
 import org.xml.sax.helpers.DefaultHandler;
@@ -30,7 +31,6 @@ import umich.ms.fileio.filetypes.pepxml.jaxb.standard.PeptideprophetResult;
 import umich.ms.fileio.filetypes.pepxml.jaxb.standard.SearchHit;
 import umich.ms.fileio.filetypes.pepxml.jaxb.standard.SearchResult;
 import umich.ms.fileio.filetypes.pepxml.jaxb.standard.SearchSummary;
-import umich.ms.fileio.filetypes.pepxml.jaxb.standard.TerminalModification;
 
 
 /**
@@ -226,20 +226,20 @@ class PepXML extends DefaultHandler {
 
       try {
         // skip PSMs with non-standard amino acid characters
-        String x = curPSM.origPep.peptide;
-        for (int i = 0; i < x.length(); i++) {
-          String c = Character.toString(x.charAt(i));
+        for (int i = 0; i < curPSM.origPep.peptide.length(); i++) {
+          String c = Character.toString(curPSM.origPep.peptide.charAt(i));
           if (!AA_CHARS_UPPER.contains(c)) {
             return;
           }
         }
+
+        curPSM.init();
 
         // Skip PSMs that exceed the number of candidate permutations
         if (curPSM.origPep.getNumPerm() > Globals.max_num_permutations) {
           return;
         }
 
-        curPSM.init();
         if (curPSM.isKeeper) {
           Globals.PSM_list.add(curPSM);
         }
@@ -279,6 +279,7 @@ class PepXML extends DefaultHandler {
           final String aa = aaMod.getAminoacid();
           final double massdiff = aaMod.getMassdiff();
           final String variable = aaMod.getVariable();
+
           if (AA_CHARS_UPPER.contains(aa)) {
             // if this is a valid AA character that is a variable modification, record it
             // as a lower case character in the varModMap
@@ -297,9 +298,9 @@ class PepXML extends DefaultHandler {
     final List<Mod> nTermMods = pepxml.getMsmsRunSummary().stream()
         .map(MsmsRunSummary::getSearchSummary).flatMap(Collection::stream)
         .map(SearchSummary::getTerminalModification).flatMap(Collection::stream)
-        .map(tm -> new Mod(tm.getTerminus(), equalsYy(tm.getProteinTerminus()),
+        .map(tm -> new Mod(Terminus.valueOf(tm.getTerminus().toUpperCase()), equalsYy(tm.getProteinTerminus()),
             equalsYy(tm.getVariable()), tm.getMassdiff()))
-        .distinct().filter(mod -> equalsXx("n", "N", mod.terminus))
+        .distinct().filter(mod -> Terminus.N.equals(mod.terminus))
         .collect(Collectors.toList());
 
     if (nTermMods.size() == 1) {
@@ -308,12 +309,12 @@ class PepXML extends DefaultHandler {
     } else if (nTermMods.size() == 2) {
       final Mod tm1 = nTermMods.get(0);
       final Mod tm2 = nTermMods.get(1);
-      if (tm1.isProtein ^ tm2.isProtein) {
+      if (tm1.isProteinEnd ^ tm2.isProteinEnd) {
         System.err.println("Two N-term mods found, but one as 'protein terminus' only, so it's ok");
         // If one is 'protein terminus == Y' and the other is 'protein terminus == N' - it's ok.
         // Otherwise it's not ok.
-        Globals.ntermMassProt = tm1.isProtein ? tm1.massDiff : tm2.massDiff;
-        Globals.ntermMass = tm1.isProtein ? tm2.massDiff : tm1.massDiff;
+        Globals.ntermMassProt = tm1.isProteinEnd ? tm1.massDiff : tm2.massDiff;
+        Globals.ntermMass = tm1.isProteinEnd ? tm2.massDiff : tm1.massDiff;
 
       } else {
         throw new IllegalStateException("More than one distinct N-term mod mass found with "
@@ -329,9 +330,9 @@ class PepXML extends DefaultHandler {
     final List<Mod> cTermMods = pepxml.getMsmsRunSummary().stream()
         .map(MsmsRunSummary::getSearchSummary).flatMap(Collection::stream)
         .map(SearchSummary::getTerminalModification).flatMap(Collection::stream)
-        .map(tm -> new Mod(tm.getTerminus(), equalsYy(tm.getProteinTerminus()),
+        .map(tm -> new Mod(Terminus.valueOf(tm.getTerminus().toUpperCase()), equalsYy(tm.getProteinTerminus()),
             equalsYy(tm.getVariable()), tm.getMassdiff()))
-        .distinct().filter(mod -> equalsXx("c", "C", mod.terminus))
+        .distinct().filter(mod -> Terminus.C.equals(mod.terminus))
         .collect(Collectors.toList());
 
     if (cTermMods.size() == 1) {
@@ -340,12 +341,12 @@ class PepXML extends DefaultHandler {
     } else if (cTermMods.size() == 2) {
       final Mod tm1 = cTermMods.get(0);
       final Mod tm2 = cTermMods.get(1);
-      if (tm1.isProtein ^ tm2.isProtein) {
+      if (tm1.isProteinEnd ^ tm2.isProteinEnd) {
         System.err.println("Two C-term mods found, but one as 'protein terminus' only, so it's ok");
         // If one is 'protein terminus == Y' and the other is 'protein terminus == N' - it's ok.
         // Otherwise it's not ok.
-        Globals.ctermMassProt = tm1.isProtein ? tm1.massDiff : tm2.massDiff;
-        Globals.ctermMass = tm1.isProtein ? tm2.massDiff : tm1.massDiff;
+        Globals.ctermMassProt = tm1.isProteinEnd ? tm1.massDiff : tm2.massDiff;
+        Globals.ctermMass = tm1.isProteinEnd ? tm2.massDiff : tm1.massDiff;
 
       } else {
         throw new IllegalStateException("More than one distinct C-term mod mass found with "
@@ -390,12 +391,13 @@ class PepXML extends DefaultHandler {
             throw new IllegalStateException("Found spectrum_query with assumed_charge == null. Not supported.");
           psm.charge = sq.getAssumedCharge();
 
-          // skip peptides with non-standard AAs
+          // skip PSMs with non-standard AAs
           for (char c : sh.getPeptide().toCharArray()) {
             if (!AA_CHARS_UPPER_RS.contains((int)c))
               return;
           }
 
+          // otherwise record the peptide sequence
           psm.origPep.peptide = sh.getPeptide();
 
           final ModificationInfo modInfo = sh.getModificationInfo();
@@ -454,6 +456,17 @@ class PepXML extends DefaultHandler {
               psm.PSMscore = findSearchScore(sh, "xcorr");
               break;
           }
+
+          psm.init();
+
+          // Skip PSMs that exceed the number of candidate permutations
+          if (psm.origPep.getNumPerm() > Globals.max_num_permutations) {
+            return;
+          }
+
+          if (psm.isKeeper)
+            Globals.PSM_list.add(psm);
+
         });
   }
 
@@ -477,52 +490,4 @@ class PepXML extends DefaultHandler {
     throw new IllegalStateException(String.format("Requested search score '%s' not found for at least one search_hit", scoreName));
   }
 
-  private class Mod {
-    final String terminus;
-    final boolean isProtein;
-    final boolean isVariable;
-    final double massDiff;
-
-    public Mod(String terminus, boolean isProtein, boolean isVariable, double massDiff) {
-      this.terminus = terminus;
-      this.isProtein = isProtein;
-      this.isVariable = isVariable;
-      this.massDiff = massDiff;
-    }
-
-    @Override
-    public boolean equals(Object o) {
-      if (this == o) {
-        return true;
-      }
-      if (o == null || getClass() != o.getClass()) {
-        return false;
-      }
-
-      Mod mod = (Mod) o;
-
-      if (isProtein != mod.isProtein) {
-        return false;
-      }
-      if (isVariable != mod.isVariable) {
-        return false;
-      }
-      if (Double.compare(mod.massDiff, massDiff) != 0) {
-        return false;
-      }
-      return terminus != null ? terminus.equals(mod.terminus) : mod.terminus == null;
-    }
-
-    @Override
-    public int hashCode() {
-      int result;
-      long temp;
-      result = terminus != null ? terminus.hashCode() : 0;
-      result = 31 * result + (isProtein ? 1 : 0);
-      result = 31 * result + (isVariable ? 1 : 0);
-      temp = Double.doubleToLongBits(massDiff);
-      result = 31 * result + (int) (temp ^ (temp >>> 32));
-      return result;
-    }
-  }
 }

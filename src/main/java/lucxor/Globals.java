@@ -74,17 +74,21 @@ class Globals {
 
   static ArrayList<PSM> PSM_list = null;
 
-  static THashMap<String, Double> targetModMap = null; // mods user wants to search for
-  static THashMap<String, Double> fixedModMap = null; // fixed mods observed in data
-  static THashMap<String, Double> varModMap = null; // variable mods observed in data
-  static THashMap<String, Double> nlMap = null; // holds all neutral loss masses, k= list of amino acids v= NL mass
+  /** Mods user wants to search for. */
+  static THashMap<String, Double> targetModMap = null;
+  /** Fixed mods observed in data. */
+  static THashMap<String, Double> fixedModMap = null;
+  /** Variable mods observed in data. */
+  static THashMap<String, Double> varModMap = null;
+  /** Holds all neutral loss masses, k= list of amino acids v= NL mass. */
+  static THashMap<String, Double> nlMap = null;
   static THashMap<String, Double> decoyNLmap = null;
   private static THashMap<Double, double[]> FLRestimateMap = null; // ary[0] = globalFLR, ary[1] = localFLR
 
-  // TODO: ACHTUNG: XXX: Delete this monstrosity (replace with Char->Stirng?)
+  // TODO: ACHTUNG: XXX: Delete this monstrosity (replace with Char->Stirng or an array?)
   static THashMap<String, Double> AAmassMap = null;
 
-  // TODO: ACHTUNG: XXX: Delete this monstrosity (replace with Char->Stirng?)
+  // TODO: ACHTUNG: XXX: Delete this monstrosity (replace with Char->Stirng or an array?)
   private static THashMap<Character, String> decoyAAMap = null;
 
   static THashMap<Integer, ModelData_CID> modelingMap_CID = null;
@@ -460,10 +464,11 @@ class Globals {
     decoyNLmap = new THashMap<>();
 
     ntermMass = 0d;
+    ntermMassProt = 0d;
     ctermMass = 0d;
+    ctermMassProt = 0d;
 
     // in case we need it, initialize the timestamp signature variable
-    timeStamp = "";
     java.util.Date date = new java.util.Date();
     SimpleDateFormat sdf = new SimpleDateFormat("yyyyMMMdd-hh_mm_ss");
     timeStamp = sdf.format(date);

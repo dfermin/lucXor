@@ -118,7 +118,6 @@ public class LucXor {
     p.load(pepxml);
     //p.load(Globals.inputFile);
 
-    System.exit(1);
     System.err.println(Globals.PSM_list.size() + " Candidate PSMs read in.");
   }
 

@@ -65,6 +65,8 @@ class PSM {
 
   void init() {
 
+
+    // TODO: Continue here, check what all these initializations do
     origPep.initialize(modCoordMap);
     origPep.charge = this.charge;
 

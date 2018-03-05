@@ -122,7 +122,7 @@ class Peptide {
     }
 
     numPermutations = StatsFunctions.combinatorial(numPPS, numRPS);
-    calcNumDecoyPermutations();
+    numDecoyPermutations = calcNumDecoyPermutations();
   }
 
 
@@ -324,7 +324,7 @@ class Peptide {
   }
 
 
-  private void calcNumDecoyPermutations() {
+  private long calcNumDecoyPermutations() {
 
     int ctr = 0;
     for (int i = 0; i < pepLen; i++) {
@@ -334,11 +334,9 @@ class Peptide {
       }
     }
 
-    if (ctr >= numPPS) { // you have enough non-target reidues to make a decoy peptide
-      numDecoyPermutations = StatsFunctions.combinatorial(ctr, numRPS);
-    } else {
-      numDecoyPermutations = 0;
-    }
+    // if you have enough non-target reidues to make a decoy peptide
+    return ctr >= numPPS ? StatsFunctions.combinatorial(ctr, numRPS) : 0;
+
   }
 
 
