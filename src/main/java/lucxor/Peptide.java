@@ -186,6 +186,35 @@ class Peptide {
     return ret.toString();
   }
 
+  /**
+   * @param c single character modification representation.
+   * @return TPP-formatted representation of the given single character modification.
+   */
+  static String getTPPresidue(String c) {
+    String ret = "";
+    String orig;
+
+    if ("[".equals(c)) {
+      int d = (int) Math.round(Globals.ntermMass + Constants.PROTON); // adds a proton
+      ret = "n[" + String.valueOf(d) + "]";
+    } else if ("[".equals(c)) {
+      int d = (int) Math.round(Globals.ctermMass);
+      ret += "c[" + String.valueOf(d) + "]";
+    } else {
+      int i = (int) Math.round(AAmassMap.get(c));
+
+      if (isDecoyResidue(c)) {
+        orig = decoyAAMap.get(c);
+      } else {
+        orig = c.toUpperCase();
+      }
+
+      ret = orig + "[" + String.valueOf(i) + "]";
+    }
+
+    return ret;
+  }
+
 
   void build_ion_ladders() {
     int ionSeriesLen = charge * pepLen;
@@ -303,7 +332,7 @@ class Peptide {
     } else {
       // The 'ion' string variable must contain at least 1 decoy residue modification
       // if you got to this point of the code.
-      for (Entry<String, Double> e : Globals.decoyNLmap.entrySet()) {
+      for (Entry<String, Double> e : Globals.nlMapDecoy.entrySet()) {
         String NL_tag = e.getKey();
         double nl_mass = e.getValue();
 

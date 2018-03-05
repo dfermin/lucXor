@@ -4,6 +4,7 @@
  */
 package lucxor;
 
+import edu.umich.dmtavt.ptmlocal.LucxorParams;
 import gnu.trove.list.array.TIntArrayList;
 import gnu.trove.map.hash.THashMap;
 import gnu.trove.map.hash.TIntIntHashMap;
@@ -66,9 +67,9 @@ public class LucXor {
 
     Globals.initialize(); // Initialize global variables
 
-    LucxorParams.parseParameterFile(args[0]);
+    final LucxorParams params = LucxorParams.parseParameterFile(args[0]);
 
-    Globals.loadUserMods();
+    Globals.loadUserMods(params);
 
     // read in the score results
     if (Globals.inputType == Constants.PEPXML) {

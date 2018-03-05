@@ -1,4 +1,4 @@
-package lucxor;
+package edu.umich.dmtavt.ptmlocal;
 
 /**
  * The site in a protein or peptide sequence.

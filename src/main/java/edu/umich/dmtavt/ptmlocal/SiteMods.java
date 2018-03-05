@@ -1,11 +1,10 @@
-package lucxor;
+package edu.umich.dmtavt.ptmlocal;
 
 import com.google.common.collect.ImmutableList;
 import com.google.common.collect.ImmutableListMultimap;
 import com.google.common.collect.Multimaps;
 import java.util.Arrays;
 import java.util.HashSet;
-import java.util.Map.Entry;
 import java.util.Set;
 
 /**

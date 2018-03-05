@@ -1,4 +1,4 @@
-package lucxor;
+package edu.umich.dmtavt.ptmlocal;
 
 /**
  * @author Dmitry Avtonomov

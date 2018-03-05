@@ -7,7 +7,7 @@ package lucxor;
 /**
  * @author dfermin
  */
-class Constants {
+public class Constants {
 
   public static final int PEPPROPHET = 0;
   public static final int MASCOTIONSCORE = 1;

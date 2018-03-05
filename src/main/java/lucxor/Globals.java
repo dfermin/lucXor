@@ -4,11 +4,10 @@
  */
 package lucxor;
 
+import edu.umich.dmtavt.ptmlocal.LucxorParams;
 import gnu.trove.map.hash.THashMap;
 import gnu.trove.map.hash.TIntObjectHashMap;
-import java.io.BufferedReader;
 import java.io.File;
-import java.io.FileReader;
 import java.io.IOException;
 import java.nio.file.Files;
 import java.nio.file.Path;
@@ -29,84 +28,29 @@ import umich.ms.fileio.exceptions.FileParsingException;
  */
 class Globals {
 
-  private static File spectrumPath = null;
-  static String spectrumSuffix = null;
-  static String matchedPkFile = null;
-  static File inputFile = null;
-  static String outputFile = null;
-  static String timeStamp = null;
-  static String dateStamp = null;
-  static int ms2tol_units;
-  static int inputType;
-  static int debugMode;
-  static int reduceNL;
-  static int peptideRepresentation;
-  static int scoringMethod;
-  static int scoringAlgorithm;
-  static int maxChargeState;
-  static int minNumPSMsForModeling;
-  static int numThreads;
-  static int runMode;
-  static int tsvHdr;
-  static int maxPepLen;
-  static double ms2tol;
-  static double modelTH;
-  static double scoreTH;
-  private static double decoyMass;
-  static double minMZ;
-  static double max_num_permutations;
-  static double precursorNLmass;
-  static double ntermMassProt;
   static double ntermMass;
-  static double ctermMassProt;
   static double ctermMass;
-  static boolean writeMatchedPeaks;
+  static double decoyMass;
 
   static ArrayList<PSM> PSM_list = null;
-
-  /** Mods user wants to search for. */
-  static THashMap<String, Double> targetModMap = null;
-  /** Fixed mods observed in data. */
-  static THashMap<String, Double> fixedModMap = null;
-  /** Variable mods observed in data. */
-  static THashMap<String, Double> varModMap = null;
-  /** Holds all neutral loss masses, k= list of amino acids v= NL mass. */
-  static THashMap<String, Double> nlMap = null;
-  static THashMap<String, Double> decoyNLmap = null;
   private static THashMap<Double, double[]> FLRestimateMap = null; // ary[0] = globalFLR, ary[1] = localFLR
-
   // TODO: ACHTUNG: XXX: Delete this monstrosity (replace with Char->Stirng or an array?)
   static THashMap<String, Double> AAmassMap = null;
-
   // TODO: ACHTUNG: XXX: Delete this monstrosity (replace with Char->Stirng or an array?)
   private static THashMap<Character, String> decoyAAMap = null;
-
   static THashMap<Integer, ModelData_CID> modelingMap_CID = null;
   static THashMap<Integer, ModelData_HCD> modelingMap_HCD = null;
 
 
   static void initialize() {
     PSM_list = new ArrayList<>();
-
     decoyAAMap = new THashMap<>();
     AAmassMap = new THashMap<>();
-    targetModMap = new THashMap<>();
-    fixedModMap = new THashMap<>();
-    varModMap = new THashMap<>();
-    nlMap = new THashMap<>();
-    decoyNLmap = new THashMap<>();
-
-    ntermMass = 0d;
-    ntermMassProt = 0d;
-    ctermMass = 0d;
-    ctermMassProt = 0d;
 
     // in case we need it, initialize the timestamp signature variable
     java.util.Date date = new java.util.Date();
     SimpleDateFormat sdf = new SimpleDateFormat("yyyyMMMdd-hh_mm_ss");
-    timeStamp = sdf.format(date);
     sdf = new SimpleDateFormat("yyyMMMdd");
-    dateStamp = sdf.format(date);
 
     AAmassMap.put("A", 71.03711);
     AAmassMap.put("R", 156.10111);
@@ -152,48 +96,52 @@ class Globals {
   }
 
 
-  // Function to incorporate information read in from input file into the
-  // AAmassMap object
-  public static void loadUserMods() {
+  /**
+   * Incorporate information read in from input file into the AAmassMap object.
+   */
+  public static void loadUserMods(LucxorParams params) {
 
     // Assign the information you got from the input file to the
     // relevant map. If none were given, then this should just proceed
     // without changing anything.
-    for (String c : targetModMap.keySet()) {
-      double mass = AAmassMap.get(c) + targetModMap.get(c);
+    for (String c : params.getTargetModMap().keySet()) {
+      double mass = AAmassMap.get(c) + params.getTargetModMap().get(c);
       String symbol = c.toLowerCase();
       AAmassMap.put(symbol, mass);
     }
 
-    for (String c : fixedModMap.keySet()) {
-      double mass = AAmassMap.get(c) + fixedModMap.get(c);
+    // Masses of fixed mods from user input are added to the AA mass map.
+    for (String c : params.getFixedModMap().keySet()) {
+      double mass = AAmassMap.get(c) + params.getFixedModMap().get(c);
       String symbol = c.toUpperCase();
       AAmassMap.put(symbol, mass);
     }
 
-    for (String c : varModMap.keySet()) { // this will be a lower case key
-
+    // VarModMap is only non-empty in case of input TSV file, not in PepXmlCase.
+    // Keys are supposed to be lower-case letters
+    for (String c : params.getVarModMap().keySet()) {
       if (c.equalsIgnoreCase("[")) {
-        Globals.ntermMass = varModMap.get(c);
+        Globals.ntermMass = params.getVarModMap().get(c);
       } else if (c.equalsIgnoreCase("]")) {
-        Globals.ctermMass = varModMap.get(c);
+        Globals.ctermMass = params.getVarModMap().get(c);
       } else {
-        double mass = AAmassMap.get(c.toUpperCase()) + varModMap.get(c);
+        double mass = AAmassMap.get(c.toUpperCase()) + params.getVarModMap().get(c);
         AAmassMap.put(c, mass);
       }
     }
 
-    // Now add the decoy masses to the AAmassMap
+    // Now add the decoy masses to the AAmassMap.
+    // Uses decoy character as key, and the mass is the mass of true AA plus the "Decoy_Mass"
+    // from user input.
     for (Character c : decoyAAMap.keySet()) {
       String trueAA = decoyAAMap.get(c);
 
-      if (varModMap.containsKey(trueAA)) {
+      if (params.getVarModMap().containsKey(trueAA)) {
         continue;
       }
-      if (targetModMap.containsKey(trueAA)) {
+      if (params.getVarModMap().containsKey(trueAA)) {
         continue;
       }
-
       double mass = AAmassMap.get(trueAA) + Globals.decoyMass;
       AAmassMap.put(c.toString(), mass);
     }
@@ -351,34 +299,6 @@ class Globals {
     }
 
     return "";
-  }
-
-
-  // Function returns the TPP-formatted representation of the given single
-  // character modification
-  static String getTPPresidue(String c) {
-    String ret = "";
-    String orig;
-
-    if (c.equalsIgnoreCase("[")) {
-      int d = (int) Math.round(Globals.ntermMass) + 1; // adds a proton
-      ret = "n[" + String.valueOf(d) + "]";
-    } else if (c.equals("]")) {
-      int d = (int) Math.round(Globals.ctermMass);
-      ret += "c[" + String.valueOf(d) + "]";
-    } else {
-      int i = (int) Math.round(AAmassMap.get(c));
-
-      if (isDecoyResidue(c)) {
-        orig = decoyAAMap.get(c);
-      } else {
-        orig = c.toUpperCase();
-      }
-
-      ret = orig + "[" + String.valueOf(i) + "]";
-    }
-
-    return ret;
   }
 
 
