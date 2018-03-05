@@ -55,7 +55,7 @@ class PSM {
   // default constructor
   PSM() {
     origPep = new Peptide();
-    modCoordMap = new TIntDoubleHashMap(2);
+    modCoordMap = new TIntDoubleHashMap(3);
     isKeeper = false;
     useForModel = false;
     isDecoy = false;
@@ -63,35 +63,21 @@ class PSM {
     PeakList = new SpectrumClass();
   }
 
-
-  void process() {
+  void init() {
 
     origPep.initialize(modCoordMap);
     origPep.charge = this.charge;
 
-    // Determine if the PSM is to be kept and if it should be used for modeling
-    int keepingScore = 0;
-    if (origPep.numPPS > 0) {
-      keepingScore++;
-    }
-    if (origPep.numRPS > 0) {
-      keepingScore++;
-    }
-    if (PSMscore >= Globals.scoreTH) {
-      keepingScore++;
-    }
-    if (charge <= Globals.maxChargeState) {
-      keepingScore++;
-    }
-    if (origPep.pepLen <= Globals.maxPepLen) {
-      keepingScore++;
-    }
 
     if (origPep.numPPS == origPep.numRPS) {
       isUnambiguous = true;
     }
 
-    if (keepingScore == 5) {
+    // Determine if the PSM is to be kept and if it should be used for modeling
+    if (origPep.numPPS > 0 && origPep.numRPS > 0 &&
+        PSMscore >= Globals.scoreTH && charge <= Globals.maxChargeState &&
+        origPep.pepLen <= Globals.maxPepLen)
+    {
       isKeeper = true;
     }
 
@@ -425,14 +411,18 @@ class PSM {
   }
 
 
-  // Function creates all of the permutations for the sequence assigned to this PSM
+  /**
+   * Creates all of the permutations for the sequence assigned to this PSM.
+   * @param RN
+   */
   void generatePermutations(int RN) {
     posPermutationScoreMap = origPep.getPermutations(0);
 
     if (!isUnambiguous) {
-      negPermutationScoreMap = new THashMap<>();
       if (RN == 0) { // RN = runMode is selected to create decoys
         negPermutationScoreMap = origPep.getPermutations(1);
+      } else {
+        negPermutationScoreMap = new THashMap<>(0);
       }
     }
   }

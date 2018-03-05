@@ -30,8 +30,8 @@ class Peptide {
   int numRPS; // number of _R_eported _P_hospho_S_ites
   int numPPS; // number of _P_otential _P_hospho_S_ites
 
-  private double numPermutations;
-  private double numDecoyPermutations = 0;
+  private long numPermutations;
+  private long numDecoyPermutations = 0;
   double score;
 
   ArrayList<PeakClass> matchedPeaks;
@@ -45,8 +45,10 @@ class Peptide {
   }
 
 
-  // this initialization function is called by the PSM class when reading
-  // a new entry from a pepXML file.
+  /**
+   * This initialization function is called by the PSM class when reading
+   * a new entry from a pepXML file.
+   */
   void initialize(TIntDoubleHashMap modCoordMap) {
 
     pepLen = peptide.length();
@@ -54,7 +56,6 @@ class Peptide {
     peptide = peptide.toUpperCase();
 
     // remove any modifications from modCoordMap that are fixed modifications
-
     for (int pos : modCoordMap.keys()) {
       double mass = modCoordMap.get(pos);
 
@@ -64,9 +65,10 @@ class Peptide {
         String C = Character.toString(peptide.charAt(pos));
         String c = C.toLowerCase();
 
-        if (Globals.fixedModMap.containsKey(C)) {
-          continue;
-        } else if (Globals.targetModMap.containsKey(C)) {
+//        if (Globals.fixedModMap.containsKey(C)) {
+//          continue;
+//        } else
+        if (Globals.targetModMap.containsKey(C)) {
           modPosMap.put(pos, mass);
         } else if (Globals.varModMap.containsKey(c)) {
           nonTargetMods.put(pos, c); // record position of mod.
@@ -76,7 +78,6 @@ class Peptide {
 
     // construct the single-character representation of all the modifications
     // in this peptide sequence
-
     modPeptide = "";
     StringBuilder sb = new StringBuilder();
     for (int i = 0; i < pepLen; i++) {
@@ -90,8 +91,6 @@ class Peptide {
           AA = c.toLowerCase();
         }
       }
-
-
       sb.append(AA);
     }
     modPeptide = sb.toString();
@@ -122,9 +121,8 @@ class Peptide {
       }
     }
 
-    numPermutations = Globals.SF.combinatorial(numPPS, numRPS);
+    numPermutations = StatsFunctions.combinatorial(numPPS, numRPS);
     calcNumDecoyPermutations();
-
   }
 
 
@@ -327,10 +325,8 @@ class Peptide {
 
 
   private void calcNumDecoyPermutations() {
-    double ctr = 0;
-    double p = (double) numPPS;
-    double k = (double) numRPS;
 
+    int ctr = 0;
     for (int i = 0; i < pepLen; i++) {
       String aa = Character.toString(peptide.charAt(i));
       if (!Globals.targetModMap.containsKey(aa)) {
@@ -338,15 +334,15 @@ class Peptide {
       }
     }
 
-    if (ctr >= p) { // you have enough non-target reidues to make a decoy peptide
-      numDecoyPermutations = Globals.SF.combinatorial(ctr, k);
+    if (ctr >= numPPS) { // you have enough non-target reidues to make a decoy peptide
+      numDecoyPermutations = StatsFunctions.combinatorial(ctr, numRPS);
     } else {
       numDecoyPermutations = 0;
     }
   }
 
 
-  double getNumPerm() {
+  long getNumPerm() {
     return (numPermutations + numDecoyPermutations);
   }
 
@@ -364,8 +360,13 @@ class Peptide {
   }
 
 
-  // function will return a map where the key is each possible permutation
-  // of the peptide and the value is the score this permutation recieves later on
+  /**
+   * Returns a map where the key is each possible permutation
+   * of the peptide and the value is the score this permutation receives later on.
+   * @param permType 0 = generate forward (positive) permutations,
+*           any other value = generate decoy (negative) permutations.
+   * @return
+   */
   THashMap<String, Double> getPermutations(int permType) {
     THashMap<String, Double> ret = new THashMap<>();
     TIntArrayList candModSites = new TIntArrayList();
@@ -384,7 +385,7 @@ class Peptide {
 
       // For the given candidate sites that can undergo modifications,
       // generate all possible permutations involving them.
-      x = Globals.SF.getAllCombinations(candModSites, numRPS);
+      x = StatsFunctions.getAllCombinations(candModSites, numRPS);
 
       for (TIntList a : x) {
         StringBuilder modPep = new StringBuilder();
@@ -420,6 +421,7 @@ class Peptide {
           score++;
         }
 
+        // TODO: XXX: BUG: this.nonTargetMods map never contains keys of type String
         if (!this.nonTargetMods.containsKey(aa)) {
           score++;
         }
@@ -431,7 +433,7 @@ class Peptide {
 
       // For the given candidate sites that can undergo modifications,
       // generate all possible permutations involving them.
-      x = Globals.SF.getAllCombinations(candModSites, numRPS);
+      x = StatsFunctions.getAllCombinations(candModSites, numRPS);
 
       for (TIntList a : x) {
         StringBuilder modPep = new StringBuilder();
@@ -493,17 +495,17 @@ class Peptide {
 
       for (PeakClass pk : matchedPeaks) {
 
-        intensityU = Globals.SF.log_gaussianProb(MD.mu_int_U, MD.var_int_U, pk.norm_intensity);
-        distU = Globals.SF.log_gaussianProb(MD.mu_dist_U, MD.var_dist_U, pk.dist);
+        intensityU = StatsFunctions.log_gaussianProb(MD.mu_int_U, MD.var_int_U, pk.norm_intensity);
+        distU = StatsFunctions.log_gaussianProb(MD.mu_dist_U, MD.var_dist_U, pk.dist);
 
         if (pk.matchedIonStr.startsWith("b")) {
-          intensityM = Globals.SF.log_gaussianProb(MD.mu_int_B, MD.var_int_B, pk.norm_intensity);
-          distM = Globals.SF.log_gaussianProb(MD.mu_dist_B, MD.var_dist_B, pk.dist);
+          intensityM = StatsFunctions.log_gaussianProb(MD.mu_int_B, MD.var_int_B, pk.norm_intensity);
+          distM = StatsFunctions.log_gaussianProb(MD.mu_dist_B, MD.var_dist_B, pk.dist);
         }
 
         if (pk.matchedIonStr.startsWith("y")) {
-          intensityM = Globals.SF.log_gaussianProb(MD.mu_int_Y, MD.var_int_Y, pk.norm_intensity);
-          distM = Globals.SF.log_gaussianProb(MD.mu_dist_Y, MD.var_dist_Y, pk.dist);
+          intensityM = StatsFunctions.log_gaussianProb(MD.mu_int_Y, MD.var_int_Y, pk.norm_intensity);
+          distM = StatsFunctions.log_gaussianProb(MD.mu_dist_Y, MD.var_dist_Y, pk.dist);
         }
 
         Iscore = intensityM - intensityU;

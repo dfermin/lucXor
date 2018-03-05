@@ -15,6 +15,7 @@ import java.io.File;
 import java.io.FileReader;
 import java.io.FileWriter;
 import java.io.IOException;
+import java.nio.file.Paths;
 import java.util.ArrayList;
 import java.util.concurrent.ExecutionException;
 import java.util.concurrent.ExecutorService;
@@ -23,6 +24,8 @@ import java.util.concurrent.TimeUnit;
 import javax.xml.parsers.ParserConfigurationException;
 import org.xml.sax.SAXException;
 import umich.ms.fileio.exceptions.FileParsingException;
+import umich.ms.fileio.filetypes.pepxml.PepXmlParser;
+import umich.ms.fileio.filetypes.pepxml.jaxb.standard.MsmsPipelineAnalysis;
 
 /**
  * @author dfermin
@@ -106,25 +109,16 @@ public class LucXor {
 
 
   // Function parses a pepXML file (this is the default input for luciphor)
-  private static void parse_pepXML()
-      throws ParserConfigurationException, SAXException, IOException {
+  private static void parse_pepXML() throws FileParsingException {
     System.err.println("\nReading PSMs from pepXML file: " + Globals.inputFile.getAbsolutePath());
 
 
+    final MsmsPipelineAnalysis pepxml = PepXmlParser.parse(Paths.get(Globals.inputFile.getAbsolutePath()));
     PepXML p = new PepXML();
-    p.load(Globals.inputFile);
+    p.load(pepxml);
+    //p.load(Globals.inputFile);
 
-//    try {
-//      System.out.printf("Reading with PepXmlParser%n");
-//      timeLo = System.nanoTime();
-//      PepXmlParser.parse(Paths.get(Globals.inputFile.getAbsolutePath()));
-//      timeHi = System.nanoTime();
-//      System.out.printf("Reading with PepXmlParser took %.2fs%n", (timeHi-timeLo)/1e9);
-//
-//    } catch (FileParsingException e) {
-//      e.printStackTrace();
-//    }
-
+    System.exit(1);
     System.err.println(Globals.PSM_list.size() + " Candidate PSMs read in.");
   }
 
@@ -195,7 +189,7 @@ public class LucXor {
       }
 
       if (numBadChars == 0) {
-        curPSM.process();
+        curPSM.init();
         if (curPSM.isKeeper) {
           Globals.PSM_list.add(curPSM);
         }
@@ -366,15 +360,8 @@ public class LucXor {
       System.err.print("\n");
 
       // first iteration is done, compute the FLR from the PSMs
-      if (RN == 0) {
-        Globals.SF.calcFLR();
-
-        if (Globals.runMode == Constants.DEFAULT_RUN_MODE) {
-          Globals.recordFLRestimates();
-          Globals.clearPSMs();
-        } else { // you are done, exit loop over RN variable
-          break;
-        }
+      if (computeFlrFromPsms(RN)) {
+        break;
       }
 
       if (RN == 1) { // now assign FLRs to each PSM
@@ -382,6 +369,21 @@ public class LucXor {
       }
     } // end loop over RN
     //*******************************************************/
+  }
+
+  private static boolean computeFlrFromPsms(int RN)
+      throws InterruptedException, ExecutionException {
+    if (RN == 0) {
+      StatsFunctions.calcFLR();
+
+      if (Globals.runMode == Constants.DEFAULT_RUN_MODE) {
+        Globals.recordFLRestimates();
+        Globals.clearPSMs();
+      } else { // you are done, exit loop over RN variable
+        return true;
+      }
+    }
+    return false;
   }
 
   private static void scorePermutationsAndWriteScoredPeaks(int RN) throws IOException {
@@ -652,15 +654,8 @@ public class LucXor {
       System.err.print("\n");
 
       // first iteration is done, compute the FLR from the PSMs
-      if (RN == 0) {
-        Globals.SF.calcFLR();
-
-        if (Globals.runMode == Constants.DEFAULT_RUN_MODE) {
-          Globals.recordFLRestimates();
-          Globals.clearPSMs();
-        } else { // you are done, exit loop over RN variable
-          break;
-        }
+      if (computeFlrFromPsms(RN)) {
+        break;
       }
 
       if (RN == 1) { // now assign FLRs to each PSM

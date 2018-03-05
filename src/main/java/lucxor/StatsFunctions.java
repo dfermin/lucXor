@@ -7,55 +7,27 @@ package lucxor;
 import gnu.trove.list.array.TIntArrayList;
 import java.util.ArrayList;
 import java.util.concurrent.ExecutionException;
+import org.apache.commons.math3.util.CombinatoricsUtils;
 import org.paukov.combinatorics.Factory;
 import org.paukov.combinatorics.Generator;
 import org.paukov.combinatorics.ICombinatoricsVector;
+import org.paukov.combinatorics.util.Util;
 
 /**
  * @author dfermin
  */
 class StatsFunctions {
 
-  /***************
-   * Function returns the number of combinations of (n choose k)
+  /**
+   * The number of combinations of (n choose k).
+   * @param n = number of characters in alphabet
+   * @param k = desired length of the words to be construted
    */
-  public double combinatorial(double n, double k) {
-    double ret;
-
-    // n = number of characters in alphabet
-    // k = desired length of the words to be construted
-
-    if (n <= 1.0) {
-      ret = 1.0;
-    } else {
-      double diff = n - k;
-      double facN = factorial(n);
-      double facK = factorial(k);
-      double facDiff = factorial(diff);
-
-      ret = facN / (facK * facDiff);
-    }
-
-    return ret;
+  public static long combinatorial(int n, int k) {
+    return CombinatoricsUtils.binomialCoefficient(n, k);
   }
 
-
-  // Recursive function to compute the Factorial (X!) of a given number
-  private double factorial(double x) {
-    double ret = 1.0;
-
-    if (x <= 1) {
-      ret = 1;
-    } else {
-      for (double i = 1; i <= x; i++) {
-        ret *= i;
-      }
-    }
-    return ret;
-  }
-
-
-  ArrayList<TIntArrayList> getAllCombinations(TIntArrayList candModSites, int k) {
+  public static ArrayList<TIntArrayList> getAllCombinations(TIntArrayList candModSites, int k) {
     ArrayList<TIntArrayList> ret = new ArrayList<>();
 
     // http://code.google.com/p/combinatoricslib/#3._Simple_combinations
@@ -82,13 +54,13 @@ class StatsFunctions {
   }
 
 
-  double log_gaussianProb(double mu, double sigma2, double x) {
+  public static double log_gaussianProb(double mu, double sigma2, double x) {
     return -0.5 * Math.pow((x - mu), 2.0) / sigma2 - 0.5 * Math.log((2.0 * Math.PI * sigma2));
   }
 
 
   // Function to compute the False Localization Rate of the PSMs
-  void calcFLR() throws InterruptedException, ExecutionException {
+  public static void calcFLR() throws InterruptedException, ExecutionException {
     double maxDeltaScore = -1.0;
     FLRClass flr = new FLRClass();
 

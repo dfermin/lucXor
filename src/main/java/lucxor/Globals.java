@@ -4,8 +4,6 @@
  */
 package lucxor;
 
-import com.google.common.collect.ArrayListMultimap;
-import com.google.common.collect.Multimap;
 import gnu.trove.map.hash.THashMap;
 import gnu.trove.map.hash.TIntObjectHashMap;
 import java.io.BufferedReader;
@@ -21,8 +19,6 @@ import java.text.SimpleDateFormat;
 import java.util.ArrayList;
 import java.util.Collections;
 import java.util.HashMap;
-import java.util.HashSet;
-import java.util.Iterator;
 import java.util.List;
 import java.util.Map;
 import java.util.Map.Entry;
@@ -34,7 +30,6 @@ import umich.ms.datatypes.LCMSDataSubset;
 import umich.ms.datatypes.scan.IScan;
 import umich.ms.datatypes.scancollection.IScanCollection;
 import umich.ms.datatypes.scancollection.ScanIndex;
-import umich.ms.datatypes.spectrum.ISpectrum;
 import umich.ms.fileio.exceptions.FileParsingException;
 import umich.ms.fileio.filetypes.mzml.MZMLFile;
 import umich.ms.fileio.filetypes.mzxml.MZXMLFile;
@@ -92,8 +87,6 @@ class Globals {
 
   static THashMap<Integer, ModelData_CID> modelingMap_CID = null;
   static THashMap<Integer, ModelData_HCD> modelingMap_HCD = null;
-
-  static StatsFunctions SF = null; // class holds stats functions
 
 
   static void parse_input_file(String str) throws IOException {
@@ -475,8 +468,6 @@ class Globals {
     sdf = new SimpleDateFormat("yyyMMMdd");
     dateStamp = sdf.format(date);
 
-    SF = new StatsFunctions();
-
     AAmassMap.put("A", 71.03711);
     AAmassMap.put("R", 156.10111);
     AAmassMap.put("N", 114.04293);
@@ -570,11 +561,12 @@ class Globals {
   }
 
 
-  // This function is only called if we are getting our modifications from
-  // a pepXML file.
+  /**
+   * This function is only called if we are getting our modifications from a pepXML file.
+   */
   static void recordModsFromPepXML() {
 
-    String alphabet = "ACDEFGHIKLMNPQRSTVWY";
+    String alphabet = PepXML.AA_CHARS_UPPER;
 
     for (String c : fixedModMap.keySet()) {
 
