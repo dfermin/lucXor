@@ -12,6 +12,7 @@ import java.io.IOException;
 import java.util.Collection;
 import java.util.HashMap;
 import java.util.List;
+import java.util.concurrent.atomic.AtomicInteger;
 import java.util.stream.Collectors;
 import javax.xml.parsers.ParserConfigurationException;
 import javax.xml.parsers.SAXParser;
@@ -43,6 +44,7 @@ class PepXML extends DefaultHandler {
   public static final RangeSet<Integer> AA_CHARS_UPPER_RS;
   public static final String AA_CHARS_LOWER = AA_CHARS_UPPER.toLowerCase();
   public static final RangeSet<Integer> AA_CHARS_LOWER_RS;
+
   public static final String PEPXML_ANALYSIS_PEPTIDEPROPHET = "peptideprophet";
   private HashMap<String, Double> variableMods;
   private HashMap<String, Double> fixedMods;
@@ -298,8 +300,12 @@ class PepXML extends DefaultHandler {
     final List<Mod> nTermMods = pepxml.getMsmsRunSummary().stream()
         .map(MsmsRunSummary::getSearchSummary).flatMap(Collection::stream)
         .map(SearchSummary::getTerminalModification).flatMap(Collection::stream)
-        .map(tm -> new Mod(Terminus.valueOf(tm.getTerminus().toUpperCase()), equalsYy(tm.getProteinTerminus()),
-            equalsYy(tm.getVariable()), tm.getMassdiff()))
+        .map(tm -> {
+          final String terminus = tm.getTerminus();
+          if (terminus.length() > 1)
+            throw new IllegalStateException("Terminus string length > 1 not allowed.");
+
+        })
         .distinct().filter(mod -> Terminus.N.equals(mod.terminus))
         .collect(Collectors.toList());
 
@@ -365,6 +371,8 @@ class PepXML extends DefaultHandler {
       throw new IllegalStateException("Called Globals.recordModsFromPepXML() twice, this should not happen");
     }
 
+    final AtomicInteger psmsSkippedCauseNonStandardAa = new AtomicInteger(0);
+
     // PSMs - going through "spectrum_query" entries
     pepxml.getMsmsRunSummary().stream()
         .map(MsmsRunSummary::getSpectrumQuery).flatMap(Collection::stream)
@@ -382,6 +390,9 @@ class PepXML extends DefaultHandler {
             throw new IllegalStateException("More than one 'search_hit' found in 'search_result'. Not supported.");
           SearchHit sh = sr.getSearchHit().get(0);
 
+          if (!sq.getSpectrum().startsWith("01CPTAC_CCRCC_P_JHU_20171106_LUMOS_f01"))
+            return;
+
           PSM psm = new PSM();
           psm.specId = sq.getSpectrum();
           if (sq.getStartScan() >= Integer.MAX_VALUE)
@@ -393,8 +404,10 @@ class PepXML extends DefaultHandler {
 
           // skip PSMs with non-standard AAs
           for (char c : sh.getPeptide().toCharArray()) {
-            if (!AA_CHARS_UPPER_RS.contains((int)c))
+            if (!AA_CHARS_UPPER_RS.contains((int)c)) {
+              psmsSkippedCauseNonStandardAa.incrementAndGet();
               return;
+            }
           }
 
           // otherwise record the peptide sequence
@@ -468,6 +481,9 @@ class PepXML extends DefaultHandler {
             Globals.PSM_list.add(psm);
 
         });
+
+    System.err.printf("Skipped %d PSMs because of non-standard amino acid entries.", psmsSkippedCauseNonStandardAa.get());
+
   }
 
   private static boolean equalsYy(String s) {

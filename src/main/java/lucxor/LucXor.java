@@ -21,8 +21,6 @@ import java.util.concurrent.ExecutionException;
 import java.util.concurrent.ExecutorService;
 import java.util.concurrent.Executors;
 import java.util.concurrent.TimeUnit;
-import javax.xml.parsers.ParserConfigurationException;
-import org.xml.sax.SAXException;
 import umich.ms.fileio.exceptions.FileParsingException;
 import umich.ms.fileio.filetypes.pepxml.PepXmlParser;
 import umich.ms.fileio.filetypes.pepxml.jaxb.standard.MsmsPipelineAnalysis;
@@ -31,16 +29,20 @@ import umich.ms.fileio.filetypes.pepxml.jaxb.standard.MsmsPipelineAnalysis;
  * @author dfermin
  */
 public class LucXor {
+  public static final String releaseVersion = "1.2014Oct10";
 
   private static long startTime;
   private static long endTime;
 
   public static void main(String[] args)
-      throws ParserConfigurationException, SAXException, IOException, IllegalStateException, InterruptedException, ExecutionException, FileParsingException {
+      throws IOException, IllegalStateException, InterruptedException, ExecutionException, FileParsingException {
 
     // Get the release version of the program from the ANT build.xml file
     //String releaseVersion = LucXor.class.getPackage().getImplementationVersion();
-    String releaseVersion = "1.2014Oct10";
+
+//    System.out.println("Program started, press enter to continue...");
+//    Scanner scanner = new Scanner(System.in);
+//    scanner.nextLine();
 
     System.err.print("\nluciphor2 (JAVA-based version of Luciphor)\n" +
         "Version: " + releaseVersion + "\n" +
@@ -56,7 +58,7 @@ public class LucXor {
     }
 
     if (args[0].equalsIgnoreCase("-t")) {
-      Globals.writeTemplateInputFile();
+      LucxorParams.writeTemplateInputFile();
     }
 
     // Start recording the running of the program
@@ -64,7 +66,7 @@ public class LucXor {
 
     Globals.initialize(); // Initialize global variables
 
-    Globals.parse_input_file(args[0]);
+    LucxorParams.parseParameterFile(args[0]);
 
     Globals.loadUserMods();
 
@@ -77,12 +79,13 @@ public class LucXor {
 
     Globals.read_in_spectra(); // Read in spectra for these PSMs
 
-    if (Globals.scoringAlgorithm == Constants.CID) {
-      runCIDcode();
-    }
-
-    if (Globals.scoringAlgorithm == Constants.HCD) {
-      runHCDcode();
+    switch (Globals.scoringAlgorithm) {
+      case Constants.CID:
+        runCIDcode();
+        break;
+      case Constants.HCD:
+        runHCDcode();
+        break;
     }
 
     writeResults();

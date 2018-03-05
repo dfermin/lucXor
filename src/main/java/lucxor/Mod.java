@@ -5,16 +5,52 @@ package lucxor;
  */
 public class Mod {
 
-  final Terminus terminus;
-  final boolean isProteinEnd;
-  final boolean isVariable;
-  final double massDiff;
+  public final Site site;
+  public final double massDiff;
+  public final double mass;
+  public final boolean isVariable;
 
-  public Mod(Terminus terminus, boolean isProteinEnd, boolean isVariable, double massDiff) {
-    this.terminus = terminus;
-    this.isProteinEnd = isProteinEnd;
-    this.isVariable = isVariable;
+  final boolean isTerminal;
+  final boolean isProteinTerm;
+  final boolean isPepTerm;
+
+  public Mod(Site site, double massDiff, double mass, boolean isVariable) {
+    this.site = site;
     this.massDiff = massDiff;
+    this.mass = mass;
+    this.isVariable = isVariable;
+
+    isProteinTerm = site == Site.PROT_C_TERM || site == Site.PROT_N_TERM;
+    isPepTerm = site == Site.PEP_C_TERM || site == Site.PEP_N_TERM;
+    isTerminal = isPepTerm || isProteinTerm;
+  }
+
+  public Site getSite() {
+    return site;
+  }
+
+  public double getMassDiff() {
+    return massDiff;
+  }
+
+  public double getMass() {
+    return mass;
+  }
+
+  public boolean isVariable() {
+    return isVariable;
+  }
+
+  public boolean isTerminal() {
+    return isTerminal;
+  }
+
+  public boolean isProteinTerm() {
+    return isProteinTerm;
+  }
+
+  public boolean isPepTerm() {
+    return isPepTerm;
   }
 
   @Override
@@ -28,27 +64,28 @@ public class Mod {
 
     Mod mod = (Mod) o;
 
-    if (isProteinEnd != mod.isProteinEnd) {
+    if (Double.compare(mod.massDiff, massDiff) != 0) {
+      return false;
+    }
+    if (Double.compare(mod.mass, mass) != 0) {
       return false;
     }
     if (isVariable != mod.isVariable) {
       return false;
     }
-    if (Double.compare(mod.massDiff, massDiff) != 0) {
-      return false;
-    }
-    return terminus == mod.terminus;
+    return site == mod.site;
   }
 
   @Override
   public int hashCode() {
     int result;
     long temp;
-    result = terminus != null ? terminus.hashCode() : 0;
-    result = 31 * result + (isProteinEnd ? 1 : 0);
-    result = 31 * result + (isVariable ? 1 : 0);
+    result = site.hashCode();
     temp = Double.doubleToLongBits(massDiff);
     result = 31 * result + (int) (temp ^ (temp >>> 32));
+    temp = Double.doubleToLongBits(mass);
+    result = 31 * result + (int) (temp ^ (temp >>> 32));
+    result = 31 * result + (isVariable ? 1 : 0);
     return result;
   }
 }

@@ -298,18 +298,18 @@ class ModelData_HCD {
 
     double padding = 0.1;
     if (minI < 0) {
-      t = minI + (Globals.round_dbl(minI, 4) * padding);
+      t = minI + (MathHelper.roundDouble(minI, 4) * padding);
     } else {
-      t = minI - (Globals.round_dbl(minI, 4) * padding);
+      t = minI - (MathHelper.roundDouble(minI, 4) * padding);
     }
-    minI = Globals.round_dbl(t, 4);
+    minI = MathHelper.roundDouble(t, 4);
 
     if (maxI < 0) {
-      t = maxI - (Globals.round_dbl(maxI, 4) * padding);
+      t = maxI - (MathHelper.roundDouble(maxI, 4) * padding);
     } else {
-      t = maxI + (Globals.round_dbl(maxI, 4) * padding);
+      t = maxI + (MathHelper.roundDouble(maxI, 4) * padding);
     }
-    maxI = Globals.round_dbl(t, 4);
+    maxI = MathHelper.roundDouble(t, 4);
 
     tickMarksInt = new double[ntick];
 
@@ -398,18 +398,18 @@ class ModelData_HCD {
     // we want to pad the extremes of the distribution to smooth out the curve
     double padding = 0.1;
     if (min_dist < 0) {
-      t = min_dist + (Globals.round_dbl(min_dist, 4) * padding);
+      t = min_dist + (MathHelper.roundDouble(min_dist, 4) * padding);
     } else {
-      t = min_dist - (Globals.round_dbl(min_dist, 4) * padding);
+      t = min_dist - (MathHelper.roundDouble(min_dist, 4) * padding);
     }
-    min_dist = Globals.round_dbl(t, 4);
+    min_dist = MathHelper.roundDouble(t, 4);
 
     if (max_dist < 0) {
-      t = max_dist - (Globals.round_dbl(max_dist, 4) * padding);
+      t = max_dist - (MathHelper.roundDouble(max_dist, 4) * padding);
     } else {
-      t = max_dist + (Globals.round_dbl(max_dist, 4) * padding);
+      t = max_dist + (MathHelper.roundDouble(max_dist, 4) * padding);
     }
-    max_dist = Globals.round_dbl(t, 4);
+    max_dist = MathHelper.roundDouble(t, 4);
 
     posTickMarksDist = new double[ntick];
 
@@ -625,28 +625,28 @@ class ModelData_HCD {
     }
 
     for (double bInt : b_int) {
-      normI = Globals.round_dbl(bInt, 4);
+      normI = MathHelper.roundDouble(bInt, 4);
       line = Integer.toString(chargeState) + "\tyi\t" +
           Double.toString(normI) + "\n";
       bw.write(line);
     }
 
     for (double yInt : y_int) {
-      normI = Globals.round_dbl(yInt, 4);
+      normI = MathHelper.roundDouble(yInt, 4);
       line = Integer.toString(chargeState) + "\tyi\t" +
           Double.toString(normI) + "\n";
       bw.write(line);
     }
 
     for (double nInt : n_int) {
-      normI = Globals.round_dbl(nInt, 4);
+      normI = MathHelper.roundDouble(nInt, 4);
       line = Integer.toString(chargeState) + "\tni\t" +
           Double.toString(normI) + "\n";
       bw.write(line);
     }
 
     for (double posDist : pos_dist) {
-      dist = Globals.round_dbl(posDist, 4);
+      dist = MathHelper.roundDouble(posDist, 4);
       line = Integer.toString(chargeState) + "\td\t" +
           Double.toString(dist) + "\n";
       bw.write(line);
@@ -660,25 +660,25 @@ class ModelData_HCD {
 
     String line = "Z = " + chargeState + ":  " +
         "b-ions Intensity: (mean, std): (" +
-        Globals.round_dbl(bIntMean, 4) + ", " +
-        Globals.round_dbl(Math.sqrt(bIntVar), 4) + ") N = " +
+        MathHelper.roundDouble(bIntMean, 4) + ", " +
+        MathHelper.roundDouble(Math.sqrt(bIntVar), 4) + ") N = " +
         b_int.length + "\n" +
         "Z = " + chargeState + ":  " +
         "y-ions Intensity: (mean, std): (" +
-        Globals.round_dbl(yIntMean, 4) + ", " +
-        Globals.round_dbl(Math.sqrt(yIntVar), 4) + ") N = " +
+        MathHelper.roundDouble(yIntMean, 4) + ", " +
+        MathHelper.roundDouble(Math.sqrt(yIntVar), 4) + ") N = " +
         y_int.length + "\n" +
 
         "Z = " + chargeState + ":  " +
         "Matched Peak Distance: (mean, std): (" +
-        Globals.round_dbl(posDistMean, 4) + ", " +
-        Globals.round_dbl(Math.sqrt(posDistVar), 4) + ") N = " +
+        MathHelper.roundDouble(posDistMean, 4) + ", " +
+        MathHelper.roundDouble(Math.sqrt(posDistVar), 4) + ") N = " +
         pos_dist.length + "\n" +
 
         "Z = " + chargeState + ":  " +
         "Noise peak Intensity: (mean, std): (" +
-        Globals.round_dbl(negIntMean, 4) + ", " +
-        Globals.round_dbl(Math.sqrt(negIntVar), 4) + ") N = " +
+        MathHelper.roundDouble(negIntMean, 4) + ", " +
+        MathHelper.roundDouble(Math.sqrt(negIntVar), 4) + ") N = " +
         n_int.length + "\n";
 
     System.err.println(line);

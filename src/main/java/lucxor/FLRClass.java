@@ -104,8 +104,8 @@ class FLRClass {
     getBandWidth(Constants.REAL); // real
 
     System.err.print(
-        "FLR bandwidth (pos): " + Globals.round_dbl(bw_real, 6) + "\n" +
-            "FLR bandwidth (neg): " + Globals.round_dbl(bw_decoy, 6) + "\n"
+        "FLR bandwidth (pos): " + MathHelper.roundDouble(bw_real, 6) + "\n" +
+            "FLR bandwidth (neg): " + MathHelper.roundDouble(bw_decoy, 6) + "\n"
     );
 
   }

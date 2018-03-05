@@ -160,9 +160,9 @@ class PSM {
   // If the user asked for it, reduce the intensity of the precursor neutral loss peak
   private void reduceNLpeak() {
     double pepMHplus = Globals.getFragmentIonMass(origPep.modPeptide, 1.0, Constants.WATER);
-    double NLmass = Globals.round_dbl((pepMHplus + Globals.precursorNLmass),
+    double NLmass = MathHelper.roundDouble((pepMHplus + Globals.precursorNLmass),
         3); // the Globals.precursorNLmass is a negative number
-    double NLmz = Globals.round_dbl((NLmass / (double) charge), 3);
+    double NLmz = MathHelper.roundDouble((NLmass / (double) charge), 3);
 
     // Do not perform this NL reduction if the peptide doesn't contain
     // a serine or theronine
@@ -173,7 +173,7 @@ class PSM {
     // Find the most intense peak in the spectrum
     double maxPk_mz = PeakList.mz[PeakList.maxI_index];
 
-    double mzDelta = Globals.round_dbl(Math.abs((maxPk_mz - NLmz)), 5);
+    double mzDelta = MathHelper.roundDouble(Math.abs((maxPk_mz - NLmz)), 5);
     double mzErr = Constants.PROTON;
     if (mzDelta <= mzErr) { // the max peak is a neutral loss peak
 
@@ -560,10 +560,10 @@ class PSM {
     Collections.sort(allScores); // low to high
     Collections.reverse(allScores);// high to low
 
-    double score1 = Globals.round_dbl(allScores.get(0), 6);
+    double score1 = MathHelper.roundDouble(allScores.get(0), 6);
     double score2 = 0;
     if (!isUnambiguous) {
-      score2 = Globals.round_dbl(allScores.get(1), 6);
+      score2 = MathHelper.roundDouble(allScores.get(1), 6);
     }
 
     String pep1 = "";
@@ -577,7 +577,7 @@ class PSM {
       for (Entry<String, Double> e : posPermutationScoreMap.entrySet()) {
         String curSeq = e.getKey();
         double x = e.getValue();
-        double d = Globals.round_dbl(x, 6);
+        double d = MathHelper.roundDouble(x, 6);
 
         if ((d == score1) && (pep1.isEmpty())) {
           pep1 = curSeq;
@@ -597,7 +597,7 @@ class PSM {
         for (Entry<String, Double> e : negPermutationScoreMap.entrySet()) {
           String curSeq = e.getKey();
           double x = e.getValue();
-          double d = Globals.round_dbl(x, 6);
+          double d = MathHelper.roundDouble(x, 6);
 
           if ((d == score1) && (pep1.isEmpty())) {
             pep1 = curSeq;
@@ -741,13 +741,13 @@ class PSM {
         continue;
       }
 
-      String mz = Double.toString(Globals.round_dbl(pk.mz, 4));
-      String relI = Double.toString(Globals.round_dbl(pk.rel_intensity, 4));
-      String normI = Double.toString(Globals.round_dbl(pk.norm_intensity, 4));
-      String Iscore = Double.toString(Globals.round_dbl(pk.intensityScore, 4));
-      String Dscore = Double.toString(Globals.round_dbl(pk.distScore, 4));
-      String score = Double.toString(Globals.round_dbl(pk.score, 4));
-      String dist = Double.toString(Globals.round_dbl(pk.dist, 4));
+      String mz = Double.toString(MathHelper.roundDouble(pk.mz, 4));
+      String relI = Double.toString(MathHelper.roundDouble(pk.rel_intensity, 4));
+      String normI = Double.toString(MathHelper.roundDouble(pk.norm_intensity, 4));
+      String Iscore = Double.toString(MathHelper.roundDouble(pk.intensityScore, 4));
+      String Dscore = Double.toString(MathHelper.roundDouble(pk.distScore, 4));
+      String score = Double.toString(MathHelper.roundDouble(pk.score, 4));
+      String dist = Double.toString(MathHelper.roundDouble(pk.dist, 4));
 
       bw.write(
           "0\t" + score1pep.modPeptide + "\t" + pk.matchedIonStr + "\t" + mz + "\t" + dist + "\t" +
@@ -772,13 +772,13 @@ class PSM {
         continue;
       }
 
-      String mz = Double.toString(Globals.round_dbl(pk.mz, 4));
-      String relI = Double.toString(Globals.round_dbl(pk.rel_intensity, 4));
-      String normI = Double.toString(Globals.round_dbl(pk.norm_intensity, 4));
-      String Iscore = Double.toString(Globals.round_dbl(pk.intensityScore, 4));
-      String Dscore = Double.toString(Globals.round_dbl(pk.distScore, 4));
-      String score = Double.toString(Globals.round_dbl(pk.score, 4));
-      String dist = Double.toString(Globals.round_dbl(pk.dist, 4));
+      String mz = Double.toString(MathHelper.roundDouble(pk.mz, 4));
+      String relI = Double.toString(MathHelper.roundDouble(pk.rel_intensity, 4));
+      String normI = Double.toString(MathHelper.roundDouble(pk.norm_intensity, 4));
+      String Iscore = Double.toString(MathHelper.roundDouble(pk.intensityScore, 4));
+      String Dscore = Double.toString(MathHelper.roundDouble(pk.distScore, 4));
+      String score = Double.toString(MathHelper.roundDouble(pk.score, 4));
+      String dist = Double.toString(MathHelper.roundDouble(pk.dist, 4));
 
       bw.write(
           "1\t" + score2pep.modPeptide + "\t" + pk.matchedIonStr + "\t" + mz + "\t" + dist + "\t" +
@@ -813,11 +813,11 @@ class PSM {
         continue;
       }
 
-      String mz = Double.toString(Globals.round_dbl(pk.mz, 4));
-      String relI = Double.toString(Globals.round_dbl(pk.rel_intensity, 4));
-      String Iscore = Double.toString(Globals.round_dbl(pk.intensityScore, 4));
-      String Dscore = Double.toString(Globals.round_dbl(pk.distScore, 4));
-      String score = Double.toString(Globals.round_dbl(pk.score, 4));
+      String mz = Double.toString(MathHelper.roundDouble(pk.mz, 4));
+      String relI = Double.toString(MathHelper.roundDouble(pk.rel_intensity, 4));
+      String Iscore = Double.toString(MathHelper.roundDouble(pk.intensityScore, 4));
+      String Dscore = Double.toString(MathHelper.roundDouble(pk.distScore, 4));
+      String score = Double.toString(MathHelper.roundDouble(pk.score, 4));
 
       ret.append(specId).append("\t1\t").append(score1pep.modPeptide).append("\t")
           .append(pk.matchedIonStr).append("\t").append(mz).append("\t").append(relI).append("\t")
@@ -841,11 +841,11 @@ class PSM {
         continue;
       }
 
-      String mz = Double.toString(Globals.round_dbl(pk.mz, 4));
-      String relI = Double.toString(Globals.round_dbl(pk.rel_intensity, 4));
-      String Iscore = Double.toString(Globals.round_dbl(pk.intensityScore, 4));
-      String Dscore = Double.toString(Globals.round_dbl(pk.distScore, 4));
-      String score = Double.toString(Globals.round_dbl(pk.score, 4));
+      String mz = Double.toString(MathHelper.roundDouble(pk.mz, 4));
+      String relI = Double.toString(MathHelper.roundDouble(pk.rel_intensity, 4));
+      String Iscore = Double.toString(MathHelper.roundDouble(pk.intensityScore, 4));
+      String Dscore = Double.toString(MathHelper.roundDouble(pk.distScore, 4));
+      String score = Double.toString(MathHelper.roundDouble(pk.score, 4));
 
       ret.append(specId).append("\t2\t").append(score2pep.modPeptide).append("\t")
           .append(pk.matchedIonStr).append("\t").append(mz).append("\t").append(relI).append("\t")

@@ -220,43 +220,43 @@ class ModelData_CID {
 
     System.err.print(
         "+" + chargeState + "\tb-ions Intensity (mu, sigma): (" +
-            Globals.round_dbl(mu_int_B, 4) + ", " +
-            Globals.round_dbl(Math.sqrt(var_int_B), 4) + ") N = " +
+            MathHelper.roundDouble(mu_int_B, 4) + ", " +
+            MathHelper.roundDouble(Math.sqrt(var_int_B), 4) + ") N = " +
             b_intensity.length + "\n"
     );
 
     System.err.print(
         "+" + chargeState + "\ty-ions Intensity (mu, sigma): (" +
-            Globals.round_dbl(mu_int_Y, 4) + ", " +
-            Globals.round_dbl(Math.sqrt(var_int_Y), 4) + ") N = " +
+            MathHelper.roundDouble(mu_int_Y, 4) + ", " +
+            MathHelper.roundDouble(Math.sqrt(var_int_Y), 4) + ") N = " +
             y_intensity.length + "\n"
     );
 
     System.err.print(
         "+" + chargeState + "\tNoise Intensity (mu, sigma): (" +
-            Globals.round_dbl(mu_int_U, 4) + ", " +
-            Globals.round_dbl(Math.sqrt(var_int_U), 4) + ") N = " +
+            MathHelper.roundDouble(mu_int_U, 4) + ", " +
+            MathHelper.roundDouble(Math.sqrt(var_int_U), 4) + ") N = " +
             u_intensity.length + "\n\n"
     );
 
     System.err.print(
         "+" + chargeState + "\tb-ions m/z Accuracy (mu, sigma): (" +
-            Globals.round_dbl(mu_dist_B, 4) + ", " +
-            Globals.round_dbl(Math.sqrt(var_dist_B), 4) + ") N = " +
+            MathHelper.roundDouble(mu_dist_B, 4) + ", " +
+            MathHelper.roundDouble(Math.sqrt(var_dist_B), 4) + ") N = " +
             b_distance.length + "\n"
     );
 
     System.err.print(
         "+" + chargeState + "\ty-ions m/z Accuracy (mu, sigma): (" +
-            Globals.round_dbl(mu_dist_Y, 4) + ", " +
-            Globals.round_dbl(Math.sqrt(var_dist_Y), 4) + ") N = " +
+            MathHelper.roundDouble(mu_dist_Y, 4) + ", " +
+            MathHelper.roundDouble(Math.sqrt(var_dist_Y), 4) + ") N = " +
             y_distance.length + "\n"
     );
 
     System.err.print(
         "+" + chargeState + "\tNoise Distance (mu, sigma): (" +
-            Globals.round_dbl(mu_dist_U, 4) + ", " +
-            Globals.round_dbl(Math.sqrt(var_dist_U), 4) + ") N = " +
+            MathHelper.roundDouble(mu_dist_U, 4) + ", " +
+            MathHelper.roundDouble(Math.sqrt(var_dist_U), 4) + ") N = " +
             u_distance.length + "\n\n"
     );
   }
@@ -298,42 +298,42 @@ class ModelData_CID {
     }
 
     for (double bIntensity : b_intensity) {
-      normI = Globals.round_dbl(bIntensity, 4);
+      normI = MathHelper.roundDouble(bIntensity, 4);
       line = Integer.toString(chargeState) + "\tyi\t" +
           Double.toString(normI) + "\n";
       bw.write(line);
     }
 
     for (double yIntensity : y_intensity) {
-      normI = Globals.round_dbl(yIntensity, 4);
+      normI = MathHelper.roundDouble(yIntensity, 4);
       line = Integer.toString(chargeState) + "\tyi\t" +
           Double.toString(normI) + "\n";
       bw.write(line);
     }
 
     for (double uIntensity : u_intensity) {
-      normI = Globals.round_dbl(uIntensity, 4);
+      normI = MathHelper.roundDouble(uIntensity, 4);
       line = Integer.toString(chargeState) + "\tni\t" +
           Double.toString(normI) + "\n";
       bw.write(line);
     }
 
     for (double bDistance : b_distance) {
-      dist = Globals.round_dbl(bDistance, 4);
+      dist = MathHelper.roundDouble(bDistance, 4);
       line = Integer.toString(chargeState) + "\tbd\t" +
           Double.toString(dist) + "\n";
       bw.write(line);
     }
 
     for (double yDistance : y_distance) {
-      dist = Globals.round_dbl(yDistance, 4);
+      dist = MathHelper.roundDouble(yDistance, 4);
       line = Integer.toString(chargeState) + "\tyd\t" +
           Double.toString(dist) + "\n";
       bw.write(line);
     }
 
     for (double uDistance : u_distance) {
-      dist = Globals.round_dbl(uDistance, 4);
+      dist = MathHelper.roundDouble(uDistance, 4);
       line = Integer.toString(chargeState) + "\tnd\t" +
           Double.toString(dist) + "\n";
       bw.write(line);

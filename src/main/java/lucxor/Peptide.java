@@ -288,7 +288,7 @@ class Peptide {
 
           String nl_str = ion + NL_tag;
           double mass = orig_ion_mass + nl_mass;
-          double mz = Globals.round_dbl((mass / z), 4);
+          double mz = MathHelper.roundDouble((mass / z), 4);
 
           if (mz > Globals.minMZ) {
             if (ion.startsWith("b")) {
@@ -309,7 +309,7 @@ class Peptide {
 
         String nl_str = ion + NL_tag;
         double mass = orig_ion_mass + nl_mass;
-        double mz = Globals.round_dbl((mass / z), 4);
+        double mz = MathHelper.roundDouble((mass / z), 4);
 
         if (mz > Globals.minMZ) {
           if (ion.startsWith("b")) {
@@ -347,12 +347,12 @@ class Peptide {
 
   void printIons() {
     for (String p : b_ions.keySet()) {
-      double m = Globals.round_dbl(b_ions.get(p), 4);
+      double m = MathHelper.roundDouble(b_ions.get(p), 4);
       System.out.println(modPeptide + "\t" + p + "\t" + m);
     }
 
     for (String p : y_ions.keySet()) {
-      double m = Globals.round_dbl(y_ions.get(p), 4);
+      double m = MathHelper.roundDouble(y_ions.get(p), 4);
       System.out.println(modPeptide + "\t" + p + "\t" + m);
     }
   }
@@ -636,13 +636,13 @@ class Peptide {
       }
 
       matchErr *= 0.5; // split in half
-      a = Globals.round_dbl((theo_mz - matchErr), 4);
-      b = Globals.round_dbl((theo_mz + matchErr), 4);
+      a = MathHelper.roundDouble((theo_mz - matchErr), 4);
+      b = MathHelper.roundDouble((theo_mz + matchErr), 4);
 
       // Hold candidate matching peaks here
       ArrayList<PeakClass> cand = new ArrayList<>();
       for (int i = 0; i < obsPeakList.N; i++) {
-        double obsMZ = Globals.round_dbl(obsPeakList.mz[i], 4);
+        double obsMZ = MathHelper.roundDouble(obsPeakList.mz[i], 4);
 
         if ((obsMZ >= a) && (obsMZ <= b)) {
           cand.add(obsPeakList.getPeakClassInstance(i));
@@ -683,13 +683,13 @@ class Peptide {
       }
 
       matchErr *= 0.5; // split in half
-      a = Globals.round_dbl((theo_mz - matchErr), 4);
-      b = Globals.round_dbl((theo_mz + matchErr), 4);
+      a = MathHelper.roundDouble((theo_mz - matchErr), 4);
+      b = MathHelper.roundDouble((theo_mz + matchErr), 4);
 
       // Hold candidate matching peaks here
       ArrayList<PeakClass> cand = new ArrayList<>();
       for (int i = 0; i < obsPeakList.N; i++) {
-        double obsMZ = Globals.round_dbl(obsPeakList.mz[i], 4);
+        double obsMZ = MathHelper.roundDouble(obsPeakList.mz[i], 4);
 
         if ((obsMZ >= a) && (obsMZ <= b)) {
           cand.add(obsPeakList.getPeakClassInstance(i));
