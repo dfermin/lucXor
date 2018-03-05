@@ -66,7 +66,9 @@ class Globals {
   static double minMZ;
   static double max_num_permutations;
   static double precursorNLmass;
+  static double ntermMassProt;
   static double ntermMass;
+  static double ctermMassProt;
   static double ctermMass;
   static boolean writeMatchedPeaks;
 

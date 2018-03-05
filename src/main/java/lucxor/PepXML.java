@@ -294,33 +294,66 @@ class PepXML extends DefaultHandler {
     // terminal modifications
 
     // N-term
-    final List<Double> distinctNTermModMasses = pepxml.getMsmsRunSummary().stream()
+    final List<Mod> nTermMods = pepxml.getMsmsRunSummary().stream()
         .map(MsmsRunSummary::getSearchSummary).flatMap(Collection::stream)
         .map(SearchSummary::getTerminalModification).flatMap(Collection::stream)
-        .filter(mod -> "N".equals(mod.getTerminus()) || "n".equals(mod.getTerminus()))
-        .map(TerminalModification::getMassdiff).distinct().collect(Collectors.toList());
+        .map(tm -> new Mod(tm.getTerminus(), equalsYy(tm.getProteinTerminus()),
+            equalsYy(tm.getVariable()), tm.getMassdiff()))
+        .distinct().filter(mod -> equalsXx("n", "N", mod.terminus))
+        .collect(Collectors.toList());
 
-    if (distinctNTermModMasses.size() == 1) {
-      Globals.ntermMass = distinctNTermModMasses.get(0);
-    } else if (distinctNTermModMasses.size() > 1) {
-      // TODO: Continue here, it should support non-protein terminus mods
-      Globals.ntermMass = distinctNTermModMasses.get(0);
-      //throw new IllegalStateException("More than one distinct N-term mod mass found, not allowed.");
+    if (nTermMods.size() == 1) {
+      Globals.ntermMass = nTermMods.get(0).massDiff;
+
+    } else if (nTermMods.size() == 2) {
+      final Mod tm1 = nTermMods.get(0);
+      final Mod tm2 = nTermMods.get(1);
+      if (tm1.isProtein ^ tm2.isProtein) {
+        System.err.println("Two N-term mods found, but one as 'protein terminus' only, so it's ok");
+        // If one is 'protein terminus == Y' and the other is 'protein terminus == N' - it's ok.
+        // Otherwise it's not ok.
+        Globals.ntermMassProt = tm1.isProtein ? tm1.massDiff : tm2.massDiff;
+        Globals.ntermMass = tm1.isProtein ? tm2.massDiff : tm1.massDiff;
+
+      } else {
+        throw new IllegalStateException("More than one distinct N-term mod mass found with "
+            + "the same site-specificity. Not allowed.");
+      }
+
+    } else if (!nTermMods.isEmpty()) {
+      throw new IllegalStateException("More than two distinct N-term mod mass found, not allowed.");
     }
 
 
     // C-term
-    final List<Double> distinctCTermModMasses = pepxml.getMsmsRunSummary().stream()
+    final List<Mod> cTermMods = pepxml.getMsmsRunSummary().stream()
         .map(MsmsRunSummary::getSearchSummary).flatMap(Collection::stream)
         .map(SearchSummary::getTerminalModification).flatMap(Collection::stream)
-        .filter(mod -> "C".equals(mod.getTerminus()) || "c".equals(mod.getTerminus()))
-        .map(TerminalModification::getMassdiff).distinct().collect(Collectors.toList());
-    if (distinctCTermModMasses.size() == 1) {
-      Globals.ctermMass = distinctCTermModMasses.get(0);
-    } else if (distinctCTermModMasses.size() > 1) {
-      // TODO: Continue here, it should support non-protein terminus mods
-      Globals.ntermMass = distinctNTermModMasses.get(0);
-      //throw new IllegalStateException("More than one distinct C-term mod mass found, not allowed.");
+        .map(tm -> new Mod(tm.getTerminus(), equalsYy(tm.getProteinTerminus()),
+            equalsYy(tm.getVariable()), tm.getMassdiff()))
+        .distinct().filter(mod -> equalsXx("c", "C", mod.terminus))
+        .collect(Collectors.toList());
+
+    if (cTermMods.size() == 1) {
+      Globals.ctermMass = nTermMods.get(0).massDiff;
+
+    } else if (cTermMods.size() == 2) {
+      final Mod tm1 = cTermMods.get(0);
+      final Mod tm2 = cTermMods.get(1);
+      if (tm1.isProtein ^ tm2.isProtein) {
+        System.err.println("Two C-term mods found, but one as 'protein terminus' only, so it's ok");
+        // If one is 'protein terminus == Y' and the other is 'protein terminus == N' - it's ok.
+        // Otherwise it's not ok.
+        Globals.ctermMassProt = tm1.isProtein ? tm1.massDiff : tm2.massDiff;
+        Globals.ctermMass = tm1.isProtein ? tm2.massDiff : tm1.massDiff;
+
+      } else {
+        throw new IllegalStateException("More than one distinct C-term mod mass found with "
+            + "the same site-specificity. Not allowed.");
+      }
+
+    } else if (!cTermMods.isEmpty()) {
+      throw new IllegalStateException("More than two distinct C-term mod mass found, not allowed.");
     }
 
 
@@ -377,7 +410,7 @@ class PepXML extends DefaultHandler {
             // record masses of modified amino acid residues
             for (ModAminoacidMass modAa : modInfo.getModAminoacidMass()) {
               if (modAa.getPosition() == null)
-                throw new IllegalStateException("Position of a mod_aminoacid_mass was null. Not supported.");
+                throw new IllegalStateException("Position of a 'mod_aminoacid_mass' was null. Not supported.");
               int pos = modAa.getPosition() - 1;
               double mass = modAa.getMass();
               psm.modCoordMap.put(pos, mass);
@@ -424,11 +457,72 @@ class PepXML extends DefaultHandler {
         });
   }
 
+  private static boolean equalsYy(String s) {
+    return "Y".equals(s) || "y".equals(s);
+  }
+
+  private static boolean equalsNn(String s) {
+    return "N".equals(s) || "n".equals(s);
+  }
+
+  private static boolean equalsXx(String c1, String c2, String s) {
+    return c1.equals(s) || c2.equals(s);
+  }
+
   private static double findSearchScore(SearchHit sh, String scoreName) {
     for (NameValueType nv : sh.getSearchScore()) {
       if (nv.getName().equals(scoreName))
         return Double.parseDouble(nv.getValueStr());
     }
     throw new IllegalStateException(String.format("Requested search score '%s' not found for at least one search_hit", scoreName));
+  }
+
+  private class Mod {
+    final String terminus;
+    final boolean isProtein;
+    final boolean isVariable;
+    final double massDiff;
+
+    public Mod(String terminus, boolean isProtein, boolean isVariable, double massDiff) {
+      this.terminus = terminus;
+      this.isProtein = isProtein;
+      this.isVariable = isVariable;
+      this.massDiff = massDiff;
+    }
+
+    @Override
+    public boolean equals(Object o) {
+      if (this == o) {
+        return true;
+      }
+      if (o == null || getClass() != o.getClass()) {
+        return false;
+      }
+
+      Mod mod = (Mod) o;
+
+      if (isProtein != mod.isProtein) {
+        return false;
+      }
+      if (isVariable != mod.isVariable) {
+        return false;
+      }
+      if (Double.compare(mod.massDiff, massDiff) != 0) {
+        return false;
+      }
+      return terminus != null ? terminus.equals(mod.terminus) : mod.terminus == null;
+    }
+
+    @Override
+    public int hashCode() {
+      int result;
+      long temp;
+      result = terminus != null ? terminus.hashCode() : 0;
+      result = 31 * result + (isProtein ? 1 : 0);
+      result = 31 * result + (isVariable ? 1 : 0);
+      temp = Double.doubleToLongBits(massDiff);
+      result = 31 * result + (int) (temp ^ (temp >>> 32));
+      return result;
+    }
   }
 }
