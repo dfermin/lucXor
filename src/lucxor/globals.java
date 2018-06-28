@@ -86,7 +86,7 @@ public class globals {
 		
 		File inF = new File(str);
 		if(!inF.exists()) { 
-			System.err.print("\nERROR! Unable to open " + str + "\n\n");
+			System.err.print("\nERROR! Unable to open " + inF.getAbsolutePath() + "\n\n");
 			System.exit(0);
 		}
 		
@@ -256,22 +256,37 @@ public class globals {
 				double m = Double.valueOf(ary[1]);
 				targetModMap.put(ary[0].toUpperCase(), m);
 			}
-			
+
+
+            if(line.startsWith("VAR_MOD")) {
+                String[] ary = parse_input_mod_line(line);
+                double m = Double.valueOf(ary[1]);
+                varModMap.put(ary[0].toLowerCase(), m); // variable mods are lower case
+            }
+
+            if(line.startsWith("FIXED_MOD")) {
+                String[] ary = parse_input_mod_line(line);
+                double m = Double.valueOf(ary[1]);
+                fixedModMap.put(ary[0].toUpperCase(), m);
+            }
+
+
 			// You only need to extract the VAR_MOD and FIXED_MOD values
 			// from the input file if you are using TSV files
-			if(globals.inputType == constants.TSV) {
-				if(line.startsWith("VAR_MOD")) {
-					String[] ary = parse_input_mod_line(line);
-					double m = Double.valueOf(ary[1]);
-					varModMap.put(ary[0].toLowerCase(), m); // variable mods are lower case
-				}
+//			if(globals.inputType == constants.TSV) {
+//				if(line.startsWith("VAR_MOD")) {
+//					String[] ary = parse_input_mod_line(line);
+//					double m = Double.valueOf(ary[1]);
+//					varModMap.put(ary[0].toLowerCase(), m); // variable mods are lower case
+//				}
+//
+//				if(line.startsWith("FIXED_MOD")) {
+//					String[] ary = parse_input_mod_line(line);
+//					double m = Double.valueOf(ary[1]);
+//					fixedModMap.put(ary[0].toUpperCase(), m);
+//				}
+//			}
 
-				if(line.startsWith("FIXED_MOD")) {
-					String[] ary = parse_input_mod_line(line);
-					double m = Double.valueOf(ary[1]);
-					fixedModMap.put(ary[0].toUpperCase(), m);
-				}
-			}
 		}
 		br.close();
 		
@@ -494,9 +509,18 @@ public class globals {
 		}
 		
 		for(String c : fixedModMap.keySet()) {
-			double mass = AAmassMap.get(c) + fixedModMap.get(c);
-			String symbol = c.toUpperCase();
-			AAmassMap.put(symbol, mass);
+
+		    if( c.equalsIgnoreCase("[") ) {
+                globals.ntermMass = fixedModMap.get(c);
+            }
+            else if( c.equalsIgnoreCase("]") ) {
+                globals.ctermMass = fixedModMap.get(c);
+            }
+		    else {
+                double mass = AAmassMap.get(c) + fixedModMap.get(c);
+                String symbol = c.toUpperCase();
+                AAmassMap.put(symbol, mass);
+            }
 		}
 		
 		for(String c : varModMap.keySet()) { // this will be a lower case key

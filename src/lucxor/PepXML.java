@@ -184,10 +184,6 @@ class PepXML extends DefaultHandler {
 				numBadChars = 100;
 
 			if(numBadChars == 0) {
-//                if(curPSM.specId.equalsIgnoreCase("QE_140625_01_IS117_Phosphoproteome.59296.59296.2")) {
-//                    int debug = 0;
-//                }
-
                 curPSM.process();
 				if(curPSM.isKeeper) globals.PSM_list.add(curPSM);
                 curPSM = null;

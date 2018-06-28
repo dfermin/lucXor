@@ -138,7 +138,6 @@ public class LucXor {
 			curPSM.PSMscore = Double.valueOf( vars[3] );
 			curPSM.origPep.peptide = vars[4].toUpperCase();
 
-			
 			if(vars.length < 6) { // no modifications so skip this PSM
 				curPSM = null;
 				continue;
