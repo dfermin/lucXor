@@ -358,6 +358,15 @@ public class globals {
                 System.err.println("<X>" + s + "\t" + decoyNLmap.get(s) + "  (Decoy NL)");
             }
 		}
+
+		// If the scores are going to be e-values, convert them to -log(evalues)
+		if(scoringMethod == constants.NEGLOGEXPECT) {
+			double tmp = -1.0 * Math.log( modelTH );
+			modelTH = tmp;
+
+			tmp = -1.0 * Math.log(scoreTH);
+			scoreTH = tmp;
+		}
 		
 	}
 
@@ -1008,8 +1017,11 @@ public class globals {
 				 "                       ## 3 = X!Tandem Hyperscore\n" +
                  "                       ## 4 = Sequest Xcorr\n\n");
 
-		bw.write("MODELING_SCORE_THRESHOLD = 0.95 ## minimum score a PSM needs to be considered for modeling\n");
+		bw.write("MODELING_SCORE_THRESHOLD = 0.95 ## Minimum score a PSM needs to be considered for modeling\n");
+		bw.write("                                ## The default assumes you are using SELECTION_METHOD=0\n");
+		bw.write("                                ## If using SELECTION_METHOD=2 then set this value to your desired e-value it will be converted to -log(e-value) internally\n");
 		bw.write("SCORING_THRESHOLD = 0    ## PSMs below this value will be discarded\n");
+		bw.write("                         ## Again, if using SELECTION_METHOD=2 then set this value to your desired e-value it will be converted to -log(e-value) internally\n");
 		bw.write("MIN_NUM_PSMS_MODEL = 50  ## The minimum number of PSMs you need for any charge state in order to build a model for it\n\n");
 		
 

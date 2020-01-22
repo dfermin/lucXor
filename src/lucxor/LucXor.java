@@ -17,7 +17,6 @@ import gnu.trove.set.hash.THashSet;
 import gnu.trove.set.hash.TIntHashSet;
 import org.xml.sax.SAXException;
 import umich.ms.fileio.exceptions.FileParsingException;
-//import umich.ms.fileio.exceptions.FileParsingException;
 
 /**
  *
@@ -135,8 +134,15 @@ public class LucXor {
 			curPSM.srcFile = vars[0];
 			curPSM.scanNum = Integer.valueOf( vars[1] );
 			curPSM.charge = Integer.valueOf( vars[2] );
-			curPSM.PSMscore = Double.valueOf( vars[3] );
+			double obsScore = Double.valueOf( vars[3] );
 			curPSM.origPep.peptide = vars[4].toUpperCase();
+
+			if(globals.scoringMethod == constants.NEGLOGEXPECT) {
+			    curPSM.PSMscore = -1.0 * Math.log(obsScore);
+            } else {
+			    curPSM.PSMscore = obsScore;
+            }
+
 
 			if(vars.length < 6) { // no modifications so skip this PSM
 				curPSM = null;
