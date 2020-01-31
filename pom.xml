@@ -30,8 +30,8 @@
   </profiles>
 
   <build>
-    <!--<sourceDirectory>src</sourceDirectory>-->
-    <!--<testSourceDirectory>test</testSourceDirectory>-->
+    <sourceDirectory>src</sourceDirectory>
+<!--    <testSourceDirectory>test</testSourceDirectory>-->
     <!--<testResources>-->
       <!--<testResource>-->
         <!--<directory>test/resources</directory>-->
@@ -75,7 +75,7 @@
     <dependency>
       <groupId>com.github.chhh</groupId>
       <artifactId>msftbx</artifactId>
-      <version>1.8.2</version>
+      <version>1.8.8</version>
     </dependency>
 
     <dependency>
