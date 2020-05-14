@@ -1,12 +1,16 @@
-# Commandline options for Luciphor
+# Luciphor options
 
-This site list the commandline options that Luciphor recognizes.<br>
+The config file should be provided to the tool in the following way:
 
-Commands in red are advanced options and not recommended for general use.
+```
+luxihpor2.jar config_file.txt
+```
+
+Some of the options in the config file are the following:
 
 | Option  | Example Usage          | Description                                                                    |
 |---------|------------------------|--------------------------------------------------------------------------------|
-| -i      | -i interact.pep.xml    | Path to the input TPP pepXML file                                              |
+|-i      | -i interact.pep.xml    | Path to the input TPP pepXML file                                              |
 |-d       | -d /usr/local/tpp/data | Path to the input spectra files. These files <i>must</i> match the names for the PSMs in the TPP pepXML file. Example PSM identifier from a pepXML file:ppeptidemix2_CID_Orbi.2022.2022.2                                                                |
 | -w      | -w 0.5                 | The MS2 fragment ion tolerance in Daltons (default is 0.5 Da.)                 |
 | -x      | -x 0                   | Peptide selection method. This option is used with -p and -m By default, Luciphor parses PSMs based upon their PeptideProphet probabilities. Other selection methods include: 1 = SEQUEST/Commet Xcorr values 2 = -log(X!Tandem E-value) 3 = Mascot Ion Score  |

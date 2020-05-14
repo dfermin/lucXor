@@ -47,7 +47,11 @@ public class LucXor {
 			System.exit(0);
 		}
 		
-		if(args[0].equalsIgnoreCase("-t")) globals.writeTemplateInputFile();
+		if(args[0].equalsIgnoreCase("-t")) {
+            File outF = globals.writeTemplateInputFile();
+            System.err.print("\nPlease edit the input file: " + outF.getPath() + " with your favorite text editor\n\n");
+            System.exit(0);
+        }
 
         // Start recording the running of the program
         startTime = System.nanoTime();

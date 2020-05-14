@@ -79,9 +79,7 @@ public class globals {
 	static THashMap<Integer, ModelData_HCD> modelingMap_HCD = null;
 	
 	static statsFunctions SF = null; // class holds stats functions
-	
-	
-	
+
 	static void parse_input_file(String str) throws IOException {
 		
 		File inF = new File(str);
@@ -934,7 +932,7 @@ public class globals {
 	
 	
 	// Function writes a sample input file for LucXor to disk
-	static void writeTemplateInputFile() throws IOException {
+	static File writeTemplateInputFile() throws IOException {
 		File outF = new File("luciphor2_input_template.txt");
 		
 		FileWriter fw = new FileWriter(outF.getAbsoluteFile());
@@ -1040,9 +1038,8 @@ public class globals {
 				 "               ## 4 = write HCD non-parametric models to disk (HCD-mode only option)\n\n");
 		
 		bw.close();
-		System.err.print("\nPlease edit the input file: " + outF.getPath() + " with your favorite text editor\n\n");
-		System.exit(0);
-	}
+		return outF;
+    }
 
 
     // Record the global and local FLR values estimated for all of the delta scores
