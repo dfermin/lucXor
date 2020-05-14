@@ -106,7 +106,7 @@ public class LucXor {
 
 	
 	// Function parses a tab-delimited file of PSMs
-	private static void parse_TSV_src() throws FileNotFoundException, IOException {
+	private static void parse_TSV_src() throws IOException {
 		System.err.println("\nReading PSM from TSV file: " + globals.inputFile.getAbsolutePath());
 		PSM curPSM = null;
 

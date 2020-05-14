@@ -82,7 +82,7 @@ public class globals {
 	
 	
 	
-	static void parse_input_file(String str) throws FileNotFoundException, IOException {
+	static void parse_input_file(String str) throws IOException {
 		
 		File inF = new File(str);
 		if(!inF.exists()) { 
@@ -579,8 +579,7 @@ public class globals {
 		// First filter the data in varModMap.
 		// We want to remove non-standard amino acid characters and remove
 		// the amino acids that are in our 'targetModMap' variable.
-		HashMap<String, Double> tmp = new HashMap();
-		tmp.putAll(varModMap);
+		HashMap<String, Double> tmp = new HashMap(varModMap);
 		varModMap.clear();
 		
 		for(String c : tmp.keySet()) {
@@ -745,7 +744,7 @@ public class globals {
 
 	
 	// Function reads in an MGF file and returns it as a HashMap
-	private static TIntObjectHashMap<SpectrumClass > read_mgf(String specFile) throws FileNotFoundException, IOException {
+	private static TIntObjectHashMap<SpectrumClass > read_mgf(String specFile) throws IOException {
 		TIntObjectHashMap<SpectrumClass > ret = new TIntObjectHashMap<SpectrumClass>();
 		
 		File mgf = new File(specFile);
