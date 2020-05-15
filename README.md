@@ -113,5 +113,9 @@ DEBUG_MODE = 0 ## 0 = default: turn off debugging
 Luxifor help you to write a configuration template that the user can edit using the following command:
 
 ```
-java lucxor-{version}.jar -t
+java jar lucxor-{version}.jar -t
 ```
+
+### Citation:
+
+Fermin D, Walmsley SJ, Gingras AC, Choi H, Nesvizhskii AI. LuciPHOr: algorithm for phosphorylation site localization with false localization rate estimation using modified target-decoy approach. Mol Cell Proteomics. 2013;12(11):3409‐3419. [doi:10.1074/mcp.M113.028928](https://www.ncbi.nlm.nih.gov/pmc/articles/pmid/23918812/)
