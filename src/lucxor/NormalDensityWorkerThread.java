@@ -27,7 +27,6 @@ public class NormalDensityWorkerThread implements Callable<Double>{
 		this.bw = bandWidth;
 		this.tic = tic_;
 	}
-		
 	
 	@Override
 	public Double call() throws Exception {

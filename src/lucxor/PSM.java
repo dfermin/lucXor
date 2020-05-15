@@ -7,11 +7,13 @@ package lucxor;
 import gnu.trove.map.hash.TDoubleObjectHashMap;
 import gnu.trove.map.hash.THashMap;
 import gnu.trove.map.hash.TIntDoubleHashMap;
+import lombok.extern.slf4j.Slf4j;
 
 import java.io.BufferedWriter;
 import java.io.File;
 import java.io.FileWriter;
 import java.io.IOException;
+import java.text.DecimalFormat;
 import java.util.*;
 import java.util.Map.Entry;
 import java.util.regex.Matcher;
@@ -21,7 +23,9 @@ import java.util.regex.Pattern;
  *
  * @author dfermin
  */
+@Slf4j
 class PSM {
+
 	String specId; // TPP-based name
 	String srcFile; // name of file from which spectrum is derived
 	int scanNum;
@@ -41,8 +45,8 @@ class PSM {
 	THashMap<String, Double> negPermutationScoreMap = null;
 
 	// matched and unmatched peaks
-	ArrayList<PeakClass> posPeaks = null;
-    ArrayList<PeakClass> negPeaks = null;
+	ArrayList<Peak> posPeaks = null;
+    ArrayList<Peak> negPeaks = null;
 
 	SpectrumClass PeakList = null;
 	
@@ -74,15 +78,15 @@ class PSM {
 		int keepingScore = 0;
 		if(origPep.numPPS > 0) keepingScore++;
 		if(origPep.numRPS > 0) keepingScore++;
-		if(PSMscore >= globals.scoreTH) keepingScore++;
-        if(charge <= globals.maxChargeState) keepingScore++;
-        if(origPep.pepLen <= globals.maxPepLen) keepingScore++;
+		if(PSMscore >= Globals.scoreTH) keepingScore++;
+        if(charge <= Globals.maxChargeState) keepingScore++;
+        if(origPep.pepLen <= Globals.maxPepLen) keepingScore++;
 		
 		if(origPep.numPPS == origPep.numRPS) isUnambiguous = true;
 		
 		if(keepingScore == 5) isKeeper = true;
 		
-		if(isKeeper && (PSMscore >= globals.modelTH)) useForModel = true;
+		if(isKeeper && (PSMscore >= Globals.modelTH)) useForModel = true;
 		
 		
 		if(isKeeper) {
@@ -90,10 +94,10 @@ class PSM {
 			String suffix = "";
 			String scanStr = Integer.toString(scanNum);
 
-			if(globals.inputType == constants.PEPXML) {
-				if(globals.spectrumSuffix.equalsIgnoreCase("mzXML")) suffix = "mzXML";
-				if(globals.spectrumSuffix.equalsIgnoreCase("mzML")) suffix = "mzML";
-				if(globals.spectrumSuffix.equalsIgnoreCase("mgf")) suffix = "mgf";
+			if(Globals.inputType == Constants.PEPXML) {
+				if(Globals.spectrumSuffix.equalsIgnoreCase("mzXML")) suffix = "mzXML";
+				if(Globals.spectrumSuffix.equalsIgnoreCase("mzML")) suffix = "mzML";
+				if(Globals.spectrumSuffix.equalsIgnoreCase("mgf")) suffix = "mgf";
 
                 /*
                 ** Some scans might have a name formatted like this:
@@ -105,13 +109,11 @@ class PSM {
 
                 if(m.find()) {
                     srcFile = m.group(1) + "." + suffix;
-                    specId = m.group(1) + "." +
-                            Integer.toString(scanNum) + "." +
-                            Integer.toString(scanNum) + "." +
-                            Integer.toString(charge);
+                    specId = m.group(1) + "." + scanNum + "." + scanNum + "." +
+							charge;
                 }
                 else {
-                    System.err.println("\nERROR: PSM.java::Unable to correctly format specId variable.\n");
+                    log.info("\nERROR: PSM.java::Unable to correctly format specId variable.\n");
                     System.exit(0);
                 }
             }
@@ -122,13 +124,12 @@ class PSM {
                 Matcher m = r.matcher(srcFile);
 
                 if(m.find()) {
-                    specId = m.group(1) + "." +
-                            Integer.toString(scanNum) + "." +
-                            Integer.toString(scanNum) + "." +
-                            Integer.toString(charge);
+                    specId = m.group(1) + "." + scanNum + "." +
+							scanNum + "." +
+							charge;
                 }
                 else {
-                    System.err.println("\nERROR: PSM.java::Unable to correctly format specId variable.\n");
+                    log.info("\nERROR: PSM.java::Unable to correctly format specId variable.\n");
                     System.exit(0);
                 }
 			}
@@ -138,25 +139,28 @@ class PSM {
 		
 	}
 
-	
 	void recordSpectra(SpectrumClass S) {
-
 		PeakList = S;
-		
 		// reduce the impact of the neutral loss peak (if any)
-		if(globals.reduceNL == 1) reduceNLpeak();
-		
+		if(Globals.reduceNL == 1) reduceNLpeak();
 		// normalize the peak intensities to the median
 		PeakList.medianNormalizeSpectra();
 	}
 
-	
 
-	// If the user asked for it, reduce the intensity of the precursor neutral loss peak 
+	/**
+	 * If the user asked for it, reduce the intensity of the precursor neutral loss peak
+ 	 */
 	private void reduceNLpeak() {
-		double pepMHplus = globals.getFragmentIonMass(origPep.modPeptide, 1.0, constants.WATER);
-		double NLmass = globals.round_dbl( (pepMHplus + globals.precursorNLmass), 3 ); // the globals.precursorNLmass is a negative number
-		double NLmz = globals.round_dbl( (NLmass / (double) charge), 3 );
+		double pepMHplus = Globals
+				.getFragmentIonMass(origPep.modPeptide, 1.0, Constants.WATER);
+
+		// the Globals.precursorNLmass is a negative number
+		double NLmass = MathFunctions
+				.roundDouble( (pepMHplus + Globals.precursorNLmass), 3 );
+
+		double NLmz = MathFunctions
+				.roundDouble( (NLmass / (double) charge), 3 );
 		
 		// Do not perform this NL reduction if the peptide doesn't contain
 		// a serine or theronine
@@ -165,8 +169,10 @@ class PSM {
 		// Find the most intense peak in the spectrum
         double maxPk_mz = PeakList.mz[ PeakList.maxI_index ];
 
-		double mzDelta = globals.round_dbl( Math.abs( (maxPk_mz - NLmz) ), 5);
-		double mzErr = constants.PROTON;
+		double mzDelta = MathFunctions
+				.roundDouble( Math.abs( (maxPk_mz - NLmz) ), 5);
+
+		double mzErr = Constants.PROTON;
 		if(mzDelta <= mzErr) { // the max peak is a neutral loss peak
 
             double orig_maxI = PeakList.maxI; // record the original intensity of the peak
@@ -185,9 +191,12 @@ class PSM {
             }
             PeakList.maxI = new_maxI;
 
-            PeakList.calcRelativeIntensity(); // recompute the relative peak intensities
+			// recompute the relative peak intensities
+            PeakList.calcRelativeIntensity();
             PeakList.raw_intensity[ orig_maxI_index ] = orig_maxI;
-            PeakList.rel_intensity[ orig_maxI_index ] = 50.0; // set the peak intensity to be 50%
+
+            // set the peak intensity to be 50%
+            PeakList.rel_intensity[ orig_maxI_index ] = 50.0;
 
 //          PeakList.maxI *= 0.5; // reduce the peak intensity by 50%
 		}
@@ -200,13 +209,13 @@ class PSM {
 		TIntDoubleHashMap ret = new TIntDoubleHashMap();
 		
 		// record n-terminal modification (if any)
-		if(modCoordMap.containsKey(constants.NTERM_MOD)) {
-            ret.put(constants.NTERM_MOD, globals.ntermMass);
+		if(modCoordMap.containsKey(Constants.NTERM_MOD)) {
+            ret.put(Constants.NTERM_MOD, Globals.ntermMass);
 		}
 
 		// record c-terminal modification (if any)
-		if(modCoordMap.containsKey(constants.CTERM_MOD)) {
-			ret.put(constants.CTERM_MOD, globals.ntermMass);
+		if(modCoordMap.containsKey(Constants.CTERM_MOD)) {
+			ret.put(Constants.CTERM_MOD, Globals.ntermMass);
 		}
 		
 		// record all variable modifications
@@ -217,13 +226,13 @@ class PSM {
 			char c = modPep.charAt(i);
 			
 			// record decoy-modified residues
-			if( globals.isDecoyResidue(Character.toString(c)) ) {
-				mass = globals.AAmassMap.get(Character.toString(c));
+			if( Globals.isDecoyResidue(Character.toString(c)) ) {
+				mass = Constants.AA_MASS_MAP.get(Character.toString(c));
 				ret.put(i, mass);
 			}
 			// record normal-modified residues
 			else if( Character.isLowerCase(c) ) {				
-				mass = globals.AAmassMap.get(Character.toString(c));
+				mass = Constants.AA_MASS_MAP.get(Character.toString(c));
 				ret.put(i, mass);
 			}
 		}
@@ -233,10 +242,10 @@ class PSM {
 		// any residues that are already modified for this peptide. These
 		// are residues that cannot be used for building decoys
 		for(int p : origPep.nonTargetMods.keySet()) {
-			if( (p == constants.NTERM_MOD) || (p == constants.CTERM_MOD)) continue;
+			if( (p == Constants.NTERM_MOD) || (p == Constants.CTERM_MOD)) continue;
 			
 			String aa = origPep.nonTargetMods.get(p);
-			double mass = globals.AAmassMap.get(aa);
+			double mass = Constants.AA_MASS_MAP.get(aa);
 			ret.put(p, mass);
 		}
 		
@@ -255,7 +264,7 @@ class PSM {
 
         // This variable will hold all of the fragment ions that are possible for every
         // permutation of the peptide sequence assigned to this peptide
-        THashMap<String, Double> all_ions = new THashMap<String, Double>();
+        THashMap<String, Double> all_ions = new THashMap<>();
 
 		for(String pep : posPermutationScoreMap.keySet()) {
             mcp.clear();
@@ -274,7 +283,7 @@ class PSM {
         // We use this data object to collect all of these cases for later processing.
         // k = observed Peak MZ value
         // v = array list of all the theoretical peaks that match to it
-        TDoubleObjectHashMap<ArrayList<PeakClass>> candMatchedPks = new TDoubleObjectHashMap<ArrayList<PeakClass>>(PeakList.N);
+        TDoubleObjectHashMap<ArrayList<Peak>> candMatchedPks = new TDoubleObjectHashMap<>(PeakList.N);
 
 
         // Iterate over each theoretical ion
@@ -282,26 +291,25 @@ class PSM {
 
             double theo_mz = all_ions.get(theo_ion);
 
-            PeakClass matchedPk = getMatchedPeak(theo_ion, theo_mz);
+            Peak matchedPk = getMatchedPeak(theo_ion, theo_mz);
             if (null == matchedPk) continue; // no match was found for this theoretical peak
 
             if (candMatchedPks.containsKey(matchedPk.mz)) {
-                ArrayList<PeakClass> ary = candMatchedPks.get(matchedPk.mz);
-                PeakClass newEntry = new PeakClass(matchedPk);
+                ArrayList<Peak> ary = candMatchedPks.get(matchedPk.mz);
+                Peak newEntry = new Peak(matchedPk);
                 ary.add(newEntry);
                 candMatchedPks.put(matchedPk.mz, ary);
             } else {
-                ArrayList<PeakClass> ary = new ArrayList<PeakClass>();
+                ArrayList<Peak> ary = new ArrayList<>();
                 ary.add(matchedPk);
                 candMatchedPks.put(matchedPk.mz, ary);
             }
         }
 
-
         // For each matched peak in 'candMatchedPks' now select the match that is the closest by m/z value
         for(double mz : candMatchedPks.keys()) {
-            ArrayList<PeakClass> ary = candMatchedPks.get(mz);
-            Collections.sort(ary, PeakClass.comparator_mz_abs_dist);
+            ArrayList<Peak> ary = candMatchedPks.get(mz);
+            ary.sort(Peak.comparator_mz_abs_dist);
             posPeaks.add(ary.get(0));
         }
         candMatchedPks.clear();
@@ -320,11 +328,11 @@ class PSM {
 
 		// Now that you have matched all the peaks you can for this spectrum
 		// All the remaining peaks are noise, we put them in the negPeaks arraylist
-		negPeaks = new ArrayList<PeakClass>(PeakList.N);
+		negPeaks = new ArrayList<>(PeakList.N);
 
         for(int i = 0; i < PeakList.N; i++) {
 
-            PeakClass negPk = PeakList.getPeakClassInstance(i);
+            Peak negPk = PeakList.getPeakClassInstance(i);
 
             if( !posPeaks.contains(negPk) ) {
 
@@ -335,7 +343,7 @@ class PSM {
                 ArrayList<Double> absDist = new ArrayList( posPeaks.size() );
 
                 int j = 0;
-                for(PeakClass matchedPk : posPeaks) {
+                for(Peak matchedPk : posPeaks) {
                     double d = matchedPk.mz - negPk.mz;
                     dist.add(d);
                     absDist.add( Math.abs(d) );
@@ -359,26 +367,26 @@ class PSM {
 
 
     /*******
-     * This function returns a PeakClass object matched to the given theoretical mz value.
+     * This function returns a Peak object matched to the given theoretical mz value.
      * The function returns a null object if no match was found.
      *
      * @param theo_ion
      * @param theo_mz
      * @return
      */
-    private PeakClass getMatchedPeak(String theo_ion, double theo_mz) {
+    private Peak getMatchedPeak(String theo_ion, double theo_mz) {
 
-        PeakClass ret = null;
+        Peak ret = null;
 
         double matchErr = 0;
         double a = 0, b = 0;
 
         // Compute the fragment error tolerance that will be used
-        if(globals.ms2tol_units == constants.PPM_UNITS) {
-            double ppmErr = globals.ms2tol / constants.PPM;
+        if(Globals.ms2tol_units == Constants.PPM_UNITS) {
+            double ppmErr = Globals.ms2tol / Constants.PPM;
             matchErr = theo_mz * ppmErr;
         }
-        else matchErr = globals.ms2tol;
+        else matchErr = Globals.ms2tol;
 
         matchErr *= 0.5; // split in half
 
@@ -387,11 +395,11 @@ class PSM {
 
 
         // Iterate over the peaks in PeakList
-        ArrayList<PeakClass> candMatches = new ArrayList<PeakClass>();
+        ArrayList<Peak> candMatches = new ArrayList<>();
         for(int i = 0; i < PeakList.N; i++) {
 
             if( (PeakList.mz[i] >= a) && (PeakList.mz[i] <= b) ) {
-                PeakClass pk = PeakList.getPeakClassInstance(i);
+                Peak pk = PeakList.getPeakClassInstance(i);
                 candMatches.add(pk);
             }
         }
@@ -400,7 +408,7 @@ class PSM {
         if( !candMatches.isEmpty() ) {
 
             // identify the most intense peak in candMatches
-            Collections.sort(candMatches, PeakClass.comparator_intensity_hi2low);
+            candMatches.sort(Peak.comparator_intensity_hi2low);
 
             ret = candMatches.get(0);
             ret.matched = true;
@@ -451,7 +459,7 @@ class PSM {
             return;
         }
 
-		if(globals.debugMode == constants.WRITE_PERM_SCORES) {
+		if(Globals.debugMode == Constants.WRITE_PERM_SCORES) {
 				debugF = new File("all_scores.debug");
 				
 				if(!debugF.exists()) {
@@ -465,7 +473,7 @@ class PSM {
 				}
 		}
 
-        if(globals.debugMode == constants.WRITE_ALL_MATCHED_PK_SCORES) {
+        if(Globals.debugMode == Constants.WRITE_ALL_MATCHED_PK_SCORES) {
             debugF = new File("all_matched_pks.debug");
 
             if(!debugF.exists()) {
@@ -493,18 +501,18 @@ class PSM {
 
             curPep.matchPeaks(PeakList); // match all the peaks you can for this peptide permutation
 
-			if(globals.scoringAlgorithm == constants.CID) curPep.calcScore_CID();
-			if(globals.scoringAlgorithm == constants.HCD) curPep.calcScore_HCD();
+			if(Globals.scoringAlgorithm == Constants.CID) curPep.calcScore_CID();
+			if(Globals.scoringAlgorithm == Constants.HCD) curPep.calcScore_HCD();
 			
-			if(globals.debugMode == constants.WRITE_PERM_SCORES) {
+			if(Globals.debugMode == Constants.WRITE_PERM_SCORES) {
 				line = specId + "\t" + origPep.modPeptide + "\t" +
 					   curPep.modPeptide + "\t0\t" + curPep.score + "\n";
 				bw.write(line);
 			}
 
-            if(globals.debugMode == constants.WRITE_ALL_MATCHED_PK_SCORES) {
-                for(PeakClass pk : curPep.matchedPeaks ) {
-                    line = specId + "\t" + curSeq + "\t" + globals.isDecoySeq(curSeq) + "\t" +
+            if(Globals.debugMode == Constants.WRITE_ALL_MATCHED_PK_SCORES) {
+                for(Peak pk : curPep.matchedPeaks ) {
+                    line = specId + "\t" + curSeq + "\t" + Globals.isDecoySeq(curSeq) + "\t" +
                            pk.matchedIonStr + "\t" + pk.mz + "\t" +
                            pk.rel_intensity + "\t" + pk.dist + "\t" +
                            pk.intensityScore + "\t" + pk.distScore + "\t" + pk.score + "\n";
@@ -533,18 +541,18 @@ class PSM {
 
                 curPep.matchPeaks(PeakList);
 
-				if(globals.scoringAlgorithm == constants.CID) curPep.calcScore_CID();
-				if(globals.scoringAlgorithm == constants.HCD) curPep.calcScore_HCD();
+				if(Globals.scoringAlgorithm == Constants.CID) curPep.calcScore_CID();
+				if(Globals.scoringAlgorithm == Constants.HCD) curPep.calcScore_HCD();
 
-				if(globals.debugMode == constants.WRITE_PERM_SCORES) {
+				if(Globals.debugMode == Constants.WRITE_PERM_SCORES) {
 					line = specId + "\t" + origPep.modPeptide + "\t" +
 						curPep.modPeptide + "\t1\t" + curPep.score + "\n";
 					bw.write(line);
 				}
 
-                if(globals.debugMode == constants.WRITE_ALL_MATCHED_PK_SCORES) {
-                    for(PeakClass pk : curPep.matchedPeaks ) {
-                        line = specId + "\t" + curSeq + "\t" + globals.isDecoySeq(curSeq) + "\t" +
+                if(Globals.debugMode == Constants.WRITE_ALL_MATCHED_PK_SCORES) {
+                    for(Peak pk : curPep.matchedPeaks ) {
+                        line = specId + "\t" + curSeq + "\t" + Globals.isDecoySeq(curSeq) + "\t" +
                                 pk.matchedIonStr + "\t" + pk.mz + "\t" +
                                 pk.rel_intensity + "\t" + pk.dist + "\t" +
                                 pk.intensityScore + "\t" + pk.distScore + "\t" + pk.score + "\n";
@@ -560,8 +568,8 @@ class PSM {
 			}
 		}
 		
-		if(globals.debugMode == constants.WRITE_PERM_SCORES) bw.close();
-        if(globals.debugMode == constants.WRITE_ALL_MATCHED_PK_SCORES) bw.close();
+		if(Globals.debugMode == Constants.WRITE_PERM_SCORES) bw.close();
+        if(Globals.debugMode == Constants.WRITE_ALL_MATCHED_PK_SCORES) bw.close();
 
 
         // collect all of the scores into a single arraylist and select the top
@@ -582,9 +590,9 @@ class PSM {
 		Collections.sort(allScores); // low to high
 		Collections.reverse(allScores);// high to low
 		
-		double score1 = globals.round_dbl(allScores.get(0), 6);
+		double score1 = MathFunctions.roundDouble(allScores.get(0), 6);
 		double score2 = 0;
-		if(!isUnambiguous) score2 = globals.round_dbl(allScores.get(1), 6);
+		if(!isUnambiguous) score2 = MathFunctions.roundDouble(allScores.get(1), 6);
 		
 		String pep1 = "";
 		String pep2 = "";
@@ -595,9 +603,9 @@ class PSM {
 			// We'll first try to find the top scores among the non-decoy 
 			// permutations
 			for(Entry<String, Double> e : posPermutationScoreMap.entrySet()) {
-				String curSeq = (String) e.getKey();
-				double x = (double) e.getValue();
-				double d = globals.round_dbl(x, 6);
+				String curSeq = e.getKey();
+				double x = e.getValue();
+				double d = MathFunctions.roundDouble(x, 6);
 				
 				if( (d == score1) && (pep1.isEmpty()) ) { 
 					pep1 = curSeq;
@@ -615,9 +623,9 @@ class PSM {
 			// if this is true, then you need to search among the decoys
 			if(numAssigned != 2) {
 				for(Entry<String, Double> e : negPermutationScoreMap.entrySet()) {
-					String curSeq = (String) e.getKey();
-					double x = (double) e.getValue();
-					double d = globals.round_dbl(x, 6);
+					String curSeq = e.getKey();
+					double x = e.getValue();
+					double d = MathFunctions.roundDouble(x, 6);
 					
 					if( (d == score1) && (pep1.isEmpty()) ) { 
 						pep1 = curSeq;
@@ -634,7 +642,7 @@ class PSM {
 		}
 		else { // special case for unambiguous PSMs
 			for(Entry<String, Double> e : posPermutationScoreMap.entrySet()) {
-				String curSeq = (String) e.getKey();
+				String curSeq = e.getKey();
 				pep1 = curSeq;
 			}
 		}
@@ -674,10 +682,12 @@ class PSM {
 	
 	// Function returns results as a string
 	String getResults() {
+
+		DecimalFormat df = new DecimalFormat("#.####");
 		
 		String ret = specId + "\t";
 
-		if(globals.peptideRepresentation == constants.SINGLE_CHAR) {
+		if(Globals.peptideRepresentation == Constants.SINGLE_CHAR) {
 			ret += origPep.peptide + "\t";
 			ret += score1pep.modPeptide + "\t";
 			ret += score2pep.modPeptide + "\t";
@@ -689,40 +699,45 @@ class PSM {
 			ret += score2pep.getModPepTPP() + "\t";
 		}
 		
-		ret += Integer.toString(origPep.numPPS) + "\t" + Integer.toString(origPep.numRPS) + "\t";
+		ret += origPep.numPPS + "\t" + origPep.numRPS + "\t";
 		
-		ret += Double.toString(PSMscore) + "\t";
+		ret += df.format(PSMscore) + "\t";
 
-        if(globals.runMode == constants.REPORT_DECOYS)
+        if(Globals.runMode == Constants.REPORT_DECOYS)
 		    ret += (score1pep.isDecoyPep() ? 1 : 0) + "\t" + (score2pep.isDecoyPep() ? 1 : 0) + "\t";
 		
-		ret += Double.toString(deltaScore) + "\t";
+		ret += df.format(deltaScore) + "\t";
 		
-		ret += Double.toString(score1pep.score) + "\t" 
-			 + Double.toString(score2pep.score) + "\t";
+		ret += df.format(score1pep.score) + "\t"
+			 + df.format(score2pep.score) + "\t";
 
-		ret += Double.toString(globalFDR) + "\t" + Double.toString(localFDR);
-		
+		ret += df.format(globalFDR) + "\t" + df.format(localFDR);
 		ret += "\n";
 		
 		return ret;
 	}
 
-	
-	// This function will write the scored peaks for the top permutation assigned
-	// to this PSM. The data is written in a TAB-delimited format.
-	void debug_writeScoredPeaks() throws IOException {
+
+	/**
+	 * This function will write the scored peaks for the top permutation assigned
+	 * to this PSM. The data is written in a TAB-delimited format.
+	 * @throws IOException
+	 */
+	void debugWriteScoredPeaks() throws IOException {
+
+		DecimalFormat df = new DecimalFormat("#.#####");
+		int numDecimals = 4;
 		
 		String tsvFileName = "";
-		if(globals.inputType == constants.PEPXML) tsvFileName = specId + ".tsv";
+		if(Globals.inputType == Constants.PEPXML) tsvFileName = specId + ".tsv";
 		else {
-			int i = srcFile.lastIndexOf(globals.spectrumSuffix);
+			int i = srcFile.lastIndexOf(Globals.spectrumSuffix);
 			String k = String.format("%05d", scanNum) + Integer.toString(charge);
 			tsvFileName = srcFile.substring(0, i) + k + ".tsv";
 		}
 		
 		// With the next 4 lines you create output directory if necessary
-		String outDirName = "debug_scored_peaks." + globals.dateStamp;
+		String outDirName = "debug_scored_peaks." + Globals.dateStamp;
 		String outFileStr = outDirName + "/" + tsvFileName;
 		
 		File outF = new File(outFileStr);
@@ -737,21 +752,21 @@ class PSM {
 		score1pep.build_ion_ladders();
         score1pep.matchPeaks(PeakList);
 
-		if(globals.scoringAlgorithm == constants.CID) score1pep.calcScore_CID();
-		if(globals.scoringAlgorithm == constants.HCD) score1pep.calcScore_HCD();
+		if(Globals.scoringAlgorithm == Constants.CID) score1pep.calcScore_CID();
+		if(Globals.scoringAlgorithm == Constants.HCD) score1pep.calcScore_HCD();
 		
-		ArrayList<PeakClass> mPK = score1pep.matchedPeaks;
-		Collections.sort(mPK, PeakClass.comparator_mz);
-		for(PeakClass pk : mPK) {
+		ArrayList<Peak> mPK = score1pep.matchedPeaks;
+		mPK.sort(Peak.comparator_mz);
+		for(Peak pk : mPK) {
 			if(!pk.matched) continue;
 			
-			String mz = Double.toString(globals.round_dbl(pk.mz, 4));
-			String relI = Double.toString(globals.round_dbl(pk.rel_intensity, 4));
-			String normI = Double.toString(globals.round_dbl(pk.norm_intensity, 4));
-			String Iscore = Double.toString(globals.round_dbl(pk.intensityScore, 4));
-			String Dscore = Double.toString(globals.round_dbl(pk.distScore, 4));
-			String score = Double.toString(globals.round_dbl(pk.score, 4));
-			String dist = Double.toString(globals.round_dbl(pk.dist, 4));
+			String mz = df.format(MathFunctions.roundDouble(pk.mz, 4));
+			String relI = df.format(MathFunctions.roundDouble(pk.rel_intensity, 4));
+			String normI = df.format(MathFunctions.roundDouble(pk.norm_intensity, 4));
+			String Iscore = df.format(MathFunctions.roundDouble(pk.intensityScore, 4));
+			String Dscore = df.format(MathFunctions.roundDouble(pk.distScore, 4));
+			String score = df.format(MathFunctions.roundDouble(pk.score, 4));
+			String dist = df.format(MathFunctions.roundDouble(pk.dist, 4));
 			
 			bw.write("0\t" + score1pep.modPeptide + "\t" + pk.matchedIonStr + "\t" + mz + "\t" + dist + "\t" + 
 					 relI + "\t" + normI + "\t" + Dscore + "\t" + Iscore + "\t" +
@@ -761,23 +776,23 @@ class PSM {
 
 		score2pep.build_ion_ladders();
 		score2pep.matchPeaks(PeakList);
-        if(globals.scoringAlgorithm == constants.CID) score2pep.calcScore_CID();
-		if(globals.scoringAlgorithm == constants.HCD) score2pep.calcScore_HCD();
+        if(Globals.scoringAlgorithm == Constants.CID) score2pep.calcScore_CID();
+		if(Globals.scoringAlgorithm == Constants.HCD) score2pep.calcScore_HCD();
 
 		
 		mPK.clear();
 		mPK = score2pep.matchedPeaks;
-		Collections.sort(mPK, PeakClass.comparator_mz);
-		for(PeakClass pk : mPK) {
+		mPK.sort(Peak.comparator_mz);
+		for(Peak pk : mPK) {
 			if(!pk.matched) continue;
 			
-			String mz = Double.toString(globals.round_dbl(pk.mz, 4));
-			String relI = Double.toString(globals.round_dbl(pk.rel_intensity, 4));
-			String normI = Double.toString(globals.round_dbl(pk.norm_intensity, 4));
-			String Iscore = Double.toString(globals.round_dbl(pk.intensityScore, 4));
-			String Dscore = Double.toString(globals.round_dbl(pk.distScore, 4));
-			String score = Double.toString(globals.round_dbl(pk.score, 4));
-			String dist = Double.toString(globals.round_dbl(pk.dist, 4));
+			String mz = df.format(MathFunctions.roundDouble(pk.mz, 4));
+			String relI = df.format(MathFunctions.roundDouble(pk.rel_intensity, 4));
+			String normI = df.format(MathFunctions.roundDouble(pk.norm_intensity, 4));
+			String Iscore = df.format(MathFunctions.roundDouble(pk.intensityScore, 4));
+			String Dscore = df.format(MathFunctions.roundDouble(pk.distScore, 4));
+			String score = df.format(MathFunctions.roundDouble(pk.score, 4));
+			String dist = df.format(MathFunctions.roundDouble(pk.dist, 4));
 			
 			bw.write("1\t" + score2pep.modPeptide + "\t" + pk.matchedIonStr + "\t" + mz + "\t" + dist + "\t" + 
 					 relI + "\t" + normI + "\t" + Dscore + "\t" + Iscore + "\t" +
@@ -789,29 +804,34 @@ class PSM {
 	}
 
 
+	/**
+	 * This function returns the matched peaks for the top 2 permutations assigned
+	 * to this PSM. The data is returned in a TAB-delimited format.
+	 * @return Line String
+	 */
+	String writeMatchedPks() {
 
-    // This function returns the matched peaks for the top 2 permutations assigned
-    // to this PSM. The data is returned in a TAB-delimited format.
-    String writeMatchedPks() {
+		DecimalFormat df = new DecimalFormat("#.####");
+		int numDecimals = 4;
 
         String ret = "";
 
         score1pep.build_ion_ladders();
         score1pep.matchPeaks(PeakList);
 
-        if(globals.scoringAlgorithm == constants.CID) score1pep.calcScore_CID();
-        if(globals.scoringAlgorithm == constants.HCD) score1pep.calcScore_HCD();
+        if(Globals.scoringAlgorithm == Constants.CID) score1pep.calcScore_CID();
+        if(Globals.scoringAlgorithm == Constants.HCD) score1pep.calcScore_HCD();
 
-        ArrayList<PeakClass> mPK = score1pep.matchedPeaks;
-        Collections.sort(mPK, PeakClass.comparator_mz);
-        for(PeakClass pk : mPK) {
+        ArrayList<Peak> mPK = score1pep.matchedPeaks;
+        mPK.sort(Peak.comparator_mz);
+        for(Peak pk : mPK) {
             if(!pk.matched) continue;
 
-            String mz = Double.toString(globals.round_dbl(pk.mz, 4));
-            String relI = Double.toString(globals.round_dbl(pk.rel_intensity, 4));
-            String Iscore = Double.toString(globals.round_dbl(pk.intensityScore, 4));
-            String Dscore = Double.toString(globals.round_dbl(pk.distScore, 4));
-            String score = Double.toString(globals.round_dbl(pk.score, 4));
+            String mz = df.format(MathFunctions.roundDouble(pk.mz, numDecimals));
+            String relI = df.format(MathFunctions.roundDouble(pk.rel_intensity, numDecimals));
+            String Iscore = df.format(MathFunctions.roundDouble(pk.intensityScore, numDecimals));
+            String Dscore = df.format(MathFunctions.roundDouble(pk.distScore, numDecimals));
+            String score = df.format(MathFunctions.roundDouble(pk.score, numDecimals));
 
             ret += specId + "\t1\t" + score1pep.modPeptide + "\t" + pk.matchedIonStr + "\t" +
                    mz + "\t" + relI + "\t" + Dscore + "\t" + Iscore + "\t" +
@@ -821,21 +841,23 @@ class PSM {
 
         score2pep.build_ion_ladders();
         score2pep.matchPeaks(PeakList);
-        if(globals.scoringAlgorithm == constants.CID) score2pep.calcScore_CID();
-        if(globals.scoringAlgorithm == constants.HCD) score2pep.calcScore_HCD();
+        if(Globals.scoringAlgorithm == Constants.CID)
+        	score2pep.calcScore_CID();
+        if(Globals.scoringAlgorithm == Constants.HCD)
+        	score2pep.calcScore_HCD();
 
 
         mPK.clear();
         mPK = score2pep.matchedPeaks;
-        Collections.sort(mPK, PeakClass.comparator_mz);
-        for(PeakClass pk : mPK) {
+        mPK.sort(Peak.comparator_mz);
+        for(Peak pk : mPK) {
             if(!pk.matched) continue;
 
-            String mz = Double.toString(globals.round_dbl(pk.mz, 4));
-            String relI = Double.toString(globals.round_dbl(pk.rel_intensity, 4));
-            String Iscore = Double.toString(globals.round_dbl(pk.intensityScore, 4));
-            String Dscore = Double.toString(globals.round_dbl(pk.distScore, 4));
-            String score = Double.toString(globals.round_dbl(pk.score, 4));
+            String mz = df.format(MathFunctions.roundDouble(pk.mz, 4));
+            String relI = df.format(MathFunctions.roundDouble(pk.rel_intensity, 4));
+            String Iscore = df.format(MathFunctions.roundDouble(pk.intensityScore, 4));
+            String Dscore = df.format(MathFunctions.roundDouble(pk.distScore, 4));
+            String score = df.format(MathFunctions.roundDouble(pk.score, 4));
 
             ret += specId + "\t2\t" + score2pep.modPeptide + "\t" + pk.matchedIonStr + "\t" +
                     mz + "\t" + relI + "\t" + Dscore + "\t" + Iscore + "\t" +
@@ -845,14 +867,10 @@ class PSM {
         return(ret);
     }
 
-
-
-
-
-
-
-    // This function prepares the PSM to be scored again *AFTER* the FLR has been estimated.
-    public void clearScores() {
+	/**
+	 * This function prepares the PSM to be scored again *AFTER* the FLR has been estimated.
+	 */
+	public void clearScores() {
 
         deltaScore = 0;
         globalFDR = Double.NaN;

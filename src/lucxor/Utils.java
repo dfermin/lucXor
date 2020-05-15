@@ -1,0 +1,27 @@
+package lucxor;
+
+public class Utils {
+
+  /**
+   * This function parse an string line and results
+   * @param line
+   * @return
+   */
+  static String parse_input_line(String line) {
+    String ret = "";
+    StringBuilder sb = new StringBuilder();
+    int N = line.length();
+
+    int b = line.indexOf("=") + 1;
+
+    for(int i = b; i < N; i++) {
+      char c = line.charAt(i);
+      if(c == '#') break;
+      if(c == ' ') continue;
+
+      sb.append(c);
+    }
+    ret = sb.toString();
+    return ret;
+  }
+}

@@ -15,7 +15,9 @@ import java.util.Collections;
  *
  * @author dfermin
  */
-public class ModelData_CID {
+public class ModelDataCID {
+
+
 	int chargeState;
 	int numPSM; // holds number of PSMs used for this charge state
 	double mu_int_B, mu_int_Y, mu_int_U;
@@ -23,24 +25,24 @@ public class ModelData_CID {
 	double mu_dist_B, mu_dist_Y, mu_dist_U;
 	double var_dist_B, var_dist_Y, var_dist_U;
 
-    double[] b_intensity = null;
-    double[] b_distance = null;
-    double[] y_intensity = null;
-    double[] y_distance = null;
-    double[] u_intensity = null;
-    double[] u_distance = null;
+	double[] b_intensity = null;
+	double[] b_distance = null;
+	double[] y_intensity = null;
+	double[] y_distance = null;
+	double[] u_intensity = null;
+	double[] u_distance = null;
 
 	
 	// This is an adjustment factor for the standard deviation suggested by hwchoi
 	final double CID_ADJUST = 16.0 / 25.0; 
 	
-	public ModelData_CID(int z, ArrayList<PeakClass> peaks) {
+	public ModelDataCID(int z, ArrayList<Peak> peaks) {
         chargeState = z;
         numPSM = 0;
 
         int Nb = 0, Ny = 0, Nu = 0;
 
-        for (PeakClass pk : peaks) {
+        for (Peak pk : peaks) {
             if (pk.matched) {
                 if (pk.matchedIonStr.startsWith("b")) {
                     Nb++;
@@ -62,7 +64,7 @@ public class ModelData_CID {
         Nb = 0;
         Ny = 0;
 
-        for (PeakClass pk : peaks) {
+        for (Peak pk : peaks) {
             if (pk.matched) {
                 if (pk.matchedIonStr.startsWith("b")) {
                     b_intensity[Nb] = pk.norm_intensity;
@@ -81,19 +83,19 @@ public class ModelData_CID {
 
         // We will limit the size of the negative distribution to speed things up
         int limitN = (Nb + Ny);
-        if(limitN < constants.MIN_NUM_NEG_PKS) limitN += constants.MIN_NUM_NEG_PKS;
+        if(limitN < Constants.MIN_NUM_NEG_PKS) limitN += Constants.MIN_NUM_NEG_PKS;
 
         if(limitN > Nu) limitN = Nu; // prevents segfault on insufficient data for modeling
         u_intensity = new double[ limitN ];
         u_distance = new double[ limitN ];
 
-        ArrayList<PeakClass> negPks = new ArrayList<>();
-        for (PeakClass pk : peaks) {
+        ArrayList<Peak> negPks = new ArrayList<>();
+        for (Peak pk : peaks) {
             if (!pk.matched) negPks.add(pk);
         }
         Collections.shuffle(negPks);
         for(int i = 0; i < limitN; i++) {
-            PeakClass pk = negPks.get(i);
+            Peak pk = negPks.get(i);
             u_intensity[i] = pk.norm_intensity;
             u_distance[i]  = pk.dist;
         }
@@ -142,9 +144,7 @@ public class ModelData_CID {
 		mu_dist_U = 0;
 
 	}
-	
-	
-	
+
 	public void calcVar() {
 		double N, v;
 		
@@ -214,43 +214,43 @@ public class ModelData_CID {
 		
 		System.err.print(
 			"+" + chargeState + "\tb-ions Intensity (mu, sigma): (" +
-			globals.round_dbl(mu_int_B, 4) + ", " +
-			globals.round_dbl(Math.sqrt(var_int_B), 4) + ") N = " +
+        MathFunctions.roundDouble(mu_int_B, 4) + ", " +
+        MathFunctions.roundDouble(Math.sqrt(var_int_B), 4) + ") N = " +
 			b_intensity.length + "\n"
 		);
 		
 		System.err.print(
 			"+" + chargeState + "\ty-ions Intensity (mu, sigma): (" +
-			globals.round_dbl(mu_int_Y, 4) + ", " +
-			globals.round_dbl(Math.sqrt(var_int_Y), 4) + ") N = " +
+        MathFunctions.roundDouble(mu_int_Y, 4) + ", " +
+        MathFunctions.roundDouble(Math.sqrt(var_int_Y), 4) + ") N = " +
 			y_intensity.length + "\n"
 		);
 		
 		System.err.print(
 			"+" + chargeState + "\tNoise Intensity (mu, sigma): (" +
-			globals.round_dbl(mu_int_U, 4) + ", " +
-			globals.round_dbl(Math.sqrt(var_int_U), 4) + ") N = " +
+        MathFunctions.roundDouble(mu_int_U, 4) + ", " +
+        MathFunctions.roundDouble(Math.sqrt(var_int_U), 4) + ") N = " +
 			u_intensity.length + "\n\n"
 		);
 		
 		System.err.print(
 			"+" + chargeState + "\tb-ions m/z Accuracy (mu, sigma): (" +
-			globals.round_dbl(mu_dist_B, 4) + ", " +
-			globals.round_dbl(Math.sqrt(var_dist_B), 4) + ") N = " +
+        MathFunctions.roundDouble(mu_dist_B, 4) + ", " +
+        MathFunctions.roundDouble(Math.sqrt(var_dist_B), 4) + ") N = " +
 			b_distance.length + "\n"
 		);
 		
 		System.err.print(
 			"+" + chargeState + "\ty-ions m/z Accuracy (mu, sigma): (" +
-			globals.round_dbl(mu_dist_Y, 4) + ", " +
-			globals.round_dbl(Math.sqrt(var_dist_Y), 4) + ") N = " +
+        MathFunctions.roundDouble(mu_dist_Y, 4) + ", " +
+        MathFunctions.roundDouble(Math.sqrt(var_dist_Y), 4) + ") N = " +
 			y_distance.length + "\n"
 		);
 		
 		System.err.print(
 			"+" + chargeState + "\tNoise Distance (mu, sigma): (" +
-			globals.round_dbl(mu_dist_U, 4) + ", " +
-			globals.round_dbl(Math.sqrt(var_dist_U), 4) + ") N = " +
+        MathFunctions.roundDouble(mu_dist_U, 4) + ", " +
+        MathFunctions.roundDouble(Math.sqrt(var_dist_U), 4) + ") N = " +
 			u_distance.length + "\n\n"
 		);
 	}
@@ -277,10 +277,10 @@ public class ModelData_CID {
      */
     public void writeModelPks() throws IOException {
         File debugF = new File("debug_model_pks_CID.txt");
-        FileWriter fw = null;
-        BufferedWriter bw = null;
+        FileWriter fw;
+        BufferedWriter bw;
         String line;
-        double mz, dist, relI, normI;
+        double dist, normI;
 
         if(!debugF.exists()) {
             fw = new FileWriter(debugF);
@@ -295,44 +295,38 @@ public class ModelData_CID {
 
 
         for(int b = 0; b < b_intensity.length; b++) {
-            normI = globals.round_dbl(b_intensity[b], 4);
-            line = Integer.toString(chargeState) + "\tyi\t" +
-                    Double.toString(normI) + "\n";
+            normI = MathFunctions.roundDouble(b_intensity[b], 4);
+            line = chargeState + "\tyi\t" + normI + "\n";
             bw.write(line);
         }
 
         for(int y = 0; y < y_intensity.length; y++) {
-            normI = globals.round_dbl(y_intensity[y], 4);
-            line = Integer.toString(chargeState) + "\tyi\t" +
-                    Double.toString(normI) + "\n";
+            normI = MathFunctions.roundDouble(y_intensity[y], 4);
+            line = chargeState + "\tyi\t" + normI + "\n";
             bw.write(line);
         }
 
         for(int n = 0; n < u_intensity.length; n++) {
-            normI = globals.round_dbl(u_intensity[n], 4);
-            line = Integer.toString(chargeState) + "\tni\t" +
-                    Double.toString(normI) + "\n";
+            normI = MathFunctions.roundDouble(u_intensity[n], 4);
+            line = chargeState + "\tni\t" + normI + "\n";
             bw.write(line);
         }
 
         for(int b = 0; b < b_distance.length; b++) {
-            dist = globals.round_dbl(b_distance[b], 4);
-            line = Integer.toString(chargeState) + "\tbd\t" +
-                    Double.toString(dist) + "\n";
+            dist = MathFunctions.roundDouble(b_distance[b], 4);
+            line = chargeState + "\tbd\t" + dist + "\n";
             bw.write(line);
         }
 
         for(int y = 0; y < y_distance.length; y++) {
-            dist = globals.round_dbl(y_distance[y], 4);
-            line = Integer.toString(chargeState) + "\tyd\t" +
-                    Double.toString(dist) + "\n";
+            dist = MathFunctions.roundDouble(y_distance[y], 4);
+            line = chargeState + "\tyd\t" + dist + "\n";
             bw.write(line);
         }
 
         for(int n = 0; n < u_distance.length; n++) {
-            dist = globals.round_dbl(u_distance[n], 4);
-            line = Integer.toString(chargeState) + "\tnd\t" +
-                    Double.toString(dist) + "\n";
+            dist = MathFunctions.roundDouble(u_distance[n], 4);
+            line = chargeState + "\tnd\t" + dist + "\n";
             bw.write(line);
         }
 

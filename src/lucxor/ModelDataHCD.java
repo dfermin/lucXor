@@ -4,6 +4,8 @@
  */
 package lucxor;
 
+import lombok.extern.slf4j.Slf4j;
+
 import java.io.BufferedWriter;
 import java.io.File;
 import java.io.FileWriter;
@@ -15,7 +17,8 @@ import java.util.concurrent.*;
  *
  * @author dfermin
  */
-public class ModelData_HCD {
+@Slf4j
+public class ModelDataHCD {
 	private final static double NORMAL_CONSTANT = 1.0 / Math.sqrt(2.0 * Math.PI);
 	int chargeState;
 	int numPSM;
@@ -36,14 +39,13 @@ public class ModelData_HCD {
 	double[] f_int_b, f_int_y, f_int_neg;
 	double[] f_dist;
 	
-	ArrayList<PeakClass> posPks, negPks;
+	ArrayList<Peak> posPks, negPks;
 	double[] b_int, y_int, n_int;
 	double[] pos_dist;
-	
-	
-	
+
 	// Default constructor
-	public ModelData_HCD(int z, ArrayList<PeakClass> peaks) {
+	public ModelDataHCD(int z, List<Peak> peaks) {
+
 		chargeState = z;
 		numPSM = 0;
 		posPks = new ArrayList();
@@ -54,7 +56,7 @@ public class ModelData_HCD {
 		int n = 0;
 		int p = 0;
 		
-		for(PeakClass pk : peaks) {
+		for(Peak pk : peaks) {
 			if(pk.matched) {
 				p++;
 				if(pk.matchedIonStr.startsWith("b")) { posPks.add(pk); b++; }
@@ -74,7 +76,7 @@ public class ModelData_HCD {
 		
 		b = 0;
 		y = 0;
-		for(PeakClass pk : posPks) {
+		for(Peak pk : posPks) {
 			if(pk.matchedIonStr.startsWith("b")) {
 				b_int[ b ] = pk.norm_intensity;
 				b++;
@@ -86,14 +88,14 @@ public class ModelData_HCD {
 		}
 		
 		p = 0;
-		for(PeakClass pk : posPks) {
+		for(Peak pk : posPks) {
 			pos_dist[ p ] = pk.dist;
 			p++;
 		}
 
         // We will limit the size of the negative distribution to speed things up
         int limitN = (b + y);
-        if(limitN < constants.MIN_NUM_NEG_PKS) limitN += constants.MIN_NUM_NEG_PKS;
+        if(limitN < Constants.MIN_NUM_NEG_PKS) limitN += Constants.MIN_NUM_NEG_PKS;
 
         if(limitN > n) limitN = n; // prevents segfault on insufficient data for modeling
 
@@ -101,7 +103,7 @@ public class ModelData_HCD {
         Collections.shuffle(negPks);
         n = 0;
 		for(n = 0; n < limitN; n++) {
-            PeakClass pk = negPks.get(n);
+            Peak pk = negPks.get(n);
 			n_int[ n ] = pk.norm_intensity;
 		}
 		
@@ -264,19 +266,19 @@ public class ModelData_HCD {
 			N = b_int.length;
 			norm_ints = b_int;
 			variance = bIntVar;
-			System.err.println("+" + chargeState + "  Estimating NP Model for b-ion intensities");
+			log.info("+" + chargeState + "  Estimating NP Model for b-ion intensities");
 		}
 		else if(ionType == 'y') {
 			N = y_int.length;
 			norm_ints = y_int;
 			variance = yIntVar;
-			System.err.println("+" + chargeState + "  Estimating NP Model for y-ion intensities");
+			log.info("+" + chargeState + "  Estimating NP Model for y-ion intensities");
 		}
 		else {
 			N = n_int.length;
 			norm_ints = n_int;
 			variance = negIntVar;
-			System.err.println("+" + chargeState + "  Estimating NP Model for noise peak intensities");
+			log.info("+" + chargeState + "  Estimating NP Model for noise peak intensities");
 		}
 
 		// get the range of the normalized intensities
@@ -285,13 +287,13 @@ public class ModelData_HCD {
 		maxI = norm_ints[ (N-1) ];
 
 		double padding = 0.1;
-		if(minI < 0) t = minI + (globals.round_dbl(minI,4) * padding);
-		else t = minI - (globals.round_dbl(minI,4) * padding);
-		minI = globals.round_dbl(t,4);
+		if(minI < 0) t = minI + (MathFunctions.roundDouble(minI,4) * padding);
+		else t = minI - (MathFunctions.roundDouble(minI,4) * padding);
+		minI = MathFunctions.roundDouble(t,4);
 		
-		if(maxI < 0) t = maxI - (globals.round_dbl(maxI,4) * padding);
-		else t = maxI + (globals.round_dbl(maxI,4) * padding);
-		maxI = globals.round_dbl(t,4);
+		if(maxI < 0) t = maxI - (MathFunctions.roundDouble(maxI,4) * padding);
+		else t = maxI + (MathFunctions.roundDouble(maxI,4) * padding);
+		maxI = MathFunctions.roundDouble(t,4);
 		
 		
 		tickMarksInt = new double[ ntick ];
@@ -309,7 +311,7 @@ public class ModelData_HCD {
 		f_int = new double[ ntick ]; // this will hold the estimated height
 		
 		//how big a chunk of the norm_ints each task will process
-		int block = norm_ints.length / globals.numThreads;
+		int block = norm_ints.length / Globals.numThreads;
 		
 		
 		// Iterate over each tick mark
@@ -317,17 +319,17 @@ public class ModelData_HCD {
 			double tic = tickMarksInt[i];
 			
 			// Threadpool of executor objects
-			ExecutorService pool = Executors.newFixedThreadPool(globals.numThreads);
+			ExecutorService pool = Executors.newFixedThreadPool(Globals.numThreads);
 		
 			// Create a List to hold the tasks to be performed
-			List< Future<Double> > taskList = new ArrayList< Future<Double> >(globals.numThreads);
+			List< Future<Double> > taskList = new ArrayList<>(Globals.numThreads);
 		
 			
 			// break up the data in norm_ints into thread chunks
-			for(int cpu = 0; cpu < globals.numThreads; cpu++) {
+			for(int cpu = 0; cpu < Globals.numThreads; cpu++) {
 				int start = cpu * block;
 				int end   = start + block;
-				if(cpu == (globals.numThreads-1) ) end = norm_ints.length;
+				if(cpu == (Globals.numThreads-1) ) end = norm_ints.length;
 				
 				// get a subset of the data to submit to the worker thread
 				double[] subAry = Arrays.copyOfRange(norm_ints, start, end);
@@ -347,7 +349,7 @@ public class ModelData_HCD {
 			}
 			kernelResult /= (((double)N) * bw);
 			
-			if(kernelResult <= constants.TINY_NUM) kernelResult = constants.TINY_NUM;
+			if(kernelResult <= Constants.TINY_NUM) kernelResult = Constants.TINY_NUM;
 			
 			f_int[ i ] = kernelResult;
 			
@@ -384,7 +386,7 @@ public class ModelData_HCD {
 		double t;
 		double[] f_ary;
 
-		System.err.println("+" + chargeState + "  Estimating NP Model for b and y ions m/z distances");
+		log.info("+" + chargeState + "  Estimating NP Model for b and y ions m/z distances");
 
 		N = pos_dist.length;
 		
@@ -395,13 +397,13 @@ public class ModelData_HCD {
 		
 		// we want to pad the extremes of the distribution to smooth out the curve
 		double padding = 0.1;
-		if(min_dist < 0) t = min_dist + (globals.round_dbl(min_dist, 4) * padding);
-		else t = min_dist - (globals.round_dbl(min_dist, 4) * padding);
-		min_dist = globals.round_dbl(t, 4);
+		if(min_dist < 0) t = min_dist + (MathFunctions.roundDouble(min_dist, 4) * padding);
+		else t = min_dist - (MathFunctions.roundDouble(min_dist, 4) * padding);
+		min_dist = MathFunctions.roundDouble(t, 4);
 		
-		if(max_dist < 0) t = max_dist - (globals.round_dbl(max_dist, 4) * padding);
-		else t = max_dist + (globals.round_dbl(max_dist, 4) * padding);
-		max_dist = globals.round_dbl(t, 4);
+		if(max_dist < 0) t = max_dist - (MathFunctions.roundDouble(max_dist, 4) * padding);
+		else t = max_dist + (MathFunctions.roundDouble(max_dist, 4) * padding);
+		max_dist = MathFunctions.roundDouble(t, 4);
 			
 		posTickMarksDist = new double[ ntick ];
 
@@ -417,7 +419,7 @@ public class ModelData_HCD {
 		f_ary = new double[ ntick ];
 
 		//how big a chunk of the norm_ints each task will process
-		int block = pos_dist.length / globals.numThreads;
+		int block = pos_dist.length / Globals.numThreads;
 		
 		
 		// Iterate over each tick mark
@@ -425,17 +427,17 @@ public class ModelData_HCD {
 			double tic = posTickMarksDist[i];
 			
 			// Threadpool of executor objects
-			ExecutorService pool = Executors.newFixedThreadPool(globals.numThreads);
+			ExecutorService pool = Executors.newFixedThreadPool(Globals.numThreads);
 
 			// Create a list to hold the tasks to be performed
-			List< Future<Double> > taskList = new ArrayList< Future<Double> >(globals.numThreads);
+			List< Future<Double> > taskList = new ArrayList<>(Globals.numThreads);
 
 			
 			// break up the data in D into thread chunks
-			for(int cpu = 0; cpu < globals.numThreads; cpu++) {
+			for(int cpu = 0; cpu < Globals.numThreads; cpu++) {
 				int start = cpu * block;
 				int end   = start + block;
-				if(cpu == (globals.numThreads-1)) end = pos_dist.length;
+				if(cpu == (Globals.numThreads-1)) end = pos_dist.length;
 				
 				double[] subAry = Arrays.copyOfRange(pos_dist, start, end);
 				
@@ -453,7 +455,7 @@ public class ModelData_HCD {
 			}
 			kernelResult /= (((double)N) * bw);
 			
-			if(kernelResult <= constants.TINY_NUM) kernelResult = constants.TINY_NUM;
+			if(kernelResult <= Constants.TINY_NUM) kernelResult = Constants.TINY_NUM;
 			
 			f_ary[ i ] = kernelResult;
 			
@@ -479,7 +481,7 @@ public class ModelData_HCD {
 	private double getMode(double[] ary) {
 		
 		double mode = 0;
-		int Nbins = (int) ntick;
+		int Nbins = ntick;
 		double binWidth = 0.0001;
 		final double LIMIT = 0.1;
 		
@@ -629,28 +631,28 @@ public class ModelData_HCD {
 		
 		
 		for(int b = 0; b < b_int.length; b++) {
-			normI = globals.round_dbl(b_int[b], 4);
-			line = Integer.toString(chargeState) + "\tyi\t" +
-				   Double.toString(normI) + "\n";
+			normI = MathFunctions.roundDouble(b_int[b], 4);
+			line = chargeState + "\tyi\t" +
+					normI + "\n";
 			bw.write(line);
 		}
 		
 		for(int y = 0; y < y_int.length; y++) {
-			normI = globals.round_dbl(y_int[y], 4);
+			normI = MathFunctions.roundDouble(y_int[y], 4);
 			line = Integer.toString(chargeState) + "\tyi\t" +
 				   Double.toString(normI) + "\n";
 			bw.write(line);
 		}
 		
 		for(int n = 0; n < n_int.length; n++) {
-			normI = globals.round_dbl(n_int[n], 4);
+			normI = MathFunctions.roundDouble(n_int[n], 4);
 			line = Integer.toString(chargeState) + "\tni\t" +
 				   Double.toString(normI) + "\n";
 			bw.write(line);
 		}
 		
 		for(int p = 0; p < pos_dist.length; p++) {
-			dist = globals.round_dbl(pos_dist[p], 4);
+			dist = MathFunctions.roundDouble(pos_dist[p], 4);
 			line = Integer.toString(chargeState) + "\td\t" +
 				   Double.toString(dist) + "\n";
 			bw.write(line);
@@ -663,29 +665,29 @@ public class ModelData_HCD {
 	public void printStats() {
 		
 		String line = "Z = " + chargeState + ":  " +
-				      "b-ions Intensity: (mean, std): (" + 
-					   globals.round_dbl(bIntMean, 4) + ", " + 
-					   globals.round_dbl(Math.sqrt(bIntVar), 4) + ") N = " + 
+				      "b-ions Intensity: (mean, std): (" +
+				MathFunctions.roundDouble(bIntMean, 4) + ", " +
+				MathFunctions.roundDouble(Math.sqrt(bIntVar), 4) + ") N = " +
 					   b_int.length + "\n" +
 					  "Z = " + chargeState + ":  " +
-				      "y-ions Intensity: (mean, std): (" + 
-					   globals.round_dbl(yIntMean, 4) + ", " + 
-					   globals.round_dbl(Math.sqrt(yIntVar), 4) + ") N = " + 
+				      "y-ions Intensity: (mean, std): (" +
+				MathFunctions.roundDouble(yIntMean, 4) + ", " +
+				MathFunctions.roundDouble(Math.sqrt(yIntVar), 4) + ") N = " +
 					   y_int.length + "\n" +
 				
 					  "Z = " + chargeState + ":  " +
-				      "Matched Peak Distance: (mean, std): (" + 
-					   globals.round_dbl(posDistMean, 4) + ", " + 
-					   globals.round_dbl(Math.sqrt(posDistVar), 4) + ") N = " + 
+				      "Matched Peak Distance: (mean, std): (" +
+				MathFunctions.roundDouble(posDistMean, 4) + ", " +
+				MathFunctions.roundDouble(Math.sqrt(posDistVar), 4) + ") N = " +
 					   pos_dist.length + "\n" +
 					   
 					   "Z = " + chargeState + ":  " +
-					   "Noise peak Intensity: (mean, std): (" + 
-					   globals.round_dbl(negIntMean, 4) + ", " + 
-					   globals.round_dbl(Math.sqrt(negIntVar), 4) + ") N = " + 
+					   "Noise peak Intensity: (mean, std): (" +
+				MathFunctions.roundDouble(negIntMean, 4) + ", " +
+				MathFunctions.roundDouble(Math.sqrt(negIntVar), 4) + ") N = " +
 					   n_int.length + "\n";
 		
-		System.err.println(line);
+		log.info(line);
 	}
 	
 	

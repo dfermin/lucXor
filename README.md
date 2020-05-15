@@ -1,4 +1,4 @@
-# Luciphor options
+# LucXor options
 
 The config file should be provided to the tool in the following way:
 

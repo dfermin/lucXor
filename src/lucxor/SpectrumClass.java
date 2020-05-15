@@ -96,7 +96,7 @@ public class SpectrumClass {
         double medianI = 0d;
 
         // Need to sort the peak intensities from low to high
-        ArrayList<Double> pksI = new ArrayList<Double>(N);
+        ArrayList<Double> pksI = new ArrayList<>(N);
         for(int i = 0; i < N; i++) pksI.add(rel_intensity[i]);
 
         Collections.sort(pksI); // intensities sorted from low to high
@@ -178,8 +178,8 @@ public class SpectrumClass {
 
 
 
-    public PeakClass getPeakClassInstance(int idx) {
-        PeakClass ret = new PeakClass();
+    public Peak getPeakClassInstance(int idx) {
+        Peak ret = new Peak();
 
         ret.mz = this.mz[ idx ];
         ret.raw_intensity = this.raw_intensity[ idx ];

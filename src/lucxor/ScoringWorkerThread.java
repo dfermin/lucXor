@@ -11,7 +11,7 @@ import java.io.IOException;
 public class ScoringWorkerThread implements Runnable {
 
     private PSM curPSM; // the PSM to be scored
-    private int jobIdx; // index of this PSM in the globals.PSM_list
+    private int jobIdx; // index of this PSM in the Globals.PSM_list
     private int runMode_;
 
     // Default constructor for this class
@@ -21,12 +21,8 @@ public class ScoringWorkerThread implements Runnable {
         this.runMode_ = rn;
     }
 
-
     @Override
     public void run() {
-
-
-
         try {
             synchronized (this) {
                 this.curPSM.generatePermutations(this.runMode_);
@@ -35,7 +31,6 @@ public class ScoringWorkerThread implements Runnable {
                 if ((this.jobIdx % 100) == 0) System.err.print(this.jobIdx + " ");
                 if ((this.jobIdx % 1000) == 0) System.err.print("\n");
             }
-
         } catch (IOException e) {
             e.printStackTrace();
         }

@@ -23,7 +23,8 @@ import java.util.logging.Logger;
  *
  * @author dfermin
  */
-public class FLRClass {
+public class FLR {
+
 	ArrayList<PSM> realPSMs, decoyPSMs;
     THashMap<Integer, double[]> minorMapG, minorMapL;
 
@@ -49,7 +50,7 @@ public class FLRClass {
 	final int NMARKS = 10001; // we want N+1 bins for the FLR
 
 
-	FLRClass() {
+	FLR() {
 		realPSMs = new ArrayList();
 		decoyPSMs = new ArrayList();
 		maxDeltaScore = 0d;
@@ -101,12 +102,12 @@ public class FLRClass {
 		calcDeltaScoreMean();
 		calcDeltaScoreVar();
 		
-		getBandWidth(constants.DECOY); // decoys
-		getBandWidth(constants.REAL); // real
+		getBandWidth(Constants.DECOY); // decoys
+		getBandWidth(Constants.REAL); // real
 		
 		System.err.print(
-			"FLR bandwidth (pos): " + globals.round_dbl(bw_real, 6) + "\n" +
-			"FLR bandwidth (neg): " + globals.round_dbl(bw_decoy, 6) + "\n"
+			"FLR bandwidth (pos): " + MathFunctions.roundDouble(bw_real, 6) + "\n" +
+			"FLR bandwidth (neg): " + MathFunctions.roundDouble(bw_decoy, 6) + "\n"
 		);
 		
 	}
@@ -118,7 +119,7 @@ public class FLRClass {
 		double result = 0d;
 		double x = 0d;
 		
-		if(dataType == constants.REAL) { // real
+		if(dataType == Constants.REAL) { // real
 			sigma = Math.sqrt(deltaScoreVar_pos);
 			N = (double) realPSMs.size();
 			x = Math.pow(N, 0.2);
@@ -128,7 +129,7 @@ public class FLRClass {
 			
 		}
 		
-		if(dataType == constants.DECOY) { // decoy
+		if(dataType == Constants.DECOY) { // decoy
 			sigma = Math.sqrt(deltaScoreVar_neg);
 			N = (double) decoyPSMs.size();
 			x = Math.pow(N, 0.2);
@@ -195,7 +196,7 @@ public class FLRClass {
 		double bw = 0;
 		double N = 0;
 		
-		if(dataType == constants.DECOY) { // decoys
+		if(dataType == Constants.DECOY) { // decoys
 			dataAry = neg;
 			bw = bw_decoy;
 			N = (double) Ndecoy;
@@ -203,7 +204,7 @@ public class FLRClass {
 			f0 = new double[ NMARKS ];
 		}
 		
-		if(dataType == constants.REAL) { // real
+		if(dataType == Constants.REAL) { // real
 			dataAry = pos;
 			bw = bw_real;
 			N = (double) Nreal;
@@ -212,23 +213,23 @@ public class FLRClass {
 		}
 		
 		// how big a chunk of the forward deltaScores to process per cpu
-		int block = dataAry.length / globals.numThreads;
+		int block = dataAry.length / Globals.numThreads;
 		
 		for(int i = 0; i < NMARKS; i++) {
 			double tic = tickMarks[i];
 			
 			// Threadpool of executor objects
-			ExecutorService pool = Executors.newFixedThreadPool(globals.numThreads);
+			ExecutorService pool = Executors.newFixedThreadPool(Globals.numThreads);
 
 			// Create a list to hold the tasks to be performed
-			List< Future<Double> > taskList = new ArrayList<Future<Double>>(globals.numThreads);
+			List< Future<Double> > taskList = new ArrayList<>(Globals.numThreads);
 
 			
 			// break up the data in pos into thread chunks
-			for(int cpu = 0; cpu < globals.numThreads; cpu++) {
+			for(int cpu = 0; cpu < Globals.numThreads; cpu++) {
 				int start = cpu * block;
 				int end   = start + block;
-				if(cpu == (globals.numThreads-1)) end = dataAry.length;
+				if(cpu == (Globals.numThreads-1)) end = dataAry.length;
 				
 				double[] subAry = Arrays.copyOfRange(dataAry, start, end);
 				
@@ -246,15 +247,15 @@ public class FLRClass {
 			}
 			kernelResult /= (N * bw);
 			
-			if(kernelResult > constants.TINY_NUM) res[i] = kernelResult;
-			else res[i] = constants.TINY_NUM;
+			if(kernelResult > Constants.TINY_NUM) res[i] = kernelResult;
+			else res[i] = Constants.TINY_NUM;
 			
 			pool.shutdown(); // bring down the threadpool
 		}
 		
-		if(dataType == constants.DECOY) f0 = res;
+		if(dataType == Constants.DECOY) f0 = res;
 		
-		if(dataType == constants.REAL) f1 = res;
+		if(dataType == Constants.REAL) f1 = res;
 
 	}
 
@@ -276,16 +277,16 @@ public class FLRClass {
 			
 			// GlobalFLR
 			ratio = 0d;
-			AUC_rev_0 = getGlobalAUC(tmp_score, constants.DECOY);
-			AUC_rev_1 = getGlobalAUC(tmp_score, constants.REAL);
+			AUC_rev_0 = getGlobalAUC(tmp_score, Constants.DECOY);
+			AUC_rev_1 = getGlobalAUC(tmp_score, Constants.REAL);
 			
 			ratio = (Ndecoy2/Nreal2) * (AUC_rev_0 / AUC_rev_1);
 			globalFDR[i] = ratio;
 			
 			// localFDR
 			ratio = 0d;
-			AUC_rev_0 = getLocalAUC(tmp_score, constants.DECOY);
-			AUC_rev_1 = getLocalAUC(tmp_score, constants.REAL);
+			AUC_rev_0 = getLocalAUC(tmp_score, Constants.DECOY);
+			AUC_rev_1 = getLocalAUC(tmp_score, Constants.REAL);
 			
 			ratio = (Ndecoy2/Nreal2) * (AUC_rev_0 / AUC_rev_1);
 			localFDR[i] = ratio;
@@ -311,7 +312,7 @@ public class FLRClass {
 		
 		
 		// For f0
-		if(whichF == constants.DECOY) { // decoys
+		if(whichF == Constants.DECOY) { // decoys
 			start_val = f0[0];
 			end_val = f0[ (NMARKS-1) ];
 			
@@ -340,7 +341,7 @@ public class FLRClass {
 		
 		
 		// For f1
-		if(whichF == constants.REAL) {
+		if(whichF == Constants.REAL) {
 			start_val = f1[0];
 			end_val = f1[ (NMARKS-1) ];
 			
@@ -381,7 +382,7 @@ public class FLRClass {
 		double fx = 0;
 		
 		// For f0
-		if(whichF == constants.DECOY) { // decoy
+		if(whichF == Constants.DECOY) { // decoy
 			sum = 0d;
 			//determine which two bins encompass the value of 'x'
 			for(int j = (NMARKS-1); j >= 1; j--) { // working backwards here
@@ -404,7 +405,7 @@ public class FLRClass {
 		
 		
 		// For f1
-		if(whichF == constants.REAL) { // real
+		if(whichF == Constants.REAL) { // real
 			sum = 0d;
 			//determine which two bins encompass the value of 'x'
 			for(int j = (NMARKS-1); j >= 1; j--) { // working backwards here
@@ -660,7 +661,7 @@ public class FLRClass {
 		for(int i = 0; i < N; i++) {
 			PSM realPSM = realPSMs.get(i);
 			
-			for(PSM p : globals.PSM_list) {
+			for(PSM p : Globals.PSM_list) {
 				if(p.specId.equalsIgnoreCase(realPSM.specId)) {
 					p.globalFDR = realPSM.globalFDR;
 					p.localFDR = realPSM.localFDR;
@@ -670,12 +671,12 @@ public class FLRClass {
 		}
 		
 		// fill in remaining PSMs
-		for(PSM p : globals.PSM_list) {
+		for(PSM p : Globals.PSM_list) {
 			if(p.isDecoy) {
 				p.globalFDR = Double.NaN;
 				p.localFDR = Double.NaN;
 			}
-			else if(p.deltaScore <= constants.MIN_DELTA_SCORE) {
+			else if(p.deltaScore <= Constants.MIN_DELTA_SCORE) {
 				p.globalFDR = 1.0;
 				p.localFDR = 1.0;
 			}
@@ -716,7 +717,7 @@ public class FLRClass {
 			}
 			bw.close();
 		} catch (IOException ex) {
-			Logger.getLogger(FLRClass.class.getName()).log(Level.SEVERE, null, ex);
+			Logger.getLogger(FLR.class.getName()).log(Level.SEVERE, null, ex);
 		}
 	}
 
