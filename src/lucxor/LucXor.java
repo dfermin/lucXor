@@ -74,7 +74,7 @@ public class LucXor {
 			parseTSVSrc();
 
         // Read in spectra for these PSMs
-		Globals.read_in_spectra();
+		Globals.readInSpectra();
 
 		// Run CID Algorithm
         if(Globals.scoringAlgorithm == Constants.CID)

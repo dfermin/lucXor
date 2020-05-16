@@ -44,7 +44,6 @@ public class FLR {
 	
 	// bandwidth for histograms
 	double bw_real, bw_decoy;
-	
 	int Nreal, Ndecoy;
 	
 	final int NMARKS = 10001; // we want N+1 bins for the FLR
@@ -76,9 +75,6 @@ public class FLR {
 		Nreal = pos.length;
 		Ndecoy = neg.length;
 	}
-	
-	
-	
 	
 	
 	public void initializeTickMarks() {

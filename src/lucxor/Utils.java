@@ -24,4 +24,14 @@ public class Utils {
     ret = sb.toString();
     return ret;
   }
+
+  /**
+   * Generate an String Filename:Scan
+   * @param srcFile Spectrum File
+   * @param scanNum Scan number
+   * @return  Filename:Scan
+   */
+  public static String generateIndex(String srcFile, Integer scanNum){
+    return srcFile + ":" + scanNum;
+  }
 }

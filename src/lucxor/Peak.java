@@ -44,28 +44,6 @@ public class Peak {
   // Comparator to sort Peak objects based upon mz dist values from low to high
   public static Comparator comparator_mz_abs_dist = (Comparator<Peak>) (o1, o2) -> Double.compare(Math.abs(o1.dist), Math.abs(o2.dist));
 
-
-  /**************************************************************************
-   * Function to use for comparison between Peak objects to remove
-   * duplicates based upon the 'mz' variable in this class.
-   */
-  @Override
-  public boolean equals(Object obj) {
-    if (obj == null) {
-      return false;
-    }
-    if (getClass() != obj.getClass()) {
-      return false;
-    }
-    final Peak other = (Peak) obj;
-    if (Double.doubleToLongBits(this.mz) != Double.doubleToLongBits(other.mz)) {
-      return false;
-    }
-    return true;
-  }
-  /**************************************************************************/
-
-
   // default constructor
   Peak(double x, double y) { mz = x; raw_intensity = y; }
 
@@ -103,5 +81,26 @@ public class Peak {
     matchedIonStr = "";
     matched = false;
   }
+
+
+  /**************************************************************************
+   * Function to use for comparison between Peak objects to remove
+   * duplicates based upon the 'mz' variable in this class.
+   */
+  @Override
+  public boolean equals(Object obj) {
+    if (obj == null) {
+      return false;
+    }
+    if (getClass() != obj.getClass()) {
+      return false;
+    }
+    final Peak other = (Peak) obj;
+    if (Double.doubleToLongBits(this.mz) != Double.doubleToLongBits(other.mz)) {
+      return false;
+    }
+    return true;
+  }
+  /**************************************************************************/
 
 }

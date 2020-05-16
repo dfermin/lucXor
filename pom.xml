@@ -90,12 +90,6 @@
       <version>3.6.1</version>
     </dependency>
 
-    <!--<dependency>-->
-      <!--<groupId>com.github.dpaukov</groupId>-->
-      <!--<artifactId>combinatoricslib3</artifactId>-->
-      <!--<version>3.2.0</version>-->
-    <!--</dependency>-->
-
     <dependency>
       <groupId>com.googlecode.combinatoricslib</groupId>
       <artifactId>combinatoricslib</artifactId>

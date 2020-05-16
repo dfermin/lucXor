@@ -14,8 +14,9 @@ import java.util.stream.Collectors;
 import java.util.stream.Stream;
 
 /**
- *
+ * This class contains a set of contants that are needed for the program.
  * @author dfermin
+ * @author ypriverol
  */
 public class Constants {
 
@@ -49,6 +50,10 @@ public class Constants {
 	public static final double TINY_NUM = 1e-10; // represents a really small number
 	public static final double MIN_DELTA_SCORE = 0.1;
     public static final double FUNCTION_TIME_LIMIT = 120; // how long a function call can go for (in seconds) before we kill it
+
+	public static final String MGF_TYPE  = "MGF";
+	public static final String MZML_TYPE = "MZML";
+	public static final String MZXML_TYPE = "MZXML";
 
 	public static Map<String, Double> AA_MASS_MAP = Stream.of(
 			new AbstractMap.SimpleEntry<>("A", 71.03711),
