@@ -122,7 +122,7 @@ public class LucXor {
 	    log.info("\nReading PSMs from pepXML file: " +
                 Globals.inputFile.getAbsolutePath());
 		PepXML p = new PepXML(Globals.inputFile);
-		log.info(Globals.PSM_list.size() + " Candidate PSMs read in.");
+		log.info(Globals.psmList.size() + " Candidate PSMs read in.");
 	}
 
 	
@@ -153,16 +153,16 @@ public class LucXor {
             String[] vars = line.split("\t");
 			
 			curPSM = new PSM();
-			curPSM.srcFile = vars[0];
-			curPSM.scanNum = Integer.valueOf( vars[1] );
-			curPSM.charge = Integer.valueOf( vars[2] );
+			curPSM.setSrcFile(vars[0]);
+			curPSM.setScanNum(Integer.valueOf( vars[1] ));
+			curPSM.setCharge(Integer.valueOf( vars[2] ));
 			double obsScore = Double.valueOf( vars[3] );
-			curPSM.origPep.peptide = vars[4].toUpperCase();
+			curPSM.setPeptideSequence(vars[4].toUpperCase());
 
 			if(Globals.scoringMethod == Constants.NEGLOGEXPECT) {
-			    curPSM.PSMscore = -1.0 * Math.log(obsScore);
+			    curPSM.setPSMscore(-1.0 * Math.log(obsScore));
             } else {
-			    curPSM.PSMscore = obsScore;
+			    curPSM.setPSMscore(obsScore);
             }
 
 
@@ -180,7 +180,7 @@ public class LucXor {
 				int pos = Integer.valueOf(ary[0]); // assume 0-based coordinates
 				double mass = Double.valueOf(ary[1]);
 				
-				curPSM.modCoordMap.put(pos, mass);
+				curPSM.getModCoordMap().put(pos, mass);
 			}
 			
 			// Determine if this PSM has any non-standard AA characters. 
@@ -192,17 +192,17 @@ public class LucXor {
 			}
 
 			// Skip PSMs that exceed the number of candidate permutations
-			if(curPSM.origPep.getNumPerm() > Globals.max_num_permutations) numBadChars = 100;
+			if(curPSM.getOrigPep().getNumPerm() > Globals.max_num_permutations) numBadChars = 100;
 
 			if(numBadChars == 0) {
 				curPSM.process();
-				if(curPSM.isKeeper) Globals.PSM_list.add(curPSM);
+				if(curPSM.isKeeper()) Globals.psmList.add(curPSM);
 			}
 			curPSM = null;
 		}
 		br.close();
 
-		log.info("Read in " + Globals.PSM_list.size() + " PSMs");
+		log.info("Read in " + Globals.psmList.size() + " PSMs");
 	}
 
 
@@ -232,11 +232,11 @@ public class LucXor {
 		// an accurate model.
         TIntIntHashMap chargeMap = new TIntIntHashMap();
 		for(int z = 2; z <= Globals.maxChargeState; z++) chargeMap.put(z,0);
-		for(PSM p : Globals.PSM_list) {
-			if(p.useForModel) {
+		for(PSM p : Globals.psmList) {
+			if(p.isUseForModel()) {
                 int old = 1;
-                if(chargeMap.containsKey(p.charge)) old = chargeMap.get(p.charge) + 1;
-				chargeMap.put(p.charge, old);
+                if(chargeMap.containsKey(p.getCharge())) old = chargeMap.get(p.getCharge()) + 1;
+				chargeMap.put(p.getCharge(), old);
                 numPSM++;
 			}
         }
@@ -274,8 +274,8 @@ public class LucXor {
 
             if((Globals.numThreads == 1) || (Globals.debugMode != 0)) {
 
-                for (PSM p : Globals.PSM_list) {
-                    if ((p.charge == z) && p.useForModel) {
+                for (PSM p : Globals.psmList) {
+                    if ((p.getCharge() == z) && p.isUseForModel()) {
                         p.generatePermutations(0); // generate both real permutations
                         p.matchAllPeaks();
                     }
@@ -287,8 +287,8 @@ public class LucXor {
                 final int NTHREADS = Globals.numThreads;
                 ExecutorService executor = Executors.newFixedThreadPool(NTHREADS);
                 int ctr = 1;
-                for (PSM p : Globals.PSM_list) {
-                    if ((p.charge == z) && p.useForModel) {
+                for (PSM p : Globals.psmList) {
+                    if ((p.getCharge() == z) && p.isUseForModel()) {
                         Runnable worker = new ModelParameterWorkerThread(p, ctr++);
                         executor.execute(worker);
                     }
@@ -304,15 +304,15 @@ public class LucXor {
 
             // At this point, each PSM (whether you used threading or not) has all of it's
             // peaks classified as 'pos' or 'neg'. Record them into the modelingPks object
-            for(PSM p : Globals.PSM_list) {
-                if ((p.charge == z) && p.useForModel) {
-                    if((null != p.posPeaks) && (!p.posPeaks.isEmpty())) {
-                        modelingPks.addAll(p.posPeaks);
-                        p.posPeaks.clear();
+            for(PSM p : Globals.psmList) {
+                if ((p.getCharge() == z) && p.isUseForModel()) {
+                    if((null != p.getPosPeaks()) && (!p.getPosPeaks().isEmpty())) {
+                        modelingPks.addAll(p.getPosPeaks());
+                        p.getPosPeaks().clear();
                     }
-                    if((null != p.negPeaks) && (!p.negPeaks.isEmpty())) {
-                        modelingPks.addAll(p.negPeaks);
-                        p.negPeaks.clear();
+                    if((null != p.getNegPeaks()) && (!p.getNegPeaks().isEmpty())) {
+                        modelingPks.addAll(p.getNegPeaks());
+                        p.getNegPeaks().clear();
                     }
                     numPSM++;
                 }
@@ -378,16 +378,16 @@ public class LucXor {
                 if(RN == 0)
                     log.info("\n[ " + RN + " ] Estimating FLR with decoys (" + NCPU + " threads)...");
                 if(RN == 1)
-                    log.info("\n[ " + RN + " ] Scoring " + Globals.PSM_list.size() + " PSMs (" + NCPU + " threads)...");
+                    log.info("\n[ " + RN + " ] Scoring " + Globals.psmList.size() + " PSMs (" + NCPU + " threads)...");
             }
             else {
-                log.info("\nScoring " + Globals.PSM_list.size() + " PSMs (" + NCPU + " threads)...");
+                log.info("\nScoring " + Globals.psmList.size() + " PSMs (" + NCPU + " threads)...");
             }
 
             AtomicInteger ctr = new AtomicInteger(1);
 
             int currentRN = RN;
-            Globals.PSM_list.parallelStream().forEach(p -> {
+            Globals.psmList.parallelStream().forEach(p -> {
                 p.generatePermutations(currentRN);
                 try {
                     p.scorePermutations();
@@ -437,11 +437,11 @@ public class LucXor {
 		// an accurate model.
 		THashMap<Integer, Integer> chargeMap = new THashMap();
 		for(int z = 2; z <= Globals.maxChargeState; z++) chargeMap.put(z,0);
-		for(PSM p : Globals.PSM_list) {
-			if(p.useForModel) {
+		for(PSM p : Globals.psmList) {
+			if(p.isUseForModel()) {
                 int old = 1;
-                if(chargeMap.containsKey(p.charge)) old = chargeMap.get(p.charge) + 1;
-                chargeMap.put(p.charge, old);
+                if(chargeMap.containsKey(p.getCharge())) old = chargeMap.get(p.getCharge()) + 1;
+                chargeMap.put(p.getCharge(), old);
                 numPSM.getAndIncrement();
 			}
 		}
@@ -483,22 +483,22 @@ public class LucXor {
 			numPSM.set(0); // track number of PSMs used for modeling
 
             int charge = z;
-            Globals.PSM_list.parallelStream().forEach( p -> {
-                if ((p.charge == charge) && p.useForModel) {
+            Globals.psmList.parallelStream().forEach(p -> {
+                if ((p.getCharge() == charge) && p.isUseForModel()) {
                     p.generatePermutations(0); // generate real permutations
                     p.matchAllPeaks();
                 }
             });
 
-            Globals.PSM_list.parallelStream().forEach( p-> {
-                if((p.charge == charge) && p.useForModel) {
-                    if( (null != p.posPeaks) && (!p.posPeaks.isEmpty()) ) {
-                        modelingPks.addAll(p.posPeaks);
-                        p.posPeaks.clear();
+            Globals.psmList.parallelStream().forEach(p-> {
+                if((p.getCharge() == charge) && p.isUseForModel()) {
+                    if( (null != p.getPosPeaks()) && (!p.getPosPeaks().isEmpty()) ) {
+                        modelingPks.addAll(p.getPosPeaks());
+                        p.getPosPeaks().clear();
                     }
-                    if( (null != p.negPeaks) && (!p.negPeaks.isEmpty()) ) {
-                        modelingPks.addAll(p.negPeaks);
-                        p.negPeaks.clear();
+                    if( (null != p.getNegPeaks()) && (!p.getNegPeaks().isEmpty()) ) {
+                        modelingPks.addAll(p.getNegPeaks());
+                        p.getNegPeaks().clear();
                     }
                     numPSM.getAndIncrement();
                 }
@@ -587,17 +587,17 @@ public class LucXor {
                 if(RN == 0)
                     log.info("\n[ " + RN + " ] Estimating FLR with decoys (" + NCPU + " threads)...");
                 if(RN == 1)
-                    log.info("\n[ " + RN + " ] Scoring " + Globals.PSM_list.size() + " PSMs (" + NCPU + " threads)...");
+                    log.info("\n[ " + RN + " ] Scoring " + Globals.psmList.size() + " PSMs (" + NCPU + " threads)...");
             }
             else {
-                log.info("\nScoring " + Globals.PSM_list.size() + " PSMs (" + NCPU + " threads)...");
+                log.info("\nScoring " + Globals.psmList.size() + " PSMs (" + NCPU + " threads)...");
             }
 
 
             // for single threaded analysis
             if((Globals.numThreads == 1) || (Globals.debugMode != 0)) {
                 int ctr = 1;
-                for(PSM p : Globals.PSM_list) {
+                for(PSM p : Globals.psmList) {
 
                     p.generatePermutations(RN);
                     p.scorePermutations();
@@ -614,7 +614,7 @@ public class LucXor {
                 final int NTHREADS = Globals.numThreads;
                 ExecutorService executor = Executors.newFixedThreadPool(NTHREADS);
                 int ctr = 1;
-                for(PSM p : Globals.PSM_list) {
+                for(PSM p : Globals.psmList) {
                     p.generatePermutations(RN);
                     Runnable worker = new ScoringWorkerThread(p, RN, ctr++);
                     executor.execute(worker);
@@ -718,7 +718,7 @@ public class LucXor {
 		
 		bw.write(hdr);
 
-		for(PSM psm : Globals.PSM_list) {
+		for(PSM psm : Globals.psmList) {
 			bw.write( psm.getResults() );
             if(Globals.writeMatchedPeaks) bwPks.write( psm.writeMatchedPks() );
 		}

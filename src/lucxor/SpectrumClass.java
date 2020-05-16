@@ -181,10 +181,10 @@ public class SpectrumClass {
     public Peak getPeakClassInstance(int idx) {
         Peak ret = new Peak();
 
-        ret.mz = this.mz[ idx ];
-        ret.raw_intensity = this.raw_intensity[ idx ];
-        ret.rel_intensity = this.rel_intensity[ idx ];
-        ret.norm_intensity = this.norm_intensity[ idx ];
+        ret.setMz(this.mz[ idx ]);
+        ret.setRawIntensity(this.raw_intensity[ idx ]);
+        ret.setRelIntensity(this.rel_intensity[ idx ]);
+        ret.setNormIntensity(this.norm_intensity[ idx ]);
 
         return ret;
     }

@@ -6,7 +6,6 @@ package lucxor;
 
 import java.io.File;
 import java.io.IOException;
-import java.util.HashMap;
 import javax.xml.parsers.ParserConfigurationException;
 import javax.xml.parsers.SAXParser;
 import javax.xml.parsers.SAXParserFactory;
@@ -21,9 +20,6 @@ import org.xml.sax.helpers.DefaultHandler;
  */
 class PepXML extends DefaultHandler {
 
-	
-	HashMap<String, Double> variableMods = new HashMap();
-	HashMap<String, Double> fixedMods = new HashMap();
 	String temp;
 	String searchEngine;
 	String AA_alphabet = "ACDEFGHIKLMNPQRSTVWY";
@@ -87,23 +83,23 @@ class PepXML extends DefaultHandler {
 		if(qName.equalsIgnoreCase("spectrum_query")) {
 			curPSM = new PSM();
 			
-			curPSM.specId = attr.getValue("spectrum");
-			curPSM.scanNum = Integer.valueOf( attr.getValue("start_scan") );
-			curPSM.charge = Integer.valueOf( attr.getValue("assumed_charge") );
+			curPSM.setSpecId(attr.getValue("spectrum"));
+			curPSM.setScanNum(Integer.valueOf( attr.getValue("start_scan") ));
+			curPSM.setCharge(Integer.valueOf( attr.getValue("assumed_charge") ));
 		}
 		
 		if(qName.equalsIgnoreCase("search_hit")) {
-			curPSM.origPep.peptide = attr.getValue("peptide");
+			curPSM.setPeptideSequence(attr.getValue("peptide"));
 		}
 		
 		if(qName.equalsIgnoreCase("modification_info")) {
 			if(attr.getLocalName(0).equalsIgnoreCase("mod_nterm_mass")) {
 				double nterm = Double.valueOf(attr.getValue("mod_nterm_mass"));
-				curPSM.modCoordMap.put(Constants.NTERM_MOD, nterm);
+				curPSM.getModCoordMap().put(Constants.NTERM_MOD, nterm);
 			}
 			else if(attr.getLocalName(0).equalsIgnoreCase("mod_cterm_mass")) {
 				double cterm = Double.valueOf(attr.getValue("mod_cterm_mass"));
-				curPSM.modCoordMap.put(Constants.CTERM_MOD, cterm);
+				curPSM.getModCoordMap().put(Constants.CTERM_MOD, cterm);
 			}
 		}
 		
@@ -111,7 +107,7 @@ class PepXML extends DefaultHandler {
 		if(qName.equalsIgnoreCase("mod_aminoacid_mass")) {
 			int pos = Integer.valueOf( attr.getValue("position") ) - 1; // ensures zero-based coordiantes
 			double mass = Double.valueOf( attr.getValue("mass") );
-			curPSM.modCoordMap.put(pos, mass);
+			curPSM.getModCoordMap().put(pos, mass);
 		}
 		
 		if(qName.equalsIgnoreCase("search_score")) {
@@ -123,19 +119,19 @@ class PepXML extends DefaultHandler {
 					double score = Double.valueOf( attr.getValue(j) );
 					
 					if(Globals.scoringMethod == Constants.NEGLOGEXPECT) {
-						if(k.equalsIgnoreCase("expect")) curPSM.PSMscore = -1.0 * Math.log(score);
+						if(k.equalsIgnoreCase("expect")) curPSM.setPSMscore(-1.0 * Math.log(score));
 					}
 					
 					if(Globals.scoringMethod == Constants.MASCOTIONSCORE) {
-						if(k.equalsIgnoreCase("ionscore")) curPSM.PSMscore = score;
+						if(k.equalsIgnoreCase("ionscore")) curPSM.setPSMscore(score);
 					}
 
                     if(Globals.scoringMethod == Constants.XTDHYPERSCORE) {
-                        if(k.equalsIgnoreCase("hyperscore")) curPSM.PSMscore = score;
+                        if(k.equalsIgnoreCase("hyperscore")) curPSM.setPSMscore(score);
                     }
 
                     if(Globals.scoringMethod == Constants.XCORR) {
-                        if (k.equalsIgnoreCase("xcorr")) curPSM.PSMscore = score;
+                        if (k.equalsIgnoreCase("xcorr")) curPSM.setPSMscore(score);
                     }
 				}
 				
@@ -144,7 +140,7 @@ class PepXML extends DefaultHandler {
 		
 		if(qName.equalsIgnoreCase("peptideprophet_result")) {
 			if(Globals.scoringMethod == Constants.PEPPROPHET)
-				curPSM.PSMscore = Double.valueOf(attr.getValue("probability"));
+				curPSM.setPSMscore(Double.valueOf(attr.getValue("probability")));
 		}
 	}
 	
@@ -167,7 +163,7 @@ class PepXML extends DefaultHandler {
 		if(qName.equalsIgnoreCase("search_hit")) { // end of record
 			
 			// skip PSMs with non-standard amino acid characters
-			String x = curPSM.origPep.peptide;
+			String x = curPSM.getPeptideSequence();
 			int numBadChars = 0;
 			for(int i = 0; i < x.length(); i++) {
 				String c = Character.toString(x.charAt(i));
@@ -175,12 +171,12 @@ class PepXML extends DefaultHandler {
 			}
 			
 			// Skip PSMs that exceed the number of candidate permutations
-			if(curPSM.origPep.getNumPerm() > Globals.max_num_permutations)
+			if(curPSM.getOrigPep().getNumPerm() > Globals.max_num_permutations)
 				numBadChars = 100;
 
 			if(numBadChars == 0) {
                 curPSM.process();
-				if(curPSM.isKeeper) Globals.PSM_list.add(curPSM);
+				if(curPSM.isKeeper()) Globals.psmList.add(curPSM);
                 curPSM = null;
 			}
 		}

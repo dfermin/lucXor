@@ -57,10 +57,10 @@ public class ModelDataHCD {
 		int p = 0;
 		
 		for(Peak pk : peaks) {
-			if(pk.matched) {
+			if(pk.isMatched()) {
 				p++;
-				if(pk.matchedIonStr.startsWith("b")) { posPks.add(pk); b++; }
-				if(pk.matchedIonStr.startsWith("y")) { posPks.add(pk); y++; }
+				if(pk.getMatchedIonStr().startsWith("b")) { posPks.add(pk); b++; }
+				if(pk.getMatchedIonStr().startsWith("y")) { posPks.add(pk); y++; }
 			}
 			else {
                 negPks.add(pk);
@@ -77,19 +77,19 @@ public class ModelDataHCD {
 		b = 0;
 		y = 0;
 		for(Peak pk : posPks) {
-			if(pk.matchedIonStr.startsWith("b")) {
-				b_int[ b ] = pk.norm_intensity;
+			if(pk.getMatchedIonStr().startsWith("b")) {
+				b_int[ b ] = pk.getNormIntensity();
 				b++;
 			}
-			else if(pk.matchedIonStr.startsWith("y")) {
-				y_int[ y ] = pk.norm_intensity;
+			else if(pk.getMatchedIonStr().startsWith("y")) {
+				y_int[ y ] = pk.getNormIntensity();
 				y++;
 			}
 		}
 		
 		p = 0;
 		for(Peak pk : posPks) {
-			pos_dist[ p ] = pk.dist;
+			pos_dist[ p ] = pk.getDist();
 			p++;
 		}
 
@@ -104,7 +104,7 @@ public class ModelDataHCD {
         n = 0;
 		for(n = 0; n < limitN; n++) {
             Peak pk = negPks.get(n);
-			n_int[ n ] = pk.norm_intensity;
+			n_int[ n ] = pk.getNormIntensity();
 		}
 		
 		posPks.clear(); posPks = null;

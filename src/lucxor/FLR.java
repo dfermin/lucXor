@@ -65,11 +65,11 @@ public class FLR {
 		neg = new double[ decoyPSMs.size() ];
 		
 		for(int i = 0; i < realPSMs.size(); i++) {
-			pos[i] = realPSMs.get(i).deltaScore;
+			pos[i] = realPSMs.get(i).getDeltaScore();
 		}
 		
 		for(int i = 0; i < decoyPSMs.size(); i++) {
-			neg[i] = decoyPSMs.get(i).deltaScore;
+			neg[i] = decoyPSMs.get(i).getDeltaScore();
 		}
 		
 		Nreal = pos.length;
@@ -650,31 +650,31 @@ public class FLR {
             double g_FDR = (globalFDR[i] > 1.0 ? 1.0 : globalFDR[i]);
             double l_FDR = (localFDR[i] > 1.0 ? 1.0 : localFDR[i]);
 
-			realPSMs.get(i).globalFDR = g_FDR;
-			realPSMs.get(i).localFDR = l_FDR;
+			realPSMs.get(i).setGlobalFDR(g_FDR);
+			realPSMs.get(i).setLocalFDR(l_FDR);
 		}
 		
 		for(int i = 0; i < N; i++) {
 			PSM realPSM = realPSMs.get(i);
 			
-			for(PSM p : Globals.PSM_list) {
-				if(p.specId.equalsIgnoreCase(realPSM.specId)) {
-					p.globalFDR = realPSM.globalFDR;
-					p.localFDR = realPSM.localFDR;
+			for(PSM p : Globals.psmList) {
+				if(p.getSpecId().equalsIgnoreCase(realPSM.getSpecId())) {
+					p.setGlobalFDR(realPSM.getGlobalFDR());
+					p.setLocalFDR(realPSM.getLocalFDR());
 					break;
 				}
 			}
 		}
 		
 		// fill in remaining PSMs
-		for(PSM p : Globals.PSM_list) {
-			if(p.isDecoy) {
-				p.globalFDR = Double.NaN;
-				p.localFDR = Double.NaN;
+		for(PSM p : Globals.psmList) {
+			if(p.isDecoy()) {
+				p.setGlobalFDR(Double.NaN);
+				p.setLocalFDR(Double.NaN);
 			}
-			else if(p.deltaScore <= Constants.MIN_DELTA_SCORE) {
-				p.globalFDR = 1.0;
-				p.localFDR = 1.0;
+			else if(p.getDeltaScore() <= Constants.MIN_DELTA_SCORE) {
+				p.setGlobalFDR(1.0);
+				p.setLocalFDR(1.0);
 			}
 		}
 	}

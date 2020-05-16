@@ -6,7 +6,7 @@ package lucxor;
 public class ModelParameterWorkerThread implements Runnable {
 
     private PSM curPSM; // the PSM modeling data will be acquired from
-    private int jobIdx; // index of this PSM in Globals.PSM_list
+    private int jobIdx; // index of this PSM in Globals.psmList
 
     // Default constructor for this class
     public ModelParameterWorkerThread(PSM externalPSM, int i) {

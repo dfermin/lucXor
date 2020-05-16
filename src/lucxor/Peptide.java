@@ -20,24 +20,24 @@ import org.apache.commons.math3.util.FastMath;
  */
 class Peptide {
 
-	String peptide;
-	String modPeptide;
-	int charge = 0;
-	TIntDoubleHashMap modPosMap = new TIntDoubleHashMap(); // total mass of each modified amino acid
-	THashMap<Integer, String> nonTargetMods = new THashMap();// holds the mod coordinates for non-target mods
-	THashMap<String, Double> b_ions = null, y_ions = null;
+	private String peptide;
+	private String modPeptide;
+	private int charge = 0;
+	private TIntDoubleHashMap modPosMap = new TIntDoubleHashMap(); // total mass of each modified amino acid
+	private THashMap<Integer, String> nonTargetMods = new THashMap();// holds the mod coordinates for non-target mods
+	private THashMap<String, Double> bIons = null, yIons = null;
 
-	int pepLen = 0;  // peptide's length
-	int numRPS; // number of _R_eported _P_hospho_S_ites
-	int numPPS; // number of _P_otential _P_hospho_S_ites
+	private int pepLen = 0;  // peptide's length
+	private int numRPS; // number of _R_eported _P_hospho_S_ites
+	private int numPPS; // number of _P_otential _P_hospho_S_ites
 
-	boolean is_unambiguous = false;
+	private boolean is_unambiguous = false;
 
-	double numPermutations = 0;
-	double numDecoyPermutations = 0;
-	double score = 0;
+	private double numPermutations = 0;
+	private double numDecoyPermutations = 0;
+	private double score = 0;
 
-	ArrayList<Peak> matchedPeaks;
+	private ArrayList<Peak> matchedPeaks;
 
 	// this initialization function is called by the PSM class when reading
 	// a new entry from a pepXML file.
@@ -168,9 +168,9 @@ class Peptide {
 
 
 
-	void build_ion_ladders() {
-		b_ions = new THashMap();
-		y_ions = new THashMap();
+	void buildIonLadders() {
+		bIons = new THashMap();
+		yIons = new THashMap();
 
 
 		String b = null, y = null;
@@ -202,11 +202,11 @@ class Peptide {
 					if(Z > 1.0) b += "/+" + Integer.toString((int)Z);
 
 					if(bmz > Globals.minMZ) {
-						b_ions.put(b, bmz);
+						bIons.put(b, bmz);
 
 						// Determine if this ion sequence can under go a neutral loss
 						// if it can, record the neutral loss variant
-						record_NL_ions(b, Z, bm);
+						recordNLIons(b, Z, bm);
 					}
 
 				}
@@ -219,11 +219,11 @@ class Peptide {
 					if(Z > 1.0) y += "/+" + Integer.toString((int)Z);
 
 					if(ymz > Globals.minMZ) {
-						y_ions.put(y, ymz);
+						yIons.put(y, ymz);
 
 						// Determine if this ion sequence can under go a neutral loss
 						// if it can, record the neutral loss variant
-						record_NL_ions(y, Z, ym);
+						recordNLIons(y, Z, ym);
 					}
 				}
 			}
@@ -234,7 +234,7 @@ class Peptide {
 
 	// Function determines if the passed ion sequence can under go a neutral loss
 	// If it can, the NL is recorded
-	private void record_NL_ions(String ion, double z, double orig_ion_mass) {
+	private void recordNLIons(String ion, double z, double orig_ion_mass) {
 
 		int start = ion.indexOf(":") + 1;
 		int end = ion.length();
@@ -262,8 +262,8 @@ class Peptide {
 					double mz = MathFunctions.roundDouble((mass / z), 4);
 
 					if(mz > Globals.minMZ) {
-						if(ion.startsWith("b")) b_ions.put(nl_str, mz);
-						if(ion.startsWith("y")) y_ions.put(nl_str, mz);
+						if(ion.startsWith("b")) bIons.put(nl_str, mz);
+						if(ion.startsWith("y")) yIons.put(nl_str, mz);
 					}
 				}
 			} // end loop Globals.nlMap
@@ -280,8 +280,8 @@ class Peptide {
 				double mz = MathFunctions.roundDouble((mass / z), 4);
 
 				if(mz > Globals.minMZ) {
-					if(ion.startsWith("b")) b_ions.put(nl_str, mz);
-					if(ion.startsWith("y")) y_ions.put(nl_str, mz);
+					if(ion.startsWith("b")) bIons.put(nl_str, mz);
+					if(ion.startsWith("y")) yIons.put(nl_str, mz);
 				}
 			}
 		}
@@ -311,13 +311,13 @@ class Peptide {
 
 
 	void printIons() {
-		for(String p : b_ions.keySet()) {
-			double m = MathFunctions.roundDouble(b_ions.get(p), 4);
+		for(String p : bIons.keySet()) {
+			double m = MathFunctions.roundDouble(bIons.get(p), 4);
 			System.out.println(modPeptide + "\t" + p + "\t" + m);
 		}
 
-		for(String p : y_ions.keySet()) {
-			double m = MathFunctions.roundDouble(y_ions.get(p), 4);
+		for(String p : yIons.keySet()) {
+			double m = MathFunctions.roundDouble(yIons.get(p), 4);
 			System.out.println(modPeptide + "\t" + p + "\t" + m);
 		}
 	}
@@ -411,15 +411,15 @@ class Peptide {
 	public THashMap<String, Double> getIonLadder() {
 		THashMap<String, Double> ret = new THashMap();
 
-		ret.putAll(b_ions);
-		ret.putAll(y_ions);
+		ret.putAll(bIons);
+		ret.putAll(yIons);
 
 		return ret;
 	}
 
 
 	// Function scores the current peptide
-	void calcScore_CID() {
+	void calcScoreCID() {
 
 		if(matchedPeaks.isEmpty()) {
 			score = 0;
@@ -439,22 +439,22 @@ class Peptide {
 			for(Peak pk : matchedPeaks) {
 
 				intensityU = MathFunctions
-						.log_gaussianProb(MD.mu_int_U, MD.var_int_U, pk.norm_intensity);
+						.log_gaussianProb(MD.mu_int_U, MD.var_int_U, pk.getNormIntensity());
 				distU = MathFunctions
-						.log_gaussianProb(MD.mu_dist_U, MD.var_dist_U, pk.dist);
+						.log_gaussianProb(MD.mu_dist_U, MD.var_dist_U, pk.getDist());
 
-				if(pk.matchedIonStr.startsWith("b")) {
+				if(pk.getMatchedIonStr().startsWith("b")) {
 					intensityM = MathFunctions
-							.log_gaussianProb(MD.mu_int_B, MD.var_int_B, pk.norm_intensity);
+							.log_gaussianProb(MD.mu_int_B, MD.var_int_B, pk.getNormIntensity());
 					distM = MathFunctions
-							.log_gaussianProb(MD.mu_dist_B, MD.var_dist_B, pk.dist);
+							.log_gaussianProb(MD.mu_dist_B, MD.var_dist_B, pk.getDist());
 				}
 
-				if(pk.matchedIonStr.startsWith("y")) {
+				if(pk.getMatchedIonStr().startsWith("y")) {
 					intensityM = MathFunctions
-							.log_gaussianProb(MD.mu_int_Y, MD.var_int_Y, pk.norm_intensity);
+							.log_gaussianProb(MD.mu_int_Y, MD.var_int_Y, pk.getNormIntensity());
 					distM = MathFunctions
-							.log_gaussianProb(MD.mu_dist_Y, MD.var_dist_Y, pk.dist);
+							.log_gaussianProb(MD.mu_dist_Y, MD.var_dist_Y, pk.getDist());
 				}
 
 				Iscore = intensityM - intensityU;
@@ -468,9 +468,9 @@ class Peptide {
 
 				if(x < 0) x = 0; // this prevents the score from going negative
 
-				pk.score = x;
-				pk.distScore = Dscore;
-				pk.intensityScore = Iscore;
+				pk.setScore(x);
+				pk.setDistScore(Dscore);
+				pk.setIntensityScore(Iscore);
 
 				score += x;
 			}
@@ -498,7 +498,7 @@ class Peptide {
 	/****************
 	 * Function computes the score for the HCD algorithm
 	 */
-	void calcScore_HCD() {
+	void calcScoreHCD() {
 
 		if(matchedPeaks.isEmpty()) {
 			score = 0;
@@ -524,12 +524,12 @@ class Peptide {
 			score = 0;
 
 			for(Peak pk : matchedPeaks) {
-				intensityU = MD.getLogNPdensityInt('n', pk.norm_intensity);
+				intensityU = MD.getLogNPdensityInt('n', pk.getNormIntensity());
 				distU = 0; // log of uniform distribution between -1 and 1 is zero
 
-				char ionType = pk.matchedIonStr.charAt(0);
-				intensityM = MD.getLogNPdensityInt(ionType, pk.norm_intensity);
-				distM = MD.getLogNPdensityDistPos(pk.dist);
+				char ionType = pk.getMatchedIonStr().charAt(0);
+				intensityM = MD.getLogNPdensityInt(ionType, pk.getNormIntensity());
+				distM = MD.getLogNPdensityDistPos(pk.getDist());
 
 				Iscore = intensityM - intensityU;
 				Dscore = distM - distU;
@@ -540,9 +540,9 @@ class Peptide {
 				double x = Iscore + Dscore;
 				if(x < 0) x = 0; // this prevents the score from going negative
 
-				pk.score = x;
-				pk.distScore = Dscore;
-				pk.intensityScore = Iscore;
+				pk.setScore(x);
+				pk.setDistScore(Dscore);
+				pk.setIntensityScore(Iscore);
 
 				score += x;
 			}
@@ -568,7 +568,7 @@ class Peptide {
 		matchedPeaks = new ArrayList<>();
 
 
-		int N = b_ions.size() + y_ions.size() ;
+		int N = bIons.size() + yIons.size() ;
 
 		// The same observed peak might be matchable to multiple theoretical ions for this peptide.
 		// This HashMap is used to keep track of the best possible match for an observed peak
@@ -578,8 +578,8 @@ class Peptide {
 
 
 		// Try to match y-ions first, they tend to be of higher intensity which is what we want
-		for(String theo_ion : y_ions.keySet()) {
-			double theo_mz  = y_ions.get(theo_ion);
+		for(String theo_ion : yIons.keySet()) {
+			double theo_mz  = yIons.get(theo_ion);
 
 			if(Globals.ms2tol_units == Constants.PPM_UNITS) {
 				double ppmErr = Globals.ms2tol / Constants.PPM;
@@ -606,25 +606,25 @@ class Peptide {
 				cand.sort(Peak.comparator_intensity_hi2low);
 				Peak pk = cand.get(0);
 
-				pk.matched = true;
-				pk.matchedIonStr = theo_ion;
-				pk.dist = pk.mz - theo_mz;
+				pk.setMatched(true);
+				pk.setMatchedIonStr(theo_ion);
+				pk.setDist(pk.getMz() - theo_mz);
 
 				// Check to see if you have already assigned this peak to a theoretical ion
-				if(bestMatchMap.containsKey(pk.mz)) {
-					Peak oldPK = bestMatchMap.get(pk.mz);
-					if(Math.abs(oldPK.dist) > (Math.abs(pk.dist))) bestMatchMap.put(pk.mz, pk);
+				if(bestMatchMap.containsKey(pk.getMz())) {
+					Peak oldPK = bestMatchMap.get(pk.getMz());
+					if(Math.abs(oldPK.getDist()) > (Math.abs(pk.getDist()))) bestMatchMap.put(pk.getMz(), pk);
 					oldPK = null;
 				}
-				else bestMatchMap.put(pk.mz, pk);
+				else bestMatchMap.put(pk.getMz(), pk);
 			}
 			cand.clear();
 		}
 
 
 		// Now try to match b-ions
-		for(String theo_ion : b_ions.keySet()) {
-			double theo_mz  = b_ions.get(theo_ion);
+		for(String theo_ion : bIons.keySet()) {
+			double theo_mz  = bIons.get(theo_ion);
 
 			if(Globals.ms2tol_units == Constants.PPM_UNITS) {
 				double ppmErr = Globals.ms2tol / Constants.PPM;
@@ -651,17 +651,17 @@ class Peptide {
 				cand.sort(Peak.comparator_intensity_hi2low);
 				Peak pk = cand.get(0);
 
-				pk.matched = true;
-				pk.matchedIonStr = theo_ion;
-				pk.dist = pk.mz - theo_mz;
+				pk.setMatched(true);
+				pk.setMatchedIonStr(theo_ion);
+				pk.setDist(pk.getMz() - theo_mz);
 
 				// Check to see if you have already assigned this peak to a theoretical ion
-				if(bestMatchMap.containsKey(pk.mz)) {
-					Peak oldPK = bestMatchMap.get(pk.mz);
-					if(Math.abs(oldPK.dist) > (Math.abs(pk.dist))) bestMatchMap.put(pk.mz, pk);
+				if(bestMatchMap.containsKey(pk.getMz())) {
+					Peak oldPK = bestMatchMap.get(pk.getMz());
+					if(Math.abs(oldPK.getDist()) > (Math.abs(pk.getDist()))) bestMatchMap.put(pk.getMz(), pk);
 					oldPK = null;
 				}
-				else bestMatchMap.put(pk.mz, pk);
+				else bestMatchMap.put(pk.getMz(), pk);
 			}
 			cand.clear();
 		}
@@ -670,5 +670,125 @@ class Peptide {
 		for(double mz : bestMatchMap.keys()) matchedPeaks.add( bestMatchMap.get(mz) );
 		bestMatchMap.clear();
 		bestMatchMap = null;
+	}
+
+	public String getPeptide() {
+		return peptide;
+	}
+
+	public void setPeptide(String peptide) {
+		this.peptide = peptide;
+	}
+
+	public String getModPeptide() {
+		return modPeptide;
+	}
+
+	public void setModPeptide(String modPeptide) {
+		this.modPeptide = modPeptide;
+	}
+
+	public int getCharge() {
+		return charge;
+	}
+
+	public void setCharge(int charge) {
+		this.charge = charge;
+	}
+
+	public TIntDoubleHashMap getModPosMap() {
+		return modPosMap;
+	}
+
+	public void setModPosMap(TIntDoubleHashMap modPosMap) {
+		this.modPosMap = modPosMap;
+	}
+
+	public THashMap<Integer, String> getNonTargetMods() {
+		return nonTargetMods;
+	}
+
+	public void setNonTargetMods(THashMap<Integer, String> nonTargetMods) {
+		this.nonTargetMods = nonTargetMods;
+	}
+
+	public THashMap<String, Double> getbIons() {
+		return bIons;
+	}
+
+	public void setbIons(THashMap<String, Double> bIons) {
+		this.bIons = bIons;
+	}
+
+	public THashMap<String, Double> getyIons() {
+		return yIons;
+	}
+
+	public void setyIons(THashMap<String, Double> yIons) {
+		this.yIons = yIons;
+	}
+
+	public int getPepLen() {
+		return pepLen;
+	}
+
+	public void setPepLen(int pepLen) {
+		this.pepLen = pepLen;
+	}
+
+	public int getNumRPS() {
+		return numRPS;
+	}
+
+	public void setNumRPS(int numRPS) {
+		this.numRPS = numRPS;
+	}
+
+	public int getNumPPS() {
+		return numPPS;
+	}
+
+	public void setNumPPS(int numPPS) {
+		this.numPPS = numPPS;
+	}
+
+	public boolean isIs_unambiguous() {
+		return is_unambiguous;
+	}
+
+	public void setIs_unambiguous(boolean is_unambiguous) {
+		this.is_unambiguous = is_unambiguous;
+	}
+
+	public double getNumPermutations() {
+		return numPermutations;
+	}
+
+	public void setNumPermutations(double numPermutations) {
+		this.numPermutations = numPermutations;
+	}
+
+	public double getNumDecoyPermutations() {
+		return numDecoyPermutations;
+	}
+
+	public void setNumDecoyPermutations(double numDecoyPermutations) {
+		this.numDecoyPermutations = numDecoyPermutations;
+	}
+
+	public double getScore() {
+		return score;
+	}
+
+	public void setScore(double score) {
+		this.score = score;
+	}
+
+	public ArrayList<Peak> getMatchedPeaks() {
+		return matchedPeaks;
+	}
+
+	public void setMatchedPeaks(ArrayList<Peak> matchedPeaks) {
+		this.matchedPeaks = matchedPeaks;
 	}
 }

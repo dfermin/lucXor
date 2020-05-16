@@ -5,7 +5,6 @@
 package lucxor;
 
 import java.util.ArrayList;
-import java.util.concurrent.ExecutionException;
 
 import gnu.trove.list.array.TIntArrayList;
 import org.paukov.combinatorics.Factory;

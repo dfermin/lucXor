@@ -43,11 +43,11 @@ public class ModelDataCID {
         int Nb = 0, Ny = 0, Nu = 0;
 
         for (Peak pk : peaks) {
-            if (pk.matched) {
-                if (pk.matchedIonStr.startsWith("b")) {
+            if (pk.isMatched()) {
+                if (pk.getMatchedIonStr().startsWith("b")) {
                     Nb++;
                 }
-                if (pk.matchedIonStr.startsWith("y")) {
+                if (pk.getMatchedIonStr().startsWith("y")) {
                     Ny++;
                 }
             } else {
@@ -65,16 +65,16 @@ public class ModelDataCID {
         Ny = 0;
 
         for (Peak pk : peaks) {
-            if (pk.matched) {
-                if (pk.matchedIonStr.startsWith("b")) {
-                    b_intensity[Nb] = pk.norm_intensity;
-                    b_distance[Nb] = pk.dist;
+            if (pk.isMatched()) {
+                if (pk.getMatchedIonStr().startsWith("b")) {
+                    b_intensity[Nb] = pk.getNormIntensity();
+                    b_distance[Nb] = pk.getDist();
                     Nb++;
                 }
 
-                if (pk.matchedIonStr.startsWith("y")) {
-                    y_intensity[Ny] = pk.norm_intensity;
-                    y_distance[Ny] = pk.dist;
+                if (pk.getMatchedIonStr().startsWith("y")) {
+                    y_intensity[Ny] = pk.getNormIntensity();
+                    y_distance[Ny] = pk.getDist();
                     Ny++;
                 }
             }
@@ -91,13 +91,13 @@ public class ModelDataCID {
 
         ArrayList<Peak> negPks = new ArrayList<>();
         for (Peak pk : peaks) {
-            if (!pk.matched) negPks.add(pk);
+            if (!pk.isMatched()) negPks.add(pk);
         }
         Collections.shuffle(negPks);
         for(int i = 0; i < limitN; i++) {
             Peak pk = negPks.get(i);
-            u_intensity[i] = pk.norm_intensity;
-            u_distance[i]  = pk.dist;
+            u_intensity[i] = pk.getNormIntensity();
+            u_distance[i]  = pk.getDist();
         }
         negPks.clear();
         negPks = null;

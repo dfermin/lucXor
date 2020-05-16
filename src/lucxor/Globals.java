@@ -11,15 +11,11 @@ import org.xml.sax.SAXException;
 import umich.ms.datatypes.LCMSData;
 import umich.ms.datatypes.LCMSDataSubset;
 import umich.ms.datatypes.scan.IScan;
-import umich.ms.datatypes.scan.StorageStrategy;
 import umich.ms.datatypes.scancollection.IScanCollection;
 import umich.ms.datatypes.scancollection.ScanIndex;
-import umich.ms.datatypes.scancollection.impl.ScanCollectionDefault;
 import umich.ms.datatypes.spectrum.ISpectrum;
 import umich.ms.fileio.exceptions.FileParsingException;
-import umich.ms.fileio.filetypes.LCMSDataSource;
 import umich.ms.fileio.filetypes.mzml.MZMLFile;
-import umich.ms.fileio.filetypes.mzml.MZMLIndex;
 import umich.ms.fileio.filetypes.mzxml.MZXMLFile;
 
 import javax.xml.parsers.ParserConfigurationException;
@@ -27,9 +23,6 @@ import java.io.*;
 import java.text.SimpleDateFormat;
 import java.util.*;
 import java.util.concurrent.ExecutionException;
-import java.util.concurrent.ExecutorService;
-import java.util.concurrent.Executors;
-import java.util.concurrent.atomic.AtomicInteger;
 import java.util.stream.Collectors;
 import java.util.zip.DataFormatException;
 
@@ -74,7 +67,7 @@ public class Globals {
 	static double minRelIntensity;
     static boolean writeMatchedPeaks;
 	
-	static ArrayList<PSM> PSM_list = new ArrayList();
+	static PSMList psmList = new PSMList();
 
     static THashMap<String, Double> TargetModMap = new THashMap(); // mods user wants to search for
 	static THashMap<String, Double> fixedModMap = new THashMap(); // fixed mods observed in data
@@ -440,11 +433,11 @@ public class Globals {
 		log.info("\nComputing False Localization Rate (FLR)");
 
 		// Identify maxDeltaScore
-		for(PSM psm : Globals.PSM_list) {
-			if(psm.deltaScore > maxDeltaScore) maxDeltaScore = psm.deltaScore;
+		for(PSM psm : Globals.psmList) {
+			if(psm.getDeltaScore() > maxDeltaScore) maxDeltaScore = psm.getDeltaScore();
 
-			if(psm.deltaScore > Constants.MIN_DELTA_SCORE) {
-				if(psm.isDecoy) flr.decoyPSMs.add(psm);
+			if(psm.getDeltaScore() > Constants.MIN_DELTA_SCORE) {
+				if(psm.isDecoy()) flr.decoyPSMs.add(psm);
 				else flr.realPSMs.add(psm);
 			}
 		}
@@ -575,13 +568,13 @@ public class Globals {
 
 		Map<String, List<Integer>> scanMap;
 		
-		scanMap = PSM_list.parallelStream()
+		scanMap = psmList.parallelStream()
 				.filter( p -> {
-					String pathStr = Globals.spectrumPath + "/" + p.srcFile;
+					String pathStr = Globals.spectrumPath + "/" + p.getSrcFile();
 					File f = new File(pathStr);
 					return f.exists();
-				}).collect(Collectors.groupingBy(p -> p.srcFile,
-						Collectors.mapping(p -> p.scanNum,
+				}).collect(Collectors.groupingBy(p -> p.getSrcFile(),
+						Collectors.mapping(p -> p.getScanNum(),
 								Collectors.toList())));
 
 		if(Globals.spectrumSuffix.equalsIgnoreCase("mgf")) {
@@ -593,10 +586,10 @@ public class Globals {
 				int assignedSpectraCtr = 0;
 				
 				// Assign the spectra to their respective PSMs
-				for(PSM p : PSM_list) {
-					if(p.srcFile.equalsIgnoreCase(fn)) {
-						if(curSpectra.containsKey(p.scanNum)) {
-							p.recordSpectra( curSpectra.get(p.scanNum) );
+				for(PSM p : psmList) {
+					if(p.getSrcFile().equalsIgnoreCase(fn)) {
+						if(curSpectra.containsKey(p.getScanNum())) {
+							p.recordSpectra( curSpectra.get(p.getScanNum()) );
 							assignedSpectraCtr++;
 						}
 					}
@@ -631,7 +624,7 @@ public class Globals {
 
             int ctr = 0;
             int iter = 0;
-            List<Integer> scanNums = (List<Integer>) scanMap.get(fn);
+            List<Integer> scanNums = scanMap.get(fn);
             Collections.sort(scanNums); // order scan numbers
 
             // read in the mzXML file
@@ -668,18 +661,12 @@ public class Globals {
 
                 SpectrumClass X = new SpectrumClass(mz, intensities);
 
-                // assign this spectrum to it's PSM
-				// Todo: This is really slow Better to have a hashMap
-                for (PSM p : PSM_list) {
-                    if (p.srcFile.equalsIgnoreCase(baseFN) && (p.scanNum == scanNum)) {
-                        p.recordSpectra(X);
-                        ctr++;
-                        break;
-                    }
-                }
-                X = null;
+                PSM psm = psmList.getByScanOrder(baseFN, scanNum);
+                psm.recordSpectra(X);
+                ctr++;
             }
-            System.err.print("\r" + baseFN +  ":  " + ctr + " spectra read in.            "); // end of file reading
+			// end of file reading
+            System.err.print("\r" + baseFN +  ":  " + ctr + " spectra read in.            ");
         }
 		long timeHi = System.nanoTime();
         log.info("Loading took %.1fs", (timeHi - timeLo)/1e9f);
@@ -745,7 +732,7 @@ public class Globals {
 //
 //						// assign this spectrum to it's PSM
 //						// Todo: This is really slow Better to have a hashMap
-//						for (PSM p : PSM_list) {
+//						for (PSM p : psmList) {
 //							if (p.srcFile.equalsIgnoreCase(fileName) && (p.scanNum == kv.getKey())) {
 //								final ISpectrum spectrum = scan.getSpectrum();
 //								int N = spectrum.getMZs().length;
@@ -921,8 +908,8 @@ public class Globals {
                 SpectrumClass curSpectrum = new SpectrumClass(mz, intensities);
 
 				// assign this spectrum to it's PSM
-				for(PSM p : PSM_list) {
-					if( (p.srcFile.equalsIgnoreCase(baseFN)) && (p.scanNum == scanNum) ) {
+				for(PSM p : psmList) {
+					if( (p.getSrcFile().equalsIgnoreCase(baseFN)) && (p.getScanNum() == scanNum) ) {
 						p.recordSpectra(curSpectrum);
 						ctr++;
 						break;
@@ -1123,12 +1110,12 @@ public class Globals {
     public static void recordFLRestimates() {
         FLRestimateMap = new THashMap();
 
-        for(PSM p : Globals.PSM_list) {
-            if(p.isDecoy) continue; // skip FLR data from decoys
+        for(PSM p : Globals.psmList) {
+            if(p.isDecoy()) continue; // skip FLR data from decoys
             double[] d = new double[2];
-            d[0] = p.globalFDR;
-            d[1] = p.localFDR;
-            FLRestimateMap.put( p.deltaScore, d );
+            d[0] = p.getGlobalFDR();
+            d[1] = p.getLocalFDR();
+            FLRestimateMap.put( p.getDeltaScore(), d );
         }
     }
 
@@ -1140,8 +1127,8 @@ public class Globals {
         Collections.sort(obsDeltaScores);  // sort them from low to high
         int N = obsDeltaScores.size();
         boolean assigned;
-        for(PSM p : Globals.PSM_list) {
-            double obs_ds = p.deltaScore;
+        for(PSM p : Globals.psmList) {
+            double obs_ds = p.getDeltaScore();
             assigned = false;
 
             // iterate over the delta scores until you find the value closest to this one
@@ -1150,8 +1137,8 @@ public class Globals {
                 double curDS = obsDeltaScores.get(i);
                 if(curDS > obs_ds) { // hit the limit, get the *previous* delta score
                     double[] d = FLRestimateMap.get( obsDeltaScores.get((i-1)) );
-                    p.globalFDR = d[0];
-                    p.localFDR = d[1];
+                    p.setGlobalFDR(d[0]);
+                    p.setLocalFDR(d[1]);
                     assigned = true;
                     break;
                 }
@@ -1159,8 +1146,8 @@ public class Globals {
 
             if(!assigned) { // very high scoring PSM
                 double[] d = FLRestimateMap.get( obsDeltaScores.get((N-1)) );
-                p.globalFDR = d[0];
-                p.localFDR = d[1];
+                p.setGlobalFDR(d[0]);
+                p.setLocalFDR(d[1]);
             }
         }
     }
@@ -1168,6 +1155,6 @@ public class Globals {
 
     // This function prepares each PSM for the second iteration (the one after the FLR has been estimated)
     public static void clearPSMs() {
-        for(PSM p : PSM_list) p.clearScores();
+        for(PSM p : psmList) p.clearScores();
     }
 }
