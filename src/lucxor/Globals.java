@@ -573,9 +573,8 @@ public class Globals {
 					String pathStr = Globals.spectrumPath + "/" + p.getSrcFile();
 					File f = new File(pathStr);
 					return f.exists();
-				}).collect(Collectors.groupingBy(p -> p.getSrcFile(),
-						Collectors.mapping(p -> p.getScanNum(),
-								Collectors.toList())));
+				}).collect(Collectors.groupingBy(PSM::getSrcFile,
+						Collectors.mapping(PSM::getScanNum, Collectors.toList())));
 
 		if(Globals.spectrumSuffix.equalsIgnoreCase("mgf")) {
 			TIntObjectHashMap<SpectrumClass> curSpectra = null;

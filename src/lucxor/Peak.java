@@ -38,16 +38,13 @@ public class Peak {
     .compare(o2.relIntensity, o1.relIntensity);
 
   // Comparator to sort Peak objects based upon relative intensity from low to high
-  public static Comparator comparator_intensity_low2hi = (Comparator<Peak>) (o1, o2) -> Double
-    .compare(o1.relIntensity, o2.relIntensity);
+  public static Comparator comparator_intensity_low2hi = Comparator.comparingDouble(o -> ((Peak)o).relIntensity);
 
   // Comparator to sort Peak objects based upon mz values from low to high
-  public static Comparator comparator_mz = (Comparator<Peak>) (o1, o2) -> Double
-    .compare(o1.mz, o2.mz);
+  public static Comparator comparator_mz = Comparator.comparingDouble(o -> ((Peak)o).mz);
 
   // Comparator to sort Peak objects based upon mz dist values from low to high
-  public static Comparator comparator_mz_abs_dist = (Comparator<Peak>) (o1, o2) -> Double
-    .compare(Math.abs(o1.dist), Math.abs(o2.dist));
+  public static Comparator comparator_mz_abs_dist = Comparator.comparingDouble(o -> Math.abs(((Peak)o).dist));
 
   // default constructor
   Peak(double x, double y) { mz = x; rawIntensity = y; }
