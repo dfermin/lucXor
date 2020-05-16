@@ -40,7 +40,7 @@ public class PSMList implements List<PSM>{
   }
 
   @Override
-  public Iterator iterator() {
+  public Iterator<PSM> iterator() {
     return psmList.iterator();
   }
 
@@ -49,11 +49,11 @@ public class PSMList implements List<PSM>{
     return psmList.toArray();
   }
 
-
   @Override
-  public Object[] toArray(Object[] a) {
-    return new Object[0];
+  public <T> T[] toArray(T[] a) {
+    return psmList.toArray(a);
   }
+
 
   @Override
   public boolean add(PSM psm) {
@@ -133,18 +133,18 @@ public class PSMList implements List<PSM>{
   }
 
   @Override
-  public ListIterator listIterator() {
-    throw new UnsupportedOperationException("Non supported method");
+  public ListIterator<PSM> listIterator() {
+    return psmList.listIterator();
   }
 
   @Override
-  public ListIterator listIterator(int index) {
-    throw new UnsupportedOperationException("Non supported metho");
+  public ListIterator<PSM> listIterator(int index) {
+    return psmList.listIterator(index);
   }
 
   @Override
-  public List subList(int fromIndex, int toIndex) {
-    throw new UnsupportedOperationException("Non supported metho");
+  public List<PSM> subList(int fromIndex, int toIndex) {
+    return psmList.subList(fromIndex, toIndex);
   }
 
   /**

@@ -4,10 +4,10 @@ public class Utils {
 
   /**
    * This function parse an string line and results
-   * @param line
-   * @return
+   * @param line line to be parse
+   * @return Result string
    */
-  static String parse_input_line(String line) {
+  static String parseInputLine(String line) {
     String ret = "";
     StringBuilder sb = new StringBuilder();
     int N = line.length();

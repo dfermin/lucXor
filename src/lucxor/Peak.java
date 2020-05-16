@@ -98,10 +98,7 @@ public class Peak {
       return false;
     }
     final Peak other = (Peak) obj;
-    if (Double.doubleToLongBits(this.mz) != Double.doubleToLongBits(other.mz)) {
-      return false;
-    }
-    return true;
+    return Double.doubleToLongBits(this.mz) == Double.doubleToLongBits(other.mz);
   }
 
   public double getMz() {

@@ -4,6 +4,7 @@
  */
 package lucxor;
 
+import gnu.trove.map.TMap;
 import gnu.trove.map.hash.THashMap;
 import gnu.trove.map.hash.TIntObjectHashMap;
 import lombok.extern.slf4j.Slf4j;
@@ -69,17 +70,17 @@ public class Globals {
 	
 	static PSMList psmList = new PSMList();
 
-    static THashMap<String, Double> TargetModMap = new THashMap(); // mods user wants to search for
-	static THashMap<String, Double> fixedModMap = new THashMap(); // fixed mods observed in data
-	static THashMap<String, Double> varModMap = new THashMap(); // variable mods observed in data
-	static THashMap<String, Double> nlMap = new THashMap(); // holds all neutral loss masses, k= list of amino acids v= NL mass
-	static THashMap<String, Double> decoyNLmap = new THashMap();
-    static THashMap<Double, double[]> FLRestimateMap = new THashMap(); // ary[0] = globalFLR, ary[1] = localFLR
+    static TMap<String, Double> TargetModMap = new THashMap<>(); // mods user wants to search for
+	static TMap<String, Double> fixedModMap = new THashMap<>(); // fixed mods observed in data
+	static TMap<String, Double> varModMap = new THashMap<>(); // variable mods observed in data
+	static TMap<String, Double> nlMap = new THashMap<>(); // holds all neutral loss masses, k= list of amino acids v= NL mass
+	static TMap<String, Double> decoyNLmap = new THashMap<>();
+    static TMap<Double, double[]> FLRestimateMap = new THashMap<>(); // ary[0] = globalFLR, ary[1] = localFLR
 
-	static THashMap<Integer, ModelDataCID> modelingMap_CID = null;
-	static THashMap<Integer, ModelDataHCD> modelingMap_HCD = null;
+	static TMap<Integer, ModelDataCID> modelingMap_CID = null;
+	static TMap<Integer, ModelDataHCD> modelingMap_HCD = null;
 	
-	static void parse_input_file(String str) throws IOException {
+	static void parseInputFile(String str) throws IOException {
 		
 		File inF = new File(str);
 		if(!inF.exists()) { 
@@ -104,92 +105,91 @@ public class Globals {
 			if(line.length() < 2) continue;
 			
 			if(line.startsWith("SPECTRUM_PATH")) {
-				String s = Utils.parse_input_line(line);
+				String s = Utils.parseInputLine(line);
 				spectrumPath = new File(s).getCanonicalFile();
 			}
 			
 			if(line.startsWith("SPECTRUM_SUFFIX")) {
-				String s = Utils.parse_input_line(line);
+				String s = Utils.parseInputLine(line);
 				spectrumSuffix = s.toLowerCase();
 			}
 			
 			if(line.startsWith("INPUT_DATA")) {
-				String s = Utils.parse_input_line(line);
+				String s = Utils.parseInputLine(line);
 				inputFile = new File(s);
 			}
 			
 			if(line.startsWith("OUTPUT_FILE")) {
-				String s = Utils.parse_input_line(line);
-				outputFile = s;
+				outputFile = Utils.parseInputLine(line);
 			}
 			
 			if(line.startsWith("INPUT_TYPE")) {
-				String s = Utils.parse_input_line(line);
+				String s = Utils.parseInputLine(line);
 				inputType = Integer.valueOf(s);
 			}
 
             if(line.startsWith("MAX_PEP_LEN")) {
-                String s = Utils.parse_input_line(line);
+                String s = Utils.parseInputLine(line);
                 maxPepLen = Integer.valueOf(s);
             }
 
 			if(line.startsWith("MAX_NUM_PERM")) {
-				String s = Utils.parse_input_line(line);
+				String s = Utils.parseInputLine(line);
 				max_num_permutations = Double.valueOf(s);
 			}
 			
 			if(line.startsWith("MIN_NUM_PSMS_MODEL")) {
-				String s = Utils.parse_input_line(line);
+				String s = Utils.parseInputLine(line);
 				minNumPSMsForModeling = Integer.valueOf(s);
 			}
 			
 			if(line.startsWith("MS2_TOL") && !line.contains("_UNITS")) {
-				String s = Utils.parse_input_line(line);
+				String s = Utils.parseInputLine(line);
 				ms2tol = Double.valueOf(s);
 			}
 			
 			if(line.startsWith("MS2_TOL_UNITS")) {
-				String s = Utils.parse_input_line(line);
+				String s = Utils.parseInputLine(line);
 				ms2tol_units = Integer.valueOf(s);
 			}
 			
 			if(line.startsWith("ALGORITHM")) {
-				String s = Utils.parse_input_line(line);
+				String s = Utils.parseInputLine(line);
 				scoringAlgorithm = Integer.valueOf(s);
 			}
 
             if(line.startsWith("TSV_HEADER")) {
-                String s = Utils.parse_input_line(line);
+                String s = Utils.parseInputLine(line);
                 tsvHdr = Integer.valueOf(s);
             }
 
 			if(line.startsWith("REDUCE_PRECURSOR_NL")) {
-				String s = Utils.parse_input_line(line);
+				String s = Utils.parseInputLine(line);
 				reduceNL = Integer.valueOf(s);
 			}
 			
 			if(line.startsWith("PRECURSOR_NL_MASS_DIFF")) {
-				String s = Utils.parse_input_line(line);
+				String s = Utils.parseInputLine(line);
 				precursorNLmass = Double.valueOf(s);
 			}
 			
 			if(line.startsWith("SELECTION_METHOD")) {
-				String s = Utils.parse_input_line(line);
+				String s = Utils.parseInputLine(line);
 				scoringMethod = Integer.valueOf(s);
 			}
 			
 			if(line.startsWith("MODELING_SCORE_THRESHOLD")) {
-				String s = Utils.parse_input_line(line);
+				String s = Utils.parseInputLine(line);
 				modelTH = Double.valueOf(s);
 			}
 			
 			if(line.startsWith("MAX_CHARGE_STATE")) {
-				String s = Utils.parse_input_line(line);
+				String s = Utils.parseInputLine(line);
 				maxChargeState = Integer.valueOf(s);
 			}
 			
 			if(line.startsWith("NUM_THREADS")) {
-				String s = Utils.parse_input_line(line);
+				String s = Utils.parseInputLine(line);
 				int x = Integer.valueOf(s);
 				// We do minus 1 because 1 thread already goes to 
 				// running the whole program
@@ -200,28 +200,28 @@ public class Globals {
 			}
 			
 			if(line.startsWith("DEBUG_MODE")) {
-				String s = Utils.parse_input_line(line);
+				String s = Utils.parseInputLine(line);
 				debugMode = Integer.valueOf(s);
 			}
 
             if(line.startsWith("WRITE_MATCHED_PEAKS_FILE")) {
-                String s = Utils.parse_input_line(line);
+                String s = Utils.parseInputLine(line);
                 if(s.equals("1")) writeMatchedPeaks = true;
             }
 
             if(line.startsWith("RUN_MODE")) {
-                String s = Utils.parse_input_line(line);
+                String s = Utils.parseInputLine(line);
                 runMode = Integer.valueOf(s);
                 if(runMode > 1) runMode = 0;
             }
 			
 			if(line.startsWith("SCORING_THRESHOLD")) {
-				String s = Utils.parse_input_line(line);
+				String s = Utils.parseInputLine(line);
 				scoreTH = Double.valueOf(s);
 			}
 			
 			if(line.startsWith("DECOY_MASS")) {
-				String s = Utils.parse_input_line(line);
+				String s = Utils.parseInputLine(line);
 				decoyMass = Double.valueOf(s);
 			}
 
@@ -239,12 +239,12 @@ public class Globals {
 			}
 			
 			if(line.startsWith("MIN_MZ")) {
-				String s = Utils.parse_input_line(line);
+				String s = Utils.parseInputLine(line);
 				minMZ = Double.valueOf(s);
 			}
 
 			if(line.startsWith("MOD_PEP_REP")) {
-				String s = Utils.parse_input_line(line);
+				String s = Utils.parseInputLine(line);
 				peptideRepresentation = Integer.valueOf(s); 
 			}
 			
@@ -411,7 +411,7 @@ public class Globals {
 		return ret;
 	}
 
-	/**
+	/*
 	 * In Java 8, you can call to an initilization method
 	 */
 	static {
@@ -428,7 +428,7 @@ public class Globals {
 	public static void calcFLR() throws InterruptedException, ExecutionException {
 		double maxDeltaScore = -1.0;
 		FLR flr = new FLR();
-		ArrayList<FLR> flrAry = new ArrayList();
+		ArrayList<FLR> flrAry = new ArrayList<>();
 
 		log.info("\nComputing False Localization Rate (FLR)");
 
@@ -536,7 +536,7 @@ public class Globals {
 		// First filter the data in varModMap.
 		// We want to remove non-standard amino acid characters and remove
 		// the amino acids that are in our 'TargetModMap' variable.
-		HashMap<String, Double> tmp = new HashMap(varModMap);
+		HashMap<String, Double> tmp = new HashMap<>(varModMap);
 		varModMap.clear();
 		
 		for(String c : tmp.keySet()) {
@@ -557,7 +557,6 @@ public class Globals {
 
 
 	static void readInSpectra() throws IOException, IllegalStateException,
-			SAXException, ParserConfigurationException, DataFormatException,
 			FileParsingException {
 		
 		log.info("\nReading spectra from " + Globals.spectrumPath
@@ -576,7 +575,7 @@ public class Globals {
 				}).collect(Collectors.groupingBy(PSM::getSrcFile,
 						Collectors.mapping(PSM::getScanNum, Collectors.toList())));
 
-		if(Globals.spectrumSuffix.equalsIgnoreCase("mgf")) {
+		if(Globals.spectrumSuffix.equalsIgnoreCase(MGF_TYPE)) {
 			TIntObjectHashMap<SpectrumClass> curSpectra = null;
 			
 			for(String specFile : scanMap.keySet()) {
@@ -598,11 +597,11 @@ public class Globals {
 		}
 
 		// Read mzXML files
-		if(Globals.spectrumSuffix.equalsIgnoreCase("mzXML"))
+		if(Globals.spectrumSuffix.equalsIgnoreCase(MZXML_TYPE))
 			readMzXML(scanMap, spectrumPath.getAbsolutePath());
 
 		// Read mzML files
-		if(Globals.spectrumSuffix.equalsIgnoreCase("mzML"))
+		if(Globals.spectrumSuffix.equalsIgnoreCase(MZML_TYPE))
 			readMzML(scanMap, spectrumPath.getAbsolutePath());
 	}
 
@@ -862,16 +861,11 @@ public class Globals {
 	 * Function to read spectra from mzXML file
 	 * @param scanMap Scan Map
 	 * @throws IllegalStateException
-	 * @throws IOException
-	 * @throws SAXException
-	 * @throws ParserConfigurationException
-	 * @throws DataFormatException
 	 * @throws FileParsingException
 	 */
 	private static void readMzXML(Map<String, List<Integer>> scanMap, String pathSpectra) throws
 			IllegalStateException,
-			IOException, SAXException, ParserConfigurationException,
-			DataFormatException, FileParsingException {
+			FileParsingException {
 		
 		// Iterate over the file names
 		for(String fn : scanMap.keySet()) {
@@ -879,7 +873,7 @@ public class Globals {
 			System.err.print(baseFN + ":  "); // beginning of info line
 			
 			int ctr = 0;
-			List<Integer> scanNums = (List<Integer>) scanMap.get(fn);
+			List<Integer> scanNums = scanMap.get(fn);
 			Collections.sort(scanNums); // order the scan numbers
 
             int N = numThreads;
@@ -947,11 +941,11 @@ public class Globals {
 
         if(c.equalsIgnoreCase("[")) {
             int d = (int) Math.round(Globals.ntermMass) + 1; // adds a proton
-            ret = "n[" + String.valueOf(d) + "]";
+            ret = "n[" + d + "]";
         }
         else if(c.equals("]")) {
             int d = (int) Math.round(Globals.ctermMass);
-            ret += "c[" + String.valueOf(d) + "]";
+            ret += "c[" + d + "]";
         }
         else {
             int i = (int) Math.round(AA_MASS_MAP.get(c));
@@ -960,7 +954,7 @@ public class Globals {
                 orig = DECOY_AA_MAP.get(c);
             } else orig = c.toUpperCase();
 
-            ret = orig + "[" + String.valueOf(i) + "]";
+            ret = orig + "[" + i + "]";
         }
 		
 		return ret;
@@ -1107,7 +1101,7 @@ public class Globals {
 
     // Record the global and local FLR values estimated for all of the delta scores
     public static void recordFLRestimates() {
-        FLRestimateMap = new THashMap();
+        FLRestimateMap = new THashMap<>();
 
         for(PSM p : Globals.psmList) {
             if(p.isDecoy()) continue; // skip FLR data from decoys

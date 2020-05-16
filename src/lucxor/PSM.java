@@ -4,6 +4,7 @@
  */
 package lucxor;
 
+import gnu.trove.map.TMap;
 import gnu.trove.map.hash.TDoubleObjectHashMap;
 import gnu.trove.map.hash.THashMap;
 import gnu.trove.map.hash.TIntDoubleHashMap;
@@ -42,12 +43,12 @@ class PSM {
 	
 	private TIntDoubleHashMap modCoordMap = null; // holds modified amino acid positions
 	
-	private THashMap<String, Double> posPermutationScoreMap = null;
-	private THashMap<String, Double> negPermutationScoreMap = null;
+	private TMap<String, Double> posPermutationScoreMap = null;
+	private TMap<String, Double> negPermutationScoreMap = null;
 
 	// matched and unmatched peaks
-	private ArrayList<Peak> posPeaks = null;
-    private ArrayList<Peak> negPeaks = null;
+	private List<Peak> posPeaks = null;
+    private List<Peak> negPeaks = null;
 
 	private SpectrumClass PeakList = null;
 	
@@ -97,9 +98,12 @@ class PSM {
 			String scanStr = Integer.toString(scanNum);
 
 			if(Globals.inputType == Constants.PEPXML) {
-				if(Globals.spectrumSuffix.equalsIgnoreCase("mzXML")) suffix = "mzXML";
-				if(Globals.spectrumSuffix.equalsIgnoreCase("mzML")) suffix = "mzML";
-				if(Globals.spectrumSuffix.equalsIgnoreCase("mgf")) suffix = "mgf";
+				if(Globals.spectrumSuffix.equalsIgnoreCase(Constants.MZXML_TYPE))
+					suffix = Constants.MZXML_TYPE;
+				if(Globals.spectrumSuffix.equalsIgnoreCase(Constants.MZML_TYPE))
+					suffix = Constants.MZML_TYPE;
+				if(Globals.spectrumSuffix.equalsIgnoreCase(Constants.MGF_TYPE))
+					suffix = Constants.MGF_TYPE;
 
                 /*
                 ** Some scans might have a name formatted like this:
@@ -260,7 +264,7 @@ class PSM {
 	// of the peptide sequence associated with this PSM
 	void matchAllPeaks() {
 
-        posPeaks = new ArrayList(PeakList.N);
+        posPeaks = new ArrayList<>(PeakList.N);
 
 		TIntDoubleHashMap mcp = new TIntDoubleHashMap(); // use this to record modifications for each permutation
 
@@ -341,8 +345,8 @@ class PSM {
                 double finalDist = 0;
 
                 // record the distance of this unmatched peak to the nearest peak in 'posPeaks'
-                ArrayList<Double> dist = new ArrayList( posPeaks.size() );
-                ArrayList<Double> absDist = new ArrayList( posPeaks.size() );
+                ArrayList<Double> dist = new ArrayList<>( posPeaks.size() );
+                ArrayList<Double> absDist = new ArrayList<>( posPeaks.size() );
 
                 int j = 0;
                 for(Peak matchedPk : posPeaks) {
@@ -425,11 +429,11 @@ class PSM {
 	
 	// Function creates all of the permutations for the sequence assigned to this PSM
 	void generatePermutations(int RN) {
-		posPermutationScoreMap = new THashMap();
+		posPermutationScoreMap = new THashMap<>();
 		posPermutationScoreMap = origPep.getPermutations(0);
 		
 		if(!isUnambiguous) {
-            negPermutationScoreMap = new THashMap();
+            negPermutationScoreMap = new THashMap<>();
             if( RN == 0 ) { // RN = runMode is selected to create decoys
                 negPermutationScoreMap = origPep.getPermutations(1);
             }
@@ -576,7 +580,7 @@ class PSM {
 
         // collect all of the scores into a single arraylist and select the top
 		// two matches to compute the delta score
-		ArrayList<Double> allScores = new ArrayList();
+		List<Double> allScores = new ArrayList<>();
 		for(String curSeq : posPermutationScoreMap.keySet()) {
 			double d = posPermutationScoreMap.get(curSeq);
 			allScores.add(d);
@@ -644,8 +648,7 @@ class PSM {
 		}
 		else { // special case for unambiguous PSMs
 			for(Entry<String, Double> e : posPermutationScoreMap.entrySet()) {
-				String curSeq = e.getKey();
-				pep1 = curSeq;
+				pep1 = e.getKey();
 			}
 		}
 		
@@ -734,7 +737,7 @@ class PSM {
 		if(Globals.inputType == Constants.PEPXML) tsvFileName = specId + ".tsv";
 		else {
 			int i = srcFile.lastIndexOf(Globals.spectrumSuffix);
-			String k = String.format("%05d", scanNum) + Integer.toString(charge);
+			String k = String.format("%05d", scanNum) + charge;
 			tsvFileName = srcFile.substring(0, i) + k + ".tsv";
 		}
 		
@@ -757,7 +760,7 @@ class PSM {
 		if(Globals.scoringAlgorithm == Constants.CID) score1pep.calcScoreCID();
 		if(Globals.scoringAlgorithm == Constants.HCD) score1pep.calcScoreHCD();
 		
-		ArrayList<Peak> mPK = score1pep.getMatchedPeaks();
+		List<Peak> mPK = score1pep.getMatchedPeaks();
 		mPK.sort(Peak.comparator_mz);
 		for(Peak pk : mPK) {
 			if(!pk.isMatched()) continue;
@@ -816,7 +819,7 @@ class PSM {
 		DecimalFormat df = new DecimalFormat("#.####");
 		int numDecimals = 4;
 
-        String ret = "";
+        StringBuilder ret = new StringBuilder();
 
         score1pep.buildIonLadders();
         score1pep.matchPeaks(PeakList);
@@ -824,7 +827,7 @@ class PSM {
         if(Globals.scoringAlgorithm == Constants.CID) score1pep.calcScoreCID();
         if(Globals.scoringAlgorithm == Constants.HCD) score1pep.calcScoreHCD();
 
-        ArrayList<Peak> mPK = score1pep.getMatchedPeaks();
+        List<Peak> mPK = score1pep.getMatchedPeaks();
         mPK.sort(Peak.comparator_mz);
         for(Peak pk : mPK) {
             if(!pk.isMatched()) continue;
@@ -835,9 +838,10 @@ class PSM {
             String Dscore = df.format(MathFunctions.roundDouble(pk.getDistScore(), numDecimals));
             String score = df.format(MathFunctions.roundDouble(pk.getDistScore(), numDecimals));
 
-            ret += specId + "\t1\t" + score1pep.getModPeptide() + "\t" + pk.getMatchedIonStr() + "\t" +
-                   mz + "\t" + relI + "\t" + Dscore + "\t" + Iscore + "\t" +
-                   score + "\n";
+            ret.append(specId).append("\t1\t").append(score1pep.getModPeptide())
+					.append("\t").append(pk.getMatchedIonStr()).append("\t")
+					.append(mz).append("\t").append(relI).append("\t").append(Dscore)
+					.append("\t").append(Iscore).append("\t").append(score).append("\n");
         }
 
 
@@ -861,12 +865,10 @@ class PSM {
             String Dscore = df.format(MathFunctions.roundDouble(pk.getDistScore(), 4));
             String score = df.format(MathFunctions.roundDouble(pk.getScore(), 4));
 
-            ret += specId + "\t2\t" + score2pep.getModPeptide() + "\t" + pk.getMatchedIonStr() + "\t" +
-                    mz + "\t" + relI + "\t" + Dscore + "\t" + Iscore + "\t" +
-                    score + "\n";
+            ret.append(specId).append("\t2\t").append(score2pep.getModPeptide()).append("\t").append(pk.getMatchedIonStr()).append("\t").append(mz).append("\t").append(relI).append("\t").append(Dscore).append("\t").append(Iscore).append("\t").append(score).append("\n");
         }
 
-        return(ret);
+        return(ret.toString());
     }
 
 	/**
@@ -945,19 +947,19 @@ class PSM {
 		return modCoordMap;
 	}
 
-	public THashMap<String, Double> getPosPermutationScoreMap() {
+	public TMap<String, Double> getPosPermutationScoreMap() {
 		return posPermutationScoreMap;
 	}
 
-	public THashMap<String, Double> getNegPermutationScoreMap() {
+	public TMap<String, Double> getNegPermutationScoreMap() {
 		return negPermutationScoreMap;
 	}
 
-	public ArrayList<Peak> getPosPeaks() {
+	public List<Peak> getPosPeaks() {
 		return posPeaks;
 	}
 
-	public ArrayList<Peak> getNegPeaks() {
+	public List<Peak> getNegPeaks() {
 		return negPeaks;
 	}
 

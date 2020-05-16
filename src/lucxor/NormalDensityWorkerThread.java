@@ -29,7 +29,7 @@ public class NormalDensityWorkerThread implements Callable<Double>{
 	}
 	
 	@Override
-	public Double call() throws Exception {
+	public Double call() {
 		double sum = 0;
 		double x = 0;
 		

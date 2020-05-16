@@ -30,9 +30,8 @@ public class LucXor {
 
     private static long startTime;
     private static long endTime;
-    private static long elapsedTime;
 
-	public static void main(String[] args) throws ParserConfigurationException,
+    public static void main(String[] args) throws ParserConfigurationException,
             SAXException, IOException, IllegalStateException, DataFormatException,
             InterruptedException, ExecutionException, FileParsingException {
 		
@@ -61,7 +60,7 @@ public class LucXor {
         startTime = System.nanoTime();
 
 		// Read Configuration file
-        Globals.parse_input_file(args[0]);
+        Globals.parseInputFile(args[0]);
 
         // Load User Modifications
 		Globals.loadUserMods();
@@ -96,7 +95,7 @@ public class LucXor {
      * Function computes the elapsed run time of the program and reports it
      */
     private static void reportElapsedTime() {
-        elapsedTime = endTime - startTime;
+        long elapsedTime = endTime - startTime;
 
         long milliseconds = TimeUnit.NANOSECONDS.toMillis(elapsedTime);
         int ss = (int) (milliseconds / 1000) % 60 ;
@@ -145,7 +144,7 @@ public class LucXor {
 			if(line.startsWith("#")) continue;
 
             // Skip over the header line for the TSV file (if it has one)
-            if( (Globals.tsvHdr == 1) && (passedHdr == false) ) {
+            if( (Globals.tsvHdr == 1) && (!passedHdr) ) {
                 passedHdr = true;
                 continue;
             }
@@ -225,7 +224,7 @@ public class LucXor {
         else NCPU = 1;
 
 
-		Globals.modelingMap_CID = new THashMap();
+		Globals.modelingMap_CID = new THashMap<>();
 		int numPSM = 0; // track number of PSMs used for modeling
 
 		// First make sure you have enough PSMs for each charge state to create
@@ -266,7 +265,7 @@ public class LucXor {
 		// iterate over the charge states collecting data for all modeling PSMs
 		log.info("(CID) Building Parametric Models from high-scoring PSMs...");
 		for(int z = 2; z <= Globals.maxChargeState; z++) {
-			ArrayList<Peak> modelingPks = new ArrayList();
+			ArrayList<Peak> modelingPks = new ArrayList<>();
 			
 			if(badZ.contains(z)) continue; // skip this charge state, you don't have enough data to model it
 			
@@ -343,7 +342,6 @@ public class LucXor {
 		for(int z = 2; z <= Globals.maxChargeState; z++) {
 			if(!Globals.modelingMap_CID.containsKey(z)) {
                 missedChargeStates.add(z);
-                continue;
             }
 			else {
                 ModelDataCID m = Globals.modelingMap_CID.get(z);
@@ -368,10 +366,8 @@ public class LucXor {
         System.gc(); // try and reclaim some memory
 
 
-        /***********************************************************************
-		// Score the PSMs
-        ************************************************************************/
 
+		// Score the PSMs
         for(int RN = 0; RN < 2; RN++) { // RN = run number, 0 = calc. FDR 1 = assign FDR estimates
 
             if(Globals.runMode == Constants.DEFAULT_RUN_MODE) {
@@ -431,11 +427,11 @@ public class LucXor {
         int NCPU = Globals.numThreads;
         if(NCPU < Runtime.getRuntime().availableProcessors()) NCPU = Globals.numThreads + 1;
 
-		Globals.modelingMap_HCD = new THashMap();
+		Globals.modelingMap_HCD = new THashMap<>();
 		
 		// First make sure you have enough PSMs for each charge state to create
 		// an accurate model.
-		THashMap<Integer, Integer> chargeMap = new THashMap();
+		THashMap<Integer, Integer> chargeMap = new THashMap<>();
 		for(int z = 2; z <= Globals.maxChargeState; z++) chargeMap.put(z,0);
 		for(PSM p : Globals.psmList) {
 			if(p.isUseForModel()) {
@@ -447,7 +443,7 @@ public class LucXor {
 		}
 		
 		// remove charge states you can't model
-		THashSet<Integer> badZ = new THashSet();
+		THashSet<Integer> badZ = new THashSet<>();
         log.info("PSMs for modeling:\n------------------\n");
         for(int z = 2; z <= Globals.maxChargeState; z++) {
 			int n = chargeMap.get(z);
@@ -524,13 +520,12 @@ public class LucXor {
         }
 
 		// Compute the statistics for the collected charge states
-        ArrayList<Integer> missedChargeStates = new ArrayList();
+        ArrayList<Integer> missedChargeStates = new ArrayList<>();
         int maxObsZ = 0;  // highest modeled charge state.
 		for(int z = 2; z <= Globals.maxChargeState; z++) {
 
 			if(!Globals.modelingMap_HCD.containsKey(z)) {
                 missedChargeStates.add(z);
-                continue;
             }
 			else {
                 ModelDataHCD m = Globals.modelingMap_HCD.get(z);
@@ -576,10 +571,7 @@ public class LucXor {
         System.gc();
 
 
-        /*******************************************************************
         // Score the PSMs
-        ********************************************************************/
-
         for(int RN = 0; RN < 2; RN++) { // RN = run number
 
             if(Globals.runMode == Constants.DEFAULT_RUN_MODE) {
@@ -650,7 +642,6 @@ public class LucXor {
                 Globals.assignFLR();
             }
         } // end loop over RN
-        /*******************************************************/
 	}
 
 	

@@ -10,6 +10,7 @@ import java.io.FileWriter;
 import java.io.IOException;
 import java.util.ArrayList;
 import java.util.Collections;
+import java.util.List;
 
 /**
  *
@@ -36,7 +37,7 @@ public class ModelDataCID {
 	// This is an adjustment factor for the standard deviation suggested by hwchoi
 	final double CID_ADJUST = 16.0 / 25.0; 
 	
-	public ModelDataCID(int z, ArrayList<Peak> peaks) {
+	public ModelDataCID(int z, List<Peak> peaks) {
         chargeState = z;
         numPSM = 0;
 
@@ -294,41 +295,41 @@ public class ModelDataCID {
         }
 
 
-        for(int b = 0; b < b_intensity.length; b++) {
-            normI = MathFunctions.roundDouble(b_intensity[b], 4);
-            line = chargeState + "\tyi\t" + normI + "\n";
-            bw.write(line);
-        }
+      for (double v : b_intensity) {
+        normI = MathFunctions.roundDouble(v, 4);
+        line = chargeState + "\tyi\t" + normI + "\n";
+        bw.write(line);
+      }
 
-        for(int y = 0; y < y_intensity.length; y++) {
-            normI = MathFunctions.roundDouble(y_intensity[y], 4);
-            line = chargeState + "\tyi\t" + normI + "\n";
-            bw.write(line);
-        }
+      for (double v4 : y_intensity) {
+        normI = MathFunctions.roundDouble(v4, 4);
+        line = chargeState + "\tyi\t" + normI + "\n";
+        bw.write(line);
+      }
 
-        for(int n = 0; n < u_intensity.length; n++) {
-            normI = MathFunctions.roundDouble(u_intensity[n], 4);
-            line = chargeState + "\tni\t" + normI + "\n";
-            bw.write(line);
-        }
+      for (double v3 : u_intensity) {
+        normI = MathFunctions.roundDouble(v3, 4);
+        line = chargeState + "\tni\t" + normI + "\n";
+        bw.write(line);
+      }
 
-        for(int b = 0; b < b_distance.length; b++) {
-            dist = MathFunctions.roundDouble(b_distance[b], 4);
-            line = chargeState + "\tbd\t" + dist + "\n";
-            bw.write(line);
-        }
+      for (double v2 : b_distance) {
+        dist = MathFunctions.roundDouble(v2, 4);
+        line = chargeState + "\tbd\t" + dist + "\n";
+        bw.write(line);
+      }
 
-        for(int y = 0; y < y_distance.length; y++) {
-            dist = MathFunctions.roundDouble(y_distance[y], 4);
-            line = chargeState + "\tyd\t" + dist + "\n";
-            bw.write(line);
-        }
+      for (double v1 : y_distance) {
+        dist = MathFunctions.roundDouble(v1, 4);
+        line = chargeState + "\tyd\t" + dist + "\n";
+        bw.write(line);
+      }
 
-        for(int n = 0; n < u_distance.length; n++) {
-            dist = MathFunctions.roundDouble(u_distance[n], 4);
-            line = chargeState + "\tnd\t" + dist + "\n";
-            bw.write(line);
-        }
+      for (double v : u_distance) {
+        dist = MathFunctions.roundDouble(v, 4);
+        line = chargeState + "\tnd\t" + dist + "\n";
+        bw.write(line);
+      }
 
         bw.close();
     }

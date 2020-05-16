@@ -9,6 +9,8 @@ import java.util.Map.Entry;
 
 import gnu.trove.list.TIntList;
 import gnu.trove.list.array.TIntArrayList;
+import gnu.trove.map.TIntDoubleMap;
+import gnu.trove.map.TMap;
 import gnu.trove.map.hash.TDoubleObjectHashMap;
 import gnu.trove.map.hash.THashMap;
 import gnu.trove.map.hash.TIntDoubleHashMap;
@@ -23,9 +25,9 @@ class Peptide {
 	private String peptide;
 	private String modPeptide;
 	private int charge = 0;
-	private TIntDoubleHashMap modPosMap = new TIntDoubleHashMap(); // total mass of each modified amino acid
-	private THashMap<Integer, String> nonTargetMods = new THashMap();// holds the mod coordinates for non-target mods
-	private THashMap<String, Double> bIons = null, yIons = null;
+	private TIntDoubleMap modPosMap = new TIntDoubleHashMap(); // total mass of each modified amino acid
+	private TMap<Integer, String> nonTargetMods = new THashMap<>();// holds the mod coordinates for non-target mods
+	private TMap<String, Double> bIons = null, yIons = null;
 
 	private int pepLen = 0;  // peptide's length
 	private int numRPS; // number of _R_eported _P_hospho_S_ites
@@ -37,16 +39,14 @@ class Peptide {
 	private double numDecoyPermutations = 0;
 	private double score = 0;
 
-	private ArrayList<Peak> matchedPeaks;
+	private List<Peak> matchedPeaks;
 
 	// this initialization function is called by the PSM class when reading
 	// a new entry from a pepXML file.
 	void initialize(TIntDoubleHashMap modCoordMap) {
 
 		pepLen = peptide.length();
-
-		String origPepStr = peptide.toUpperCase();
-		peptide = origPepStr;
+		peptide = peptide.toUpperCase();
 
 		// remove any modifications from modCoordMap that are fixed modifications
 
@@ -58,7 +58,8 @@ class Peptide {
 				String C = Character.toString(peptide.charAt(pos));
 				String c = C.toLowerCase();
 
-				if( Globals.fixedModMap.containsKey(C)) continue;
+				if( Globals.fixedModMap.containsKey(C)) {
+				}
 				else if( Globals.TargetModMap.containsKey(C) ) modPosMap.put(pos, mass);
 				else if( Globals.varModMap.containsKey(c)) nonTargetMods.put(pos, c); // record position of mod.
 			}
@@ -140,7 +141,7 @@ class Peptide {
 		// Append N-term modification (if any is present)
 		if(modPeptide.startsWith("[")) {
 			int d = (int) Math.round(Globals.ntermMass);
-			ret = "n[" + String.valueOf( d ) + "]";
+			ret = "n[" + d + "]";
 			pepLen_local += 1; // need this to capture last residue in this function
 		}
 
@@ -160,7 +161,7 @@ class Peptide {
 		// Append C-term modification (if any is present)
 		if(modPeptide.endsWith("]")) {
 			int d = (int) Math.round(Globals.ctermMass);
-			ret += "c[" + String.valueOf(d) + "]";
+			ret += "c[" + d + "]";
 		}
 
 		return ret;
@@ -169,8 +170,8 @@ class Peptide {
 
 
 	void buildIonLadders() {
-		bIons = new THashMap();
-		yIons = new THashMap();
+		bIons = new THashMap<>();
+		yIons = new THashMap<>();
 
 
 		String b = null, y = null;
@@ -199,7 +200,7 @@ class Peptide {
 					bm = Globals.getFragmentIonMass(b, Z, 0.0) + ntermM;
 					bmz = bm / Z;
 
-					if(Z > 1.0) b += "/+" + Integer.toString((int)Z);
+					if(Z > 1.0) b += "/+" + (int) Z;
 
 					if(bmz > Globals.minMZ) {
 						bIons.put(b, bmz);
@@ -216,7 +217,7 @@ class Peptide {
 					ym = Globals.getFragmentIonMass(y, Z, Constants.WATER) + ctermM;
 					ymz = ym / Z;
 
-					if(Z > 1.0) y += "/+" + Integer.toString((int)Z);
+					if(Z > 1.0) y += "/+" + (int) Z;
 
 					if(ymz > Globals.minMZ) {
 						yIons.put(y, ymz);
@@ -325,10 +326,10 @@ class Peptide {
 
 	// function will return a map where the key is each possible permutation
 	// of the peptide and the value is the score this permutation recieves later on
-	THashMap<String, Double> getPermutations(int permType) {
-		THashMap<String, Double> ret = new THashMap();
-		TIntArrayList candModSites = new TIntArrayList();
-		ArrayList<TIntArrayList> x = new ArrayList();
+	TMap<String, Double> getPermutations(int permType) {
+		THashMap<String, Double> ret = new THashMap<>();
+		TIntList candModSites = new TIntArrayList();
+		List<TIntList> x = new ArrayList<>();
 		int i = 0;
 
 		if(permType == 0) { // generate forward (positive) permutations
@@ -409,7 +410,7 @@ class Peptide {
 
 	// Function returns the ion ladder for this peptide sequence
 	public THashMap<String, Double> getIonLadder() {
-		THashMap<String, Double> ret = new THashMap();
+		THashMap<String, Double> ret = new THashMap<>();
 
 		ret.putAll(bIons);
 		ret.putAll(yIons);
@@ -439,22 +440,22 @@ class Peptide {
 			for(Peak pk : matchedPeaks) {
 
 				intensityU = MathFunctions
-						.log_gaussianProb(MD.mu_int_U, MD.var_int_U, pk.getNormIntensity());
+						.logGaussianProb(MD.mu_int_U, MD.var_int_U, pk.getNormIntensity());
 				distU = MathFunctions
-						.log_gaussianProb(MD.mu_dist_U, MD.var_dist_U, pk.getDist());
+						.logGaussianProb(MD.mu_dist_U, MD.var_dist_U, pk.getDist());
 
 				if(pk.getMatchedIonStr().startsWith("b")) {
 					intensityM = MathFunctions
-							.log_gaussianProb(MD.mu_int_B, MD.var_int_B, pk.getNormIntensity());
+							.logGaussianProb(MD.mu_int_B, MD.var_int_B, pk.getNormIntensity());
 					distM = MathFunctions
-							.log_gaussianProb(MD.mu_dist_B, MD.var_dist_B, pk.getDist());
+							.logGaussianProb(MD.mu_dist_B, MD.var_dist_B, pk.getDist());
 				}
 
 				if(pk.getMatchedIonStr().startsWith("y")) {
 					intensityM = MathFunctions
-							.log_gaussianProb(MD.mu_int_Y, MD.var_int_Y, pk.getNormIntensity());
+							.logGaussianProb(MD.mu_int_Y, MD.var_int_Y, pk.getNormIntensity());
 					distM = MathFunctions
-							.log_gaussianProb(MD.mu_dist_Y, MD.var_dist_Y, pk.getDist());
+							.logGaussianProb(MD.mu_dist_Y, MD.var_dist_Y, pk.getDist());
 				}
 
 				Iscore = intensityM - intensityU;
@@ -696,7 +697,7 @@ class Peptide {
 		this.charge = charge;
 	}
 
-	public TIntDoubleHashMap getModPosMap() {
+	public TIntDoubleMap getModPosMap() {
 		return modPosMap;
 	}
 
@@ -704,7 +705,7 @@ class Peptide {
 		this.modPosMap = modPosMap;
 	}
 
-	public THashMap<Integer, String> getNonTargetMods() {
+	public TMap<Integer, String> getNonTargetMods() {
 		return nonTargetMods;
 	}
 
@@ -712,7 +713,7 @@ class Peptide {
 		this.nonTargetMods = nonTargetMods;
 	}
 
-	public THashMap<String, Double> getbIons() {
+	public TMap<String, Double> getbIons() {
 		return bIons;
 	}
 
@@ -720,7 +721,7 @@ class Peptide {
 		this.bIons = bIons;
 	}
 
-	public THashMap<String, Double> getyIons() {
+	public TMap<String, Double> getyIons() {
 		return yIons;
 	}
 
@@ -784,7 +785,7 @@ class Peptide {
 		this.score = score;
 	}
 
-	public ArrayList<Peak> getMatchedPeaks() {
+	public List<Peak> getMatchedPeaks() {
 		return matchedPeaks;
 	}
 

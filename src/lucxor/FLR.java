@@ -4,6 +4,7 @@
  */
 package lucxor;
 
+import gnu.trove.map.TMap;
 import gnu.trove.map.hash.THashMap;
 
 import java.io.BufferedWriter;
@@ -25,8 +26,8 @@ import java.util.logging.Logger;
  */
 public class FLR {
 
-	ArrayList<PSM> realPSMs, decoyPSMs;
-    THashMap<Integer, double[]> minorMapG, minorMapL;
+	List<PSM> realPSMs, decoyPSMs;
+    TMap<Integer, double[]> minorMapG, minorMapL;
 
     // f0 = decoy
     // f1 = real
@@ -50,8 +51,8 @@ public class FLR {
 
 
 	FLR() {
-		realPSMs = new ArrayList();
-		decoyPSMs = new ArrayList();
+		realPSMs = new ArrayList<>();
+		decoyPSMs = new ArrayList<>();
 		maxDeltaScore = 0d;
 		Nreal = 0;
 		Ndecoy = 0;
@@ -429,8 +430,8 @@ public class FLR {
 	// Function prepares minorMaps for FDR data
 	public void setMinorMaps() {
 		
-		ArrayList<Double> scoreList = new ArrayList();
-		HashMap<Double, double[]> localMap = new HashMap();
+		ArrayList<Double> scoreList = new ArrayList<>();
+		HashMap<Double, double[]> localMap = new HashMap<>();
         double[] FDRary = null;
 		double ds = 0d; // deltaScore
 		double FDR = 0d;  // FDR
@@ -442,11 +443,11 @@ public class FLR {
 
             if(iter == 0) {
                 FDRary = globalFDR;
-                minorMapG = new THashMap();
+                minorMapG = new THashMap<>();
             }
             else {
                 FDRary = localFDR;
-                minorMapL = new THashMap();
+                minorMapL = new THashMap<>();
             }
 
             localMap.clear();
@@ -492,7 +493,7 @@ public class FLR {
         boolean cont;
 
         double[] deqPtr = null;
-        THashMap<Integer, double[]> mapPtr = null;
+        TMap<Integer, double[]> mapPtr = null;
 
         // 0 = global FDR, 1 = localFDR
         for(int iter = 0; iter < 2; iter++) {
@@ -581,11 +582,8 @@ public class FLR {
                     cont = true;
                     i = curStart+1;
                     while( cont && (i < N) && (i < curEnd) ) {
-
                         f_expect = f[curStart] + slope * (x[i] - x[curStart]);
-
-                        if( f_expect > f[i] ) cont = false;
-                        else cont = true;
+						cont = !(f_expect > f[i]);
                         i++;
                     }
 
@@ -604,7 +602,7 @@ public class FLR {
 
             curStart = 0;
             curEnd = curStart + 1;
-            while(isMinorPoint[curEnd] == false) curEnd++;
+            while(!isMinorPoint[curEnd]) curEnd++;
 
             while( (curStart < (N-1)) && (curEnd < N) ) {
                 i = curStart + 1;
@@ -619,7 +617,7 @@ public class FLR {
                 curStart = curEnd;
                 curEnd = curStart + 1;
                 if(curEnd >= N) curEnd = N-1;
-                while( (isMinorPoint[curEnd] == false) && (curEnd < N) ) curEnd++;
+                while( (!isMinorPoint[curEnd]) && (curEnd < N) ) curEnd++;
             }
 
 
@@ -653,12 +651,10 @@ public class FLR {
 			realPSMs.get(i).setGlobalFDR(g_FDR);
 			realPSMs.get(i).setLocalFDR(l_FDR);
 		}
-		
-		for(int i = 0; i < N; i++) {
-			PSM realPSM = realPSMs.get(i);
-			
-			for(PSM p : Globals.psmList) {
-				if(p.getSpecId().equalsIgnoreCase(realPSM.getSpecId())) {
+
+		for (PSM realPSM : realPSMs) {
+			for (PSM p : Globals.psmList) {
+				if (p.getSpecId().equalsIgnoreCase(realPSM.getSpecId())) {
 					p.setGlobalFDR(realPSM.getGlobalFDR());
 					p.setLocalFDR(realPSM.getLocalFDR());
 					break;
@@ -705,10 +701,10 @@ public class FLR {
 			BufferedWriter bw = new BufferedWriter(new FileWriter(f));
 			bw.write("index\ttickMark\tf0\tf1\n");
 			for(int i = 0; i < NMARKS; i++) {
-				String line = Integer.toString(i) + "\t" + 
-							  Double.toString(tickMarks[i]) + "\t" + 
-							  Double.toString(f0[i]) + "\t" + 
-							  Double.toString(f1[i]) + "\n";
+				String line = i + "\t" +
+						tickMarks[i] + "\t" +
+						f0[i] + "\t" +
+						f1[i] + "\n";
 				bw.write(line);
 			}
 			bw.close();

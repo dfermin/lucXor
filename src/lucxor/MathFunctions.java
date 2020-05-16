@@ -5,7 +5,9 @@
 package lucxor;
 
 import java.util.ArrayList;
+import java.util.List;
 
+import gnu.trove.list.TIntList;
 import gnu.trove.list.array.TIntArrayList;
 import org.paukov.combinatorics.Factory;
 import org.paukov.combinatorics.Generator;
@@ -58,13 +60,13 @@ public class MathFunctions {
 
 
 
-	static ArrayList<TIntArrayList> getAllCombinations(TIntArrayList candModSites, int k) {
-		ArrayList<TIntArrayList> ret = new ArrayList();
+	static List<TIntList> getAllCombinations(TIntList candModSites, int k) {
+		List<TIntList> ret = new ArrayList<>();
 		int L = candModSites.size(); // total number of values
 
 		// http://code.google.com/p/combinatoricslib/#3._Simple_combinations
 
-		ArrayList<Integer> vec = new ArrayList();
+		ArrayList<Integer> vec = new ArrayList<>();
 		for(int i : candModSites.toArray()) vec.add(i);
 
 		ICombinatoricsVector<Integer> initialVector = Factory.createVector( vec );
@@ -82,7 +84,7 @@ public class MathFunctions {
 		return ret;
 	}
 
-	static double log_gaussianProb(double mu, double sigma2, double x) {
+	static double logGaussianProb(double mu, double sigma2, double x) {
 		double ret = 0d;
 		ret = -0.5 * Math.pow((x-mu), 2.0) / sigma2 - 0.5 * Math.log( (2.0 * Math.PI * sigma2) );
 		return ret;
@@ -100,6 +102,4 @@ public class MathFunctions {
 		ret = (double)Math.round( (value * N) ) / N;
 		return ret;
 	}
-
-
 }

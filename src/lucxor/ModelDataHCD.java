@@ -48,8 +48,8 @@ public class ModelDataHCD {
 
 		chargeState = z;
 		numPSM = 0;
-		posPks = new ArrayList();
-		negPks = new ArrayList();
+		posPks = new ArrayList<>();
+		negPks = new ArrayList<>();
 		
 		int b = 0;
 		int y = 0;
@@ -170,24 +170,24 @@ public class ModelDataHCD {
 		double sum = 0;
 		
 		
-		/********** B-ions ********/
+		// B-ions
 		N = (double) b_int.length;
 		sum = 0;
 		for(double b : b_int) sum += b;
 		bIntMean = sum / N;
 		
 		
-		/********** Y-ions ********/
+		// Y-ions
 		N = (double) y_int.length;
 		sum = 0;
 		for(double y : y_int) sum += y;
 		yIntMean = sum / N;
 
-		/*** Positive peak distances ***/
+		// Positive peak distances
 		posDistMean = getMode(pos_dist);
 		
 		
-		/********** Noise peaks *******/
+		// Noise peaks
 		N = (double) n_int.length;
 		sum = 0;
 		for(double n : n_int) sum += n;
@@ -205,7 +205,7 @@ public class ModelDataHCD {
 	public void calcVar() {
 		double N, v;
 		
-		/**** B-ions ****/
+		// B-ions
 		v = 0;
 		N = ((double) b_int.length) - 1.0;
 		for(double b : b_int) {
@@ -215,7 +215,7 @@ public class ModelDataHCD {
 		bIntVar = (v / N);
 
 		
-		/**** Y-ions ****/
+		// Y-ions
 		v = 0;
 		N = ((double) y_int.length) - 1.0;
 		for(double b : y_int) {
@@ -226,7 +226,7 @@ public class ModelDataHCD {
 			
 		
 		
-		/***** Positive Peak Distance *******/
+		// Positive Peak Distance
 		v = 0;
 		N = ((double) pos_dist.length) - 1.0;
 		for(double n : pos_dist) {
@@ -237,7 +237,7 @@ public class ModelDataHCD {
 		
 		
 		
-		/***** Noise Peaks *******/
+		// Noise Peaks
 		v = 0;
 		N = ((double) n_int.length) - 1.0;
 		for(double n : n_int) {
@@ -628,33 +628,30 @@ public class ModelDataHCD {
 			fw = new FileWriter(debugF, true); // open for appending
 			bw = new BufferedWriter(fw);
 		}
-		
-		
-		for(int b = 0; b < b_int.length; b++) {
-			normI = MathFunctions.roundDouble(b_int[b], 4);
+
+
+		for (double v : b_int) {
+			normI = MathFunctions.roundDouble(v, 4);
 			line = chargeState + "\tyi\t" +
 					normI + "\n";
 			bw.write(line);
 		}
-		
-		for(int y = 0; y < y_int.length; y++) {
-			normI = MathFunctions.roundDouble(y_int[y], 4);
-			line = Integer.toString(chargeState) + "\tyi\t" +
-				   Double.toString(normI) + "\n";
+
+		for (double v : y_int) {
+			normI = MathFunctions.roundDouble(v, 4);
+			line = chargeState + "\tyi\t" + normI + "\n";
 			bw.write(line);
 		}
-		
-		for(int n = 0; n < n_int.length; n++) {
-			normI = MathFunctions.roundDouble(n_int[n], 4);
-			line = Integer.toString(chargeState) + "\tni\t" +
-				   Double.toString(normI) + "\n";
+
+		for (double v : n_int) {
+			normI = MathFunctions.roundDouble(v, 4);
+			line = chargeState + "\tni\t" + normI + "\n";
 			bw.write(line);
 		}
-		
-		for(int p = 0; p < pos_dist.length; p++) {
-			dist = MathFunctions.roundDouble(pos_dist[p], 4);
-			line = Integer.toString(chargeState) + "\td\t" +
-				   Double.toString(dist) + "\n";
+
+		for (double v : pos_dist) {
+			dist = MathFunctions.roundDouble(v, 4);
+			line = chargeState + "\td\t" + dist + "\n";
 			bw.write(line);
 		}
 		
@@ -728,23 +725,23 @@ public class ModelDataHCD {
 			for(int i = 0; i < ntick; i++) {
 				bw.write(
 						"b\t" +
-						Integer.toString(chargeState) + "\t" +
-						Double.toString( bTickMarksInt[i] ) + "\t" +
-						Double.toString( f_int_b[i] ) + "\n"
+								chargeState + "\t" +
+								bTickMarksInt[i] + "\t" +
+								f_int_b[i] + "\n"
 				);
 				
 				bw.write(
 						"y\t" +
-						Integer.toString(chargeState) + "\t" +
-						Double.toString( yTickMarksInt[i] ) + "\t" +
-						Double.toString( f_int_y[i] ) + "\n"
+								chargeState + "\t" +
+								yTickMarksInt[i] + "\t" +
+								f_int_y[i] + "\n"
 				);
 				
 				bw.write(
 						"n\t" +
-						Integer.toString(chargeState) + "\t" +
-						Double.toString( negTickMarksInt[i] ) + "\t" +
-						Double.toString( f_int_neg[i] ) + "\n"
+								chargeState + "\t" +
+								negTickMarksInt[i] + "\t" +
+								f_int_neg[i] + "\n"
 				);
 			}
 		}
@@ -752,9 +749,9 @@ public class ModelDataHCD {
 			for(int i = 0; i < ntick; i++) {
 				bw.write(
 						"p\t" +
-						Integer.toString(chargeState) + "\t" +
-						Double.toString( posTickMarksDist[i] ) + "\t" +
-						Double.toString( f_dist[i] ) + "\n"
+								chargeState + "\t" +
+								posTickMarksDist[i] + "\t" +
+								f_dist[i] + "\n"
 				);
 			}
 		}
