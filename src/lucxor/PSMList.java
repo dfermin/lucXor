@@ -7,11 +7,14 @@ import java.util.*;
  */
 public class PSMList implements List<PSM>{
 
-  // List of PSMs
-  List<PSM> psmList = new ArrayList<>();
+  // List of PSMs, minimun number of PSMs in PRIDE experiments are 10'000
+  List<PSM> psmList = new ArrayList<>(10_000);
 
   // This hash map controls the FileName + Scan, Order of the PSM in the psmList
-  Map<String, Integer> scanOrder = new HashMap<>();
+  Map<String, Integer> scanOrder = new HashMap<>(10_000);
+
+  //charge list
+  Map<Integer, Integer> chargeCount = new HashMap<>(5);
 
   int numDecoys = 0;
   int numTargets = 0;
@@ -57,13 +60,26 @@ public class PSMList implements List<PSM>{
 
   @Override
   public boolean add(PSM psm) {
+
     int index = psmList.size();
     psmList.add(psm);
     scanOrder.put(Utils.generateIndex(psm.getSrcFile(), psm.getScanNum()), index);
+
+    // Count decoys and targets
     if (psm.isDecoy())
       numDecoys++;
     else
       numTargets++;
+
+    // Count charge distributions
+    // First make sure you have enough PSMs for each charge state to create
+    if(psm.isUseForModel()) {
+      int old = 1;
+      if(chargeCount.containsKey(psm.getCharge()))
+        old = chargeCount.get(psm.getCharge()) + 1;
+      chargeCount.put(psm.getCharge(), old);
+    }
+
     return true;
   }
 
@@ -157,5 +173,13 @@ public class PSMList implements List<PSM>{
     String hash = Utils.generateIndex(baseFN, scanNum);
     int index = scanOrder.get(hash);
     return psmList.get(index);
+  }
+
+  /**
+   * Get the charge distribution, Number of PSms by Charge.
+   * @return
+   */
+  public Map<Integer, Integer> getChargeCount() {
+    return chargeCount;
   }
 }

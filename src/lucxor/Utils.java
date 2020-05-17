@@ -12,7 +12,7 @@ public class Utils {
     StringBuilder sb = new StringBuilder();
     int N = line.length();
 
-    int b = line.indexOf("=") + 1;
+    int b = line.indexOf('=') + 1;
 
     for(int i = b; i < N; i++) {
       char c = line.charAt(i);

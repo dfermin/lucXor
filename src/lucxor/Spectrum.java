@@ -10,7 +10,7 @@ import java.util.Collections;
 /**
  * Created by dfermin on 3/31/14.
  */
-public class SpectrumClass {
+public class Spectrum {
 
     public int N; // number of peaks
 	public int maxI_index; // the max. intensity peaks index in this.raw_intensity[]
@@ -23,24 +23,23 @@ public class SpectrumClass {
 	public double[] norm_intensity = null; 
 
 
-
-    /*************
-     * Default constructor we use for SpectrumClass
-     * @param mz_
-     * @param intensities_
+    /*
+     * Default constructor we use for Spectrum
+     * @param mz
+     * @param intensities
      */
-    public SpectrumClass(double[] mz_, double[] intensities_) {
-        N = mz_.length;
+    public Spectrum(double[] mz, double[] intensities) {
+        N = mz.length;
         maxI = 0;
         maxI_index = 0;
 
         // This should never happen but just to avoid a segfault we put this conditional in
-        if(mz_.length != intensities_.length)
-            N = Math.min(mz_.length, intensities_.length);
+        if(mz.length != intensities.length)
+            N = Math.min(mz.length, intensities.length);
 
         TIntArrayList candPks = new TIntArrayList(N);
         for(int i = 0; i < N; i++) {
-            if(intensities_[i] == 0) continue; // skip zero intensity peaks
+            if(intensities[i] == 0) continue; // skip zero intensity peaks
             candPks.add(i);
         }
 
@@ -55,12 +54,12 @@ public class SpectrumClass {
         for(int i = 0; i < N; i++) {
             int curIdx = candPks.get(i);
 
-            if(intensities_[ curIdx ] > maxI) {
-                maxI = intensities_[ curIdx ];
+            if(intensities[ curIdx ] > maxI) {
+                maxI = intensities[ curIdx ];
                 maxI_index = curIdx;
             }
-            this.mz[i] = mz_[ curIdx ];
-            this.raw_intensity[i] = intensities_[ curIdx ];
+            this.mz[i] = mz[ curIdx ];
+            this.raw_intensity[i] = intensities[ curIdx ];
 
         }
 
@@ -74,10 +73,10 @@ public class SpectrumClass {
     }
 
 
-    public SpectrumClass() {} // empty constructor
+    public Spectrum() {} // empty constructor
 
 
-    /***********
+    /*
      * Function calculates the relative intensity of the spectrum based upon the value of
      * maxI. You only need to call this function when the value of 'maxI' has changed.
      */
@@ -88,7 +87,7 @@ public class SpectrumClass {
     }
 
 
-    /***********
+    /*
      * Function computes the log(rel_intensity/median_intensity)
      */
     public void medianNormalizeSpectra() {
@@ -103,10 +102,9 @@ public class SpectrumClass {
 
         if(N % 2  == 0) { // even number of elements
             int a = mid - 1;
-            int b = mid;
 
             double aI = pksI.get(a);
-            double bI = pksI.get(b);
+            double bI = pksI.get(mid);
             medianI = (aI + bI) / 2.0;
         }
         else { // odd number of elements
@@ -119,11 +117,7 @@ public class SpectrumClass {
         }
     }
 
-
-
-
-
-    /************
+    /*
      * Get a particular peak value mz or intensity
      */
     public double getPeak(int idx, int dt) {
@@ -147,17 +141,13 @@ public class SpectrumClass {
         return ret;
     }
 
-
-
-
-    /*********
+    /*
      * Returns true if the mz variable is empty or unset
      * @return
      */
     public boolean isEmpty() {
         if(null == this.mz) return true;
-        if(this.mz.length == 0) return true;
-        return false;
+        return this.mz.length == 0;
     }
 
 
@@ -176,16 +166,17 @@ public class SpectrumClass {
         return ret;
     }
 
-
-
+    /**
+     * Get the peak information
+     * @param idx index of the Peak
+     * @return new Peak
+     */
     public Peak getPeakClassInstance(int idx) {
         Peak ret = new Peak();
-
         ret.setMz(this.mz[ idx ]);
         ret.setRawIntensity(this.raw_intensity[ idx ]);
         ret.setRelIntensity(this.rel_intensity[ idx ]);
         ret.setNormIntensity(this.norm_intensity[ idx ]);
-
         return ret;
     }
 }

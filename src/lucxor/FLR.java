@@ -7,18 +7,12 @@ package lucxor;
 import gnu.trove.map.TMap;
 import gnu.trove.map.hash.THashMap;
 
-import java.io.BufferedWriter;
-import java.io.File;
-import java.io.FileWriter;
-import java.io.IOException;
 import java.util.ArrayList;
 import java.util.Arrays;
 import java.util.Collections;
 import java.util.HashMap;
 import java.util.List;
 import java.util.concurrent.*;
-import java.util.logging.Level;
-import java.util.logging.Logger;
 
 /**
  *
@@ -47,7 +41,7 @@ public class FLR {
 	double bw_real, bw_decoy;
 	int Nreal, Ndecoy;
 	
-	final int NMARKS = 10001; // we want N+1 bins for the FLR
+	static final int NMARKS = 10001; // we want N+1 bins for the FLR
 
 
 	FLR() {
@@ -483,9 +477,11 @@ public class FLR {
     }
 
 
-    // Function performs minorization of the FDR data to smooth out the curve
-    // in the event the data is too sparse. In big data sets, this will only improve things
-    public void performMinorization() {
+	/**
+	 * Function performs minorization of the FDR data to smooth out the curve
+	 * in the event the data is too sparse. In big data sets, this will only improve things
+	 */
+	public void performMinorization() {
         int i,j,N;
         int curStart, curEnd;
         double f_expect;
@@ -674,46 +670,6 @@ public class FLR {
 			}
 		}
 	}
-	
 
 
-
-	
-	// Function evaluates a normal density value for a specific point in the distribution
-	private double normalDensity(double curTickMark, double curScore, double h) {
-		double result = 0d;
-		double x = (curTickMark - curScore) / h;
-		
-		double term1 = 1.0 / (Math.sqrt( (2.0 * Math.PI) ));
-		
-		double term2 = -0.5 * x * x;
-		
-		result = term1 * Math.exp( term2 );
-		return result;
-	}
-
-	
-	
-	void debugFLR() {
-		
-		try {
-			File f = new File("debug_flr_tickMarks.tsv");
-			BufferedWriter bw = new BufferedWriter(new FileWriter(f));
-			bw.write("index\ttickMark\tf0\tf1\n");
-			for(int i = 0; i < NMARKS; i++) {
-				String line = i + "\t" +
-						tickMarks[i] + "\t" +
-						f0[i] + "\t" +
-						f1[i] + "\n";
-				bw.write(line);
-			}
-			bw.close();
-		} catch (IOException ex) {
-			Logger.getLogger(FLR.class.getName()).log(Level.SEVERE, null, ex);
-		}
-	}
-
-
-	
-	
 }

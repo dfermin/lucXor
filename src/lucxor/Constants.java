@@ -95,6 +95,5 @@ public class Constants {
 					new AbstractMap.SimpleEntry<>("^", "S"),
 					new AbstractMap.SimpleEntry<>("*", "T"),
 					new AbstractMap.SimpleEntry<>("=", "Y")
-
 			).collect(Collectors.toMap(Map.Entry::getKey, Map.Entry::getValue));
 }

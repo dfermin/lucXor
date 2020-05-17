@@ -35,7 +35,7 @@ public class ModelDataCID {
 
 	
 	// This is an adjustment factor for the standard deviation suggested by hwchoi
-	final double CID_ADJUST = 16.0 / 25.0; 
+	static final double CID_ADJUST = 16.0 / 25.0;
 	
 	public ModelDataCID(int z, List<Peak> peaks) {
         chargeState = z;

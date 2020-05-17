@@ -237,16 +237,16 @@ class Peptide {
 	// If it can, the NL is recorded
 	private void recordNLIons(String ion, double z, double orig_ion_mass) {
 
-		int start = ion.indexOf(":") + 1;
+		int start = ion.indexOf(':') + 1;
 		int end = ion.length();
-		if(ion.contains("/")) end = ion.indexOf("/") - 1;
+		if(ion.contains("/")) end = ion.indexOf('/') - 1;
 
 		String x = ion.substring(start, end);
 
 		if( !Globals.isDecoySeq(x) ) {
-			for(String nlr : Globals.nlMap.keySet()) {
+			for(Entry<String, Double> stringDoubleEntry : Globals.nlMap.entrySet()) {
 
-				String candResidues = nlr.substring( 0, nlr.indexOf("-") );
+				String candResidues = stringDoubleEntry.getKey().substring( 0, stringDoubleEntry.getKey().indexOf('-') );
 				int numCandRes = 0;
 
 				for(int i = 0; i < x.length(); i++){
@@ -255,8 +255,8 @@ class Peptide {
 				}
 
 				if(numCandRes > 0) { // this ion contains residues that can result in a NL
-					double nl_mass = Globals.nlMap.get(nlr);
-					String NL_tag = nlr.substring( nlr.indexOf("-") );
+					double nl_mass = stringDoubleEntry.getValue();
+					String NL_tag = stringDoubleEntry.getKey().substring( stringDoubleEntry.getKey().indexOf('-') );
 
 					String nl_str = ion + NL_tag;
 					double mass = orig_ion_mass + nl_mass;
@@ -312,14 +312,14 @@ class Peptide {
 
 
 	void printIons() {
-		for(String p : bIons.keySet()) {
-			double m = MathFunctions.roundDouble(bIons.get(p), 4);
-			System.out.println(modPeptide + "\t" + p + "\t" + m);
+		for(Entry<String, Double> stringDoubleEntry : bIons.entrySet()) {
+			double m = MathFunctions.roundDouble(stringDoubleEntry.getValue(), 4);
+			System.out.println(modPeptide + "\t" + stringDoubleEntry.getKey() + "\t" + m);
 		}
 
-		for(String p : yIons.keySet()) {
-			double m = MathFunctions.roundDouble(yIons.get(p), 4);
-			System.out.println(modPeptide + "\t" + p + "\t" + m);
+		for(Entry<String, Double> stringDoubleEntry : yIons.entrySet()) {
+			double m = MathFunctions.roundDouble(stringDoubleEntry.getValue(), 4);
+			System.out.println(modPeptide + "\t" + stringDoubleEntry.getKey() + "\t" + m);
 		}
 	}
 
@@ -426,7 +426,7 @@ class Peptide {
 			score = 0;
 		}
 		else {
-			ModelDataCID MD = Globals.modelingMap_CID.get(this.charge);
+			ModelDataCID MD = Globals.modelingMapCID.get(this.charge);
 
 			// Now compute the scores for these peaks
 			double intensityM = 0;
@@ -487,7 +487,8 @@ class Peptide {
 		int score = 0;
 		for(int i = 0; i < pepLen; i++) {
 			String aa = Character.toString( modPeptide.charAt(i) );
-			if(Globals.isDecoyResidue(aa)) score++;
+			if(Globals.isDecoyResidue(aa))
+				score++;
 		}
 
 		if(score > 0) ret = true;
@@ -505,14 +506,15 @@ class Peptide {
 			score = 0;
 		}
 		else {
-			ModelDataHCD MD = Globals.modelingMap_HCD.get(this.charge);
+			ModelDataHCD MD = Globals.modelingMapHCD.get(this.charge);
 
 			double matchErr = 0;
 			double decoyPadding = 1;
 			double a = 0, b = 0;
 
 			// we double the error window size for decoys. Otherwise they may not get matched peaks
-			if(isDecoyPep()) decoyPadding = 2.0;
+			if(isDecoyPep())
+				decoyPadding = 2.0;
 
 
 			// Now compute the scores for these peaks
@@ -556,8 +558,8 @@ class Peptide {
 	 * theoretical ions for this peptide
 	 * @param obsPeakList
 	 */
-	public void matchPeaks(SpectrumClass obsPeakList) {
-//        if( !Globals.modelingMap_CID.containsKey(this.charge) ) {
+	public void matchPeaks(Spectrum obsPeakList) {
+//        if( !Globals.modelingMapCID.containsKey(this.charge) ) {
 //            log.info("\nError! " + peptide + "/+" + this.charge +
 //                    ": a CID Model does not exist for this charge state!\nExiting now.\n");
 //            System.exit(0);
@@ -579,8 +581,8 @@ class Peptide {
 
 
 		// Try to match y-ions first, they tend to be of higher intensity which is what we want
-		for(String theo_ion : yIons.keySet()) {
-			double theo_mz  = yIons.get(theo_ion);
+		for(Entry<String, Double> stringDoubleEntry : yIons.entrySet()) {
+			double theo_mz  = stringDoubleEntry.getValue();
 
 			if(Globals.ms2tol_units == Constants.PPM_UNITS) {
 				double ppmErr = Globals.ms2tol / Constants.PPM;
@@ -608,7 +610,7 @@ class Peptide {
 				Peak pk = cand.get(0);
 
 				pk.setMatched(true);
-				pk.setMatchedIonStr(theo_ion);
+				pk.setMatchedIonStr(stringDoubleEntry.getKey());
 				pk.setDist(pk.getMz() - theo_mz);
 
 				// Check to see if you have already assigned this peak to a theoretical ion
@@ -624,8 +626,8 @@ class Peptide {
 
 
 		// Now try to match b-ions
-		for(String theo_ion : bIons.keySet()) {
-			double theo_mz  = bIons.get(theo_ion);
+		for(Entry<String, Double> stringDoubleEntry : bIons.entrySet()) {
+			double theo_mz  = stringDoubleEntry.getValue();
 
 			if(Globals.ms2tol_units == Constants.PPM_UNITS) {
 				double ppmErr = Globals.ms2tol / Constants.PPM;
@@ -653,7 +655,7 @@ class Peptide {
 				Peak pk = cand.get(0);
 
 				pk.setMatched(true);
-				pk.setMatchedIonStr(theo_ion);
+				pk.setMatchedIonStr(stringDoubleEntry.getKey());
 				pk.setDist(pk.getMz() - theo_mz);
 
 				// Check to see if you have already assigned this peak to a theoretical ion

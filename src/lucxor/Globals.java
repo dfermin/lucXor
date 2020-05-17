@@ -8,7 +8,6 @@ import gnu.trove.map.TMap;
 import gnu.trove.map.hash.THashMap;
 import gnu.trove.map.hash.TIntObjectHashMap;
 import lombok.extern.slf4j.Slf4j;
-import org.xml.sax.SAXException;
 import umich.ms.datatypes.LCMSData;
 import umich.ms.datatypes.LCMSDataSubset;
 import umich.ms.datatypes.scan.IScan;
@@ -19,13 +18,11 @@ import umich.ms.fileio.exceptions.FileParsingException;
 import umich.ms.fileio.filetypes.mzml.MZMLFile;
 import umich.ms.fileio.filetypes.mzxml.MZXMLFile;
 
-import javax.xml.parsers.ParserConfigurationException;
 import java.io.*;
 import java.text.SimpleDateFormat;
 import java.util.*;
 import java.util.concurrent.ExecutionException;
 import java.util.stream.Collectors;
-import java.util.zip.DataFormatException;
 
 import static lucxor.Constants.*;
 
@@ -77,8 +74,8 @@ public class Globals {
 	static TMap<String, Double> decoyNLmap = new THashMap<>();
     static TMap<Double, double[]> FLRestimateMap = new THashMap<>(); // ary[0] = globalFLR, ary[1] = localFLR
 
-	static TMap<Integer, ModelDataCID> modelingMap_CID = null;
-	static TMap<Integer, ModelDataHCD> modelingMap_HCD = null;
+	static TMap<Integer, ModelDataCID> modelingMapCID = null;
+	static TMap<Integer, ModelDataHCD> modelingMapHCD = null;
 	
 	static void parseInputFile(String str) throws IOException {
 		
@@ -194,8 +191,8 @@ public class Globals {
 				// We do minus 1 because 1 thread already goes to 
 				// running the whole program
 				if(x < 0) numThreads = 1;
-				else if(x > 1) numThreads = (x - 1);
-                else if(x == 0) numThreads = Runtime.getRuntime().availableProcessors();
+                else if(x == 0 || (numThreads > Runtime.getRuntime().availableProcessors()))
+                	numThreads = Runtime.getRuntime().availableProcessors() - 1;
                 else numThreads = x;
 			}
 			
@@ -226,14 +223,14 @@ public class Globals {
 			}
 
             if(line.startsWith("DECOY_NL")) {
-                String[] ary = parse_NL_line(line);
+                String[] ary = parseNLLine(line);
                 String k = ary[0].substring(1);
                 double m = Double.valueOf(ary[1]);
                 decoyNLmap.put(k,m);
             }
 			
 			if(line.startsWith("NL")) {
-				String[] ary = parse_NL_line(line);
+				String[] ary = parseNLLine(line);
 				double m = Double.valueOf(ary[1]);
 				nlMap.put(ary[0], m);
 			}
@@ -342,17 +339,17 @@ public class Globals {
         }
 		
 		log.info("Mods to score:");
-		for(String s : TargetModMap.keySet()) {
-			log.info(s + "\t" + TargetModMap.get(s));
+		for(Map.Entry<String, Double> stringDoubleEntry : TargetModMap.entrySet()) {
+			log.info(stringDoubleEntry.getKey() + "\t" + stringDoubleEntry.getValue());
 		}
 		
 		if(!nlMap.isEmpty()) {
 			log.info("\nAllowed Neutral Losses:");
-			for(String s : nlMap.keySet()) {
-				log.info(s + "\t" + nlMap.get(s));
+			for(Map.Entry<String, Double> stringDoubleEntry : nlMap.entrySet()) {
+				log.info(stringDoubleEntry.getKey() + "\t" + stringDoubleEntry.getValue());
 			}
-            for(String s : decoyNLmap.keySet()) {
-                log.info("<X>" + s + "\t" + decoyNLmap.get(s) + "  (Decoy NL)");
+            for(Map.Entry<String, Double> stringDoubleEntry : decoyNLmap.entrySet()) {
+                log.info("<X>" + stringDoubleEntry.getKey() + "\t" + stringDoubleEntry.getValue() + "  (Decoy NL)");
             }
 		}
 
@@ -376,7 +373,7 @@ public class Globals {
 		double mass = 0d;
 		int N = line.length();
 		
-		int b = line.indexOf("=") + 1;
+		int b = line.indexOf('=') + 1;
 		
 		for(int i = b; i < N; i++) {
 			char c = line.charAt(i);
@@ -398,7 +395,7 @@ public class Globals {
 	}
 	
 	
-	static String[] parse_NL_line(String line) {
+	static String[] parseNLLine(String line) {
 		String[] ret = new String[2];
 		
 		line = line.replaceAll("#", "");
@@ -466,51 +463,51 @@ public class Globals {
 		// Assign the information you got from the input file to the 
 		// relevant map. If none were given, then this should just proceed
 		// without changing anything.
-		for(String c : TargetModMap.keySet()) {
-			double mass = AA_MASS_MAP.get(c) + TargetModMap.get(c);
-			String symbol = c.toLowerCase();
+		for(Map.Entry<String, Double> stringDoubleEntry : TargetModMap.entrySet()) {
+			double mass = AA_MASS_MAP.get(stringDoubleEntry.getKey()) + stringDoubleEntry.getValue();
+			String symbol = stringDoubleEntry.getKey().toLowerCase();
 			AA_MASS_MAP.put(symbol, mass);
 		}
 		
-		for(String c : fixedModMap.keySet()) {
+		for(Map.Entry<String, Double> stringDoubleEntry : fixedModMap.entrySet()) {
 
-		    if( c.equalsIgnoreCase("[") ) {
-                Globals.ntermMass = fixedModMap.get(c);
+		    if( stringDoubleEntry.getKey().equalsIgnoreCase("[") ) {
+                Globals.ntermMass = stringDoubleEntry.getValue();
             }
-            else if( c.equalsIgnoreCase("]") ) {
-                Globals.ctermMass = fixedModMap.get(c);
+            else if( stringDoubleEntry.getKey().equalsIgnoreCase("]") ) {
+                Globals.ctermMass = stringDoubleEntry.getValue();
             }
 		    else {
-                double mass = AA_MASS_MAP.get(c) + fixedModMap.get(c);
-                String symbol = c.toUpperCase();
+                double mass = AA_MASS_MAP.get(stringDoubleEntry.getKey()) + stringDoubleEntry.getValue();
+                String symbol = stringDoubleEntry.getKey().toUpperCase();
                 AA_MASS_MAP.put(symbol, mass);
             }
 		}
 		
-		for(String c : varModMap.keySet()) { // this will be a lower case key
+		for(Map.Entry<String, Double> stringDoubleEntry : varModMap.entrySet()) { // this will be a lower case key
 			
-			if( c.equalsIgnoreCase("[") ) {
-				Globals.ntermMass = varModMap.get(c);
+			if( stringDoubleEntry.getKey().equalsIgnoreCase("[") ) {
+				Globals.ntermMass = stringDoubleEntry.getValue();
 			}
-			else if( c.equalsIgnoreCase("]") ) {
-				Globals.ctermMass = varModMap.get(c);
+			else if( stringDoubleEntry.getKey().equalsIgnoreCase("]") ) {
+				Globals.ctermMass = stringDoubleEntry.getValue();
 			}
 			else {
-				double mass = AA_MASS_MAP.get(c.toUpperCase()) + varModMap.get(c);
-				AA_MASS_MAP.put(c, mass);
+				double mass = AA_MASS_MAP.get(stringDoubleEntry.getKey().toUpperCase()) + stringDoubleEntry.getValue();
+				AA_MASS_MAP.put(stringDoubleEntry.getKey(), mass);
 			}
 		}
 		
 		
 		// Now add the decoy masses to the AA_MASS_MAP
-		for(String c : DECOY_AA_MAP.keySet()) {
-			String trueAA = DECOY_AA_MAP.get(c);
+		for(Map.Entry<String, String> stringStringEntry : DECOY_AA_MAP.entrySet()) {
+			String trueAA = stringStringEntry.getValue();
 			
 			if(varModMap.containsKey(trueAA)) continue;
 			if(TargetModMap.containsKey(trueAA)) continue;
 			
 			double mass = AA_MASS_MAP.get(trueAA) + Globals.decoyMass;
-			AA_MASS_MAP.put(c, mass);
+			AA_MASS_MAP.put(stringStringEntry.getKey(), mass);
 		}
 
 	}
@@ -524,12 +521,12 @@ public class Globals {
 		
 		String alphabet = "ACDEFGHIKLMNPQRSTVWY";
 		
-		for(String c : fixedModMap.keySet()) {
+		for(Map.Entry<String, Double> stringDoubleEntry : fixedModMap.entrySet()) {
 			
-			if(!alphabet.contains(c)) continue; // skip non-amino acid characters 
+			if(!alphabet.contains(stringDoubleEntry.getKey())) continue; // skip non-amino acid characters
 		
-			double mass = AA_MASS_MAP.get(c) + fixedModMap.get(c);
-			String symbol = c.toUpperCase();
+			double mass = AA_MASS_MAP.get(stringDoubleEntry.getKey()) + stringDoubleEntry.getValue();
+			String symbol = stringDoubleEntry.getKey().toUpperCase();
 			AA_MASS_MAP.put(symbol, mass);
 		}
 		
@@ -539,19 +536,19 @@ public class Globals {
 		HashMap<String, Double> tmp = new HashMap<>(varModMap);
 		varModMap.clear();
 		
-		for(String c : tmp.keySet()) {
-			String C = c.toUpperCase();
-			double mass = tmp.get(c);
+		for(Map.Entry<String, Double> stringDoubleEntry : tmp.entrySet()) {
+			String C = stringDoubleEntry.getKey().toUpperCase();
+			double mass = stringDoubleEntry.getValue();
 			if(!alphabet.contains(C)) continue; // skip non-amino acid characters
 			if(TargetModMap.containsKey(C)) continue; // skip target residues
-			varModMap.put(c, mass);
+			varModMap.put(stringDoubleEntry.getKey(), mass);
 		}
 		tmp = null;
 		
-		for(String c : varModMap.keySet()) {
-			String C = c.toUpperCase();
-			double mass = AA_MASS_MAP.get(C) + varModMap.get(c);
-			AA_MASS_MAP.put(c, mass);
+		for(Map.Entry<String, Double> stringDoubleEntry : varModMap.entrySet()) {
+			String C = stringDoubleEntry.getKey().toUpperCase();
+			double mass = AA_MASS_MAP.get(C) + stringDoubleEntry.getValue();
+			AA_MASS_MAP.put(stringDoubleEntry.getKey(), mass);
 		}
 	}
 
@@ -576,7 +573,7 @@ public class Globals {
 						Collectors.mapping(PSM::getScanNum, Collectors.toList())));
 
 		if(Globals.spectrumSuffix.equalsIgnoreCase(MGF_TYPE)) {
-			TIntObjectHashMap<SpectrumClass> curSpectra = null;
+			TIntObjectHashMap<Spectrum> curSpectra = null;
 			
 			for(String specFile : scanMap.keySet()) {
 				curSpectra = read_mgf(specFile);
@@ -616,13 +613,13 @@ public class Globals {
 		long timeLo = System.nanoTime();
 
         // Iterate over the file names
-        for(String fn : scanMap.keySet()) {
-            String baseFN = new File(spectraPath + "/" + fn).getName();
+        for(Map.Entry<String, List<Integer>> stringListEntry : scanMap.entrySet()) {
+            String baseFN = new File(spectraPath + "/" + stringListEntry.getKey()).getName();
             System.err.print("\n" + baseFN + ":  "); // beginning of info line
 
             int ctr = 0;
             int iter = 0;
-            List<Integer> scanNums = scanMap.get(fn);
+            List<Integer> scanNums = stringListEntry.getValue();
             Collections.sort(scanNums); // order scan numbers
 
             // read in the mzXML file
@@ -657,7 +654,7 @@ public class Globals {
                     continue;
                 }
 
-                SpectrumClass X = new SpectrumClass(mz, intensities);
+                Spectrum X = new Spectrum(mz, intensities);
 
                 PSM psm = psmList.getByScanOrder(baseFN, scanNum);
                 psm.recordSpectra(X);
@@ -752,7 +749,7 @@ public class Globals {
 //									continue;
 //								}
 //
-//								SpectrumClass X = new SpectrumClass(mz, intensities);
+//								Spectrum X = new Spectrum(mz, intensities);
 //								p.recordSpectra(X);
 //								ctr.getAndIncrement();
 //								break;
@@ -773,10 +770,10 @@ public class Globals {
     static double getFragmentIonMass(String x, double z, double addl_mass) {
 		double ret = 1.00728 * z;
 		
-		int start = x.indexOf(":") + 1;
+		int start = x.indexOf(':') + 1;
 		int stop  = x.length();
 		
-		if(x.contains("-")) stop = x.indexOf("-");
+		if(x.contains("-")) stop = x.indexOf('-');
 		
 		for(int i = start; i < stop; i++) {
 			String c = Character.toString( x.charAt(i) );
@@ -794,14 +791,15 @@ public class Globals {
 
 	
 	// Function reads in an MGF file and returns it as a HashMap
-	private static TIntObjectHashMap<SpectrumClass > read_mgf(String specFile) throws IOException {
-		TIntObjectHashMap<SpectrumClass > ret = new TIntObjectHashMap<>();
+	private static TIntObjectHashMap<Spectrum> read_mgf(String specFile) throws
+			IOException {
+		TIntObjectHashMap<Spectrum> ret = new TIntObjectHashMap<>();
 		
 		File mgf = new File(specFile);
 		BufferedReader br = new BufferedReader(new FileReader(mgf));
 		String line;
 		int scanNum = 0;
-        SpectrumClass S = null;
+        Spectrum S = null;
         ArrayList<Double> mzAL = null, intensityAL = null;
 
 		
@@ -819,7 +817,7 @@ public class Globals {
                         mz[i] = mzAL.get(i);
                         I[i] = intensityAL.get(i);
                     }
-                    S = new SpectrumClass(mz, I);
+                    S = new Spectrum(mz, I);
                     ret.put(scanNum, S);
 
                     mzAL = null;
@@ -837,8 +835,8 @@ public class Globals {
 			}
 			
 			if(line.startsWith("TITLE=")) {
-				int i = line.indexOf(".") + 1;
-				int j = line.indexOf(".", i);
+				int i = line.indexOf('.') + 1;
+				int j = line.indexOf('.', i);
 				String s = line.substring(i,j);
 				scanNum = Integer.valueOf(s);
 			}
@@ -868,18 +866,18 @@ public class Globals {
 			FileParsingException {
 		
 		// Iterate over the file names
-		for(String fn : scanMap.keySet()) {
-			String baseFN = new File(pathSpectra + "/" + fn).getName();
+		for(Map.Entry<String, List<Integer>> stringListEntry : scanMap.entrySet()) {
+			String baseFN = new File(pathSpectra + "/" + stringListEntry.getKey()).getName();
 			System.err.print(baseFN + ":  "); // beginning of info line
 			
 			int ctr = 0;
-			List<Integer> scanNums = scanMap.get(fn);
+			List<Integer> scanNums = stringListEntry.getValue();
 			Collections.sort(scanNums); // order the scan numbers
 
             int N = numThreads;
             if(numThreads > 1) N -= 1;
 
-			final MZXMLFile mzxml = new MZXMLFile(fn, false);
+			final MZXMLFile mzxml = new MZXMLFile(stringListEntry.getKey(), false);
 			mzxml.setNumThreadsForParsing(N);
             mzxml.setParsingTimeout(60L); // 1 minute before it times out trying to read a file
 			final LCMSData lcmsData = new LCMSData(mzxml);
@@ -888,7 +886,7 @@ public class Globals {
 			final ScanIndex ms2ScanIndex = scans.getMapMsLevel2index().get(2);
 
 			if( (ms2ScanIndex == null) || (ms2ScanIndex.getNum2scan().isEmpty()) ) {
-				log.info("\nERROR: Globals.readMzXML(): Unable to read MS2 scans from '" + fn + "'\n");
+				log.info("\nERROR: Globals.readMzXML(): Unable to read MS2 scans from '" + stringListEntry.getKey() + "'\n");
 				System.exit(0);
 			}
 			
@@ -898,7 +896,7 @@ public class Globals {
 				double[] mz = scan.getSpectrum().getMZs();
 				double[] intensities = scan.getSpectrum().getIntensities();
 
-                SpectrumClass curSpectrum = new SpectrumClass(mz, intensities);
+                Spectrum curSpectrum = new Spectrum(mz, intensities);
 
 				// assign this spectrum to it's PSM
 				for(PSM p : psmList) {
@@ -983,7 +981,8 @@ public class Globals {
 	// Function returns true if the given residue is from the decoy list
 	static boolean isDecoyResidue(String AA) {
 		boolean ret = false;
-		if(DECOY_AA_MAP.containsKey(AA)) ret = true;
+		if(DECOY_AA_MAP.containsKey(AA))
+			ret = true;
 		return ret;
 	}
 	
