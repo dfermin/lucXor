@@ -529,12 +529,12 @@ public class LucXor {
                 m.printStats();
 
                 // Compute intensity parameters
-                m.estimateNP_intensity('b');
-                m.estimateNP_intensity('y');
-                m.estimateNP_intensity('n');
+                m.estimateNPIntensity('b');
+                m.estimateNPIntensity('y');
+                m.estimateNPIntensity('n');
 
                 // Compute distance parameters
-                m.estimateNP_posDist();
+                m.estimateNPPosDist();
                 log.info("\n");  // makes for prettier output
 
                 Globals.modelingMapHCD.put(z, m);

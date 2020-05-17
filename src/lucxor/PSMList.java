@@ -53,7 +53,7 @@ public class PSMList implements List<PSM>{
   }
 
   @Override
-  public <T> T[] toArray(T[] a) {
+  public <PSM> PSM[] toArray(PSM[] a) {
     return psmList.toArray(a);
   }
 

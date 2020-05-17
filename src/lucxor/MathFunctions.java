@@ -59,10 +59,14 @@ public class MathFunctions {
 	}
 
 
-
+	/**
+	 * Get all combinations for all PTMs
+	 * @param candModSites Candidate Modification sites
+	 * @param k Number of combinations
+	 * @return
+	 */
 	static List<TIntList> getAllCombinations(TIntList candModSites, int k) {
 		List<TIntList> ret = new ArrayList<>();
-		int L = candModSites.size(); // total number of values
 
 		// http://code.google.com/p/combinatoricslib/#3._Simple_combinations
 
@@ -75,7 +79,8 @@ public class MathFunctions {
 
 		for(ICombinatoricsVector<Integer> combination : gen) {
 			TIntArrayList curList = new TIntArrayList();
-			for(int i : combination) curList.add(i);
+			for(int i : combination)
+				curList.add(i);
 
 			ret.add(curList);
 			curList = null;

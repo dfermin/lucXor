@@ -96,7 +96,6 @@ class PSM {
 		if(isKeeper) {
 			// We will reconstruct the specId here to remove left-padded zeros
 			String suffix = "";
-			String scanStr = Integer.toString(scanNum);
 
 			if(Globals.inputType == Constants.PEPXML) {
 				if(Globals.spectrumSuffix.equalsIgnoreCase(Constants.MZXML_TYPE))
@@ -770,13 +769,13 @@ class PSM {
 		for(Peak pk : mPK) {
 			if(!pk.isMatched()) continue;
 			
-			String mz = df.format(MathFunctions.roundDouble(pk.getMz(), 4));
-			String relI = df.format(MathFunctions.roundDouble(pk.getRelIntensity(), 4));
-			String normI = df.format(MathFunctions.roundDouble(pk.getNormIntensity(), 4));
-			String Iscore = df.format(MathFunctions.roundDouble(pk.getIntensityScore(), 4));
-			String Dscore = df.format(MathFunctions.roundDouble(pk.getDistScore(), 4));
-			String score = df.format(MathFunctions.roundDouble(pk.getScore(), 4));
-			String dist = df.format(MathFunctions.roundDouble(pk.getDist(), 4));
+			String mz = df.format(MathFunctions.roundDouble(pk.getMz(), numDecimals));
+			String relI = df.format(MathFunctions.roundDouble(pk.getRelIntensity(), numDecimals));
+			String normI = df.format(MathFunctions.roundDouble(pk.getNormIntensity(), numDecimals));
+			String Iscore = df.format(MathFunctions.roundDouble(pk.getIntensityScore(), numDecimals));
+			String Dscore = df.format(MathFunctions.roundDouble(pk.getDistScore(), numDecimals));
+			String score = df.format(MathFunctions.roundDouble(pk.getScore(), numDecimals));
+			String dist = df.format(MathFunctions.roundDouble(pk.getDist(), numDecimals));
 			
 			bw.write("0\t" + score1pep.getModPeptide() + "\t" + pk.getMatchedIonStr() + "\t" + mz + "\t" + dist + "\t" +
 					 relI + "\t" + normI + "\t" + Dscore + "\t" + Iscore + "\t" +
@@ -796,13 +795,13 @@ class PSM {
 		for(Peak pk : mPK) {
 			if(!pk.isMatched()) continue;
 			
-			String mz = df.format(MathFunctions.roundDouble(pk.getMz(), 4));
-			String relI = df.format(MathFunctions.roundDouble(pk.getRelIntensity(), 4));
-			String normI = df.format(MathFunctions.roundDouble(pk.getNormIntensity(), 4));
-			String Iscore = df.format(MathFunctions.roundDouble(pk.getIntensityScore(), 4));
-			String Dscore = df.format(MathFunctions.roundDouble(pk.getDistScore(), 4));
-			String score = df.format(MathFunctions.roundDouble(pk.getScore(), 4));
-			String dist = df.format(MathFunctions.roundDouble(pk.getDist(), 4));
+			String mz = df.format(MathFunctions.roundDouble(pk.getMz(), numDecimals));
+			String relI = df.format(MathFunctions.roundDouble(pk.getRelIntensity(), numDecimals));
+			String normI = df.format(MathFunctions.roundDouble(pk.getNormIntensity(), numDecimals));
+			String Iscore = df.format(MathFunctions.roundDouble(pk.getIntensityScore(), numDecimals));
+			String Dscore = df.format(MathFunctions.roundDouble(pk.getDistScore(), numDecimals));
+			String score = df.format(MathFunctions.roundDouble(pk.getScore(), numDecimals));
+			String dist = df.format(MathFunctions.roundDouble(pk.getDist(), numDecimals));
 			
 			bw.write("1\t" + score2pep.getModPeptide() + "\t" + pk.getMatchedIonStr() + "\t" + mz + "\t" + dist + "\t" +
 					 relI + "\t" + normI + "\t" + Dscore + "\t" + Iscore + "\t" +
@@ -864,11 +863,11 @@ class PSM {
         for(Peak pk : mPK) {
             if(!pk.isMatched()) continue;
 
-            String mz = df.format(MathFunctions.roundDouble(pk.getMz(), 4));
-            String relI = df.format(MathFunctions.roundDouble(pk.getRelIntensity(), 4));
-            String Iscore = df.format(MathFunctions.roundDouble(pk.getIntensityScore(), 4));
-            String Dscore = df.format(MathFunctions.roundDouble(pk.getDistScore(), 4));
-            String score = df.format(MathFunctions.roundDouble(pk.getScore(), 4));
+            String mz = df.format(MathFunctions.roundDouble(pk.getMz(), numDecimals));
+            String relI = df.format(MathFunctions.roundDouble(pk.getRelIntensity(), numDecimals));
+            String Iscore = df.format(MathFunctions.roundDouble(pk.getIntensityScore(), numDecimals));
+            String Dscore = df.format(MathFunctions.roundDouble(pk.getDistScore(), numDecimals));
+            String score = df.format(MathFunctions.roundDouble(pk.getScore(), numDecimals));
 
             ret.append(specId).append("\t2\t").append(score2pep.getModPeptide()).append("\t").append(pk.getMatchedIonStr()).append("\t").append(mz).append("\t").append(relI).append("\t").append(Dscore).append("\t").append(Iscore).append("\t").append(score).append("\n");
         }
@@ -908,10 +907,6 @@ class PSM {
 		return charge;
 	}
 
-	public double getPSMscore() {
-		return PSMscore;
-	}
-
 	public double getDeltaScore() {
 		return deltaScore;
 	}
@@ -944,20 +939,8 @@ class PSM {
 		return isDecoy;
 	}
 
-	public boolean isUnambiguous() {
-		return isUnambiguous;
-	}
-
 	public TIntDoubleHashMap getModCoordMap() {
 		return modCoordMap;
-	}
-
-	public TMap<String, Double> getPosPermutationScoreMap() {
-		return posPermutationScoreMap;
-	}
-
-	public TMap<String, Double> getNegPermutationScoreMap() {
-		return negPermutationScoreMap;
 	}
 
 	public List<Peak> getPosPeaks() {
@@ -968,24 +951,12 @@ class PSM {
 		return negPeaks;
 	}
 
-	public Spectrum getPeakList() {
-		return PeakList;
-	}
-
 	public Peptide getOrigPep() {
 		return origPep;
 	}
 
 	public String getPeptideSequence(){
 		return origPep.getPeptide();
-	}
-
-	public Peptide getScore1pep() {
-		return score1pep;
-	}
-
-	public Peptide getScore2pep() {
-		return score2pep;
 	}
 
 	public void setSpecId(String specId) {
@@ -1008,43 +979,8 @@ class PSM {
 		this.PSMscore = PSMscore;
 	}
 
-	public void setDeltaScore(double deltaScore) {
-		this.deltaScore = deltaScore;
-	}
-
-	public void setKeeper(boolean keeper) {
-		isKeeper = keeper;
-	}
-
-	public void setUseForModel(boolean useForModel) {
-		this.useForModel = useForModel;
-	}
-
-	public void setDecoy(boolean decoy) {
-		isDecoy = decoy;
-	}
-
-	public void setUnambiguous(boolean unambiguous) {
-		isUnambiguous = unambiguous;
-	}
-
-	public void setPeakList(Spectrum peakList) {
-		PeakList = peakList;
-	}
-
-	public void setOrigPep(Peptide origPep) {
-		this.origPep = origPep;
-	}
-
 	public void setPeptideSequence(String sequence){
 		this.origPep.setPeptide(sequence);
 	}
 
-	public void setScore1pep(Peptide score1pep) {
-		this.score1pep = score1pep;
-	}
-
-	public void setScore2pep(Peptide score2pep) {
-		this.score2pep = score2pep;
-	}
 }

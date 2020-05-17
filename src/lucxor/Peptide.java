@@ -371,9 +371,11 @@ class Peptide {
 				String AA = Character.toString( peptide.charAt(i) );
 				String aa = AA.toLowerCase();
 				int score = 0;
-				if( !Globals.TargetModMap.containsKey(AA) ) score++;
+				if( !Globals.TargetModMap.containsKey(AA))
+					score++;
 
-				if( !this.nonTargetMods.containsKey(aa) ) score++;
+				if( !this.nonTargetMods.containsKey(aa) )
+					score++;
 
 				if(score == 2) candModSites.add(i);
 			}

@@ -46,9 +46,6 @@ public class Peak {
   // Comparator to sort Peak objects based upon mz dist values from low to high
   public static Comparator comparator_mz_abs_dist = Comparator.comparingDouble(o -> Math.abs(((Peak)o).dist));
 
-  // default constructor
-  Peak(double x, double y) { mz = x; rawIntensity = y; }
-
   public Peak() {
     mz = 0;
     relIntensity = 0;
@@ -107,10 +104,6 @@ public class Peak {
 
   public void setMz(double mz) {
     this.mz = mz;
-  }
-
-  public double getRawIntensity() {
-    return rawIntensity;
   }
 
   public void setRawIntensity(double rawIntensity) {
@@ -179,10 +172,6 @@ public class Peak {
 
   public void setMatchedIonStr(String matchedIonStr) {
     this.matchedIonStr = matchedIonStr;
-  }
-
-  public double getMatchedIonMZ() {
-    return matchedIonMZ;
   }
 
   public void setMatchedIonMZ(double matchedIonMZ) {

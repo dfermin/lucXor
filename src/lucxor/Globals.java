@@ -425,7 +425,6 @@ public class Globals {
 	public static void calcFLR() throws InterruptedException, ExecutionException {
 		double maxDeltaScore = -1.0;
 		FLR flr = new FLR();
-		ArrayList<FLR> flrAry = new ArrayList<>();
 
 		log.info("\nComputing False Localization Rate (FLR)");
 

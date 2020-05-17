@@ -25,17 +25,15 @@ public class ModelDataHCD {
 	static final int ntick = 2000;
 	
 	double bIntBW, yIntBW;  // positive peak intensity bandwidth
-	double negIntBW;  // negative peak intensity bandwidth
 	double posDistBW; // positive peak distance bandwidth
 
 	double bIntMean, bIntVar, yIntMean, yIntVar;
 	double negIntMean, negIntVar;
 	double posDistMean, posDistVar;
-	double negDistMean, negDistVar;
-	
-	
+
+
 	double[] bTickMarksInt, yTickMarksInt, negTickMarksInt;
-	double[] posTickMarksDist, negTickMarksDist;
+	double[] posTickMarksDist;
 	double[] f_int_b, f_int_y, f_int_neg;
 	double[] f_dist;
 	
@@ -165,7 +163,6 @@ public class ModelDataHCD {
 	// Compute the mean for pos and neg data. This function must be called
 	// *before* the calcVar function
 	public void calcMean() {
-		double mean = 0;
 		double N = 0;
 		double sum = 0;
 		
@@ -197,7 +194,6 @@ public class ModelDataHCD {
 		// For the negative distribution we assume a uniform distribution over a
 		// 1 Dalton window. As such, the log of a uniform distribution between 
 		// -1 to 1 is zero
-		negDistMean = 0;
 	}
 	
 	
@@ -247,12 +243,16 @@ public class ModelDataHCD {
 		negIntVar = (v / N);
 		
 	}
-	
-	
-	
-	// Function computes the estimated parameters for the non-parametric model
-	// for the intensity of the peaks assigned to this ModelData object
-	void estimateNP_intensity(char ionType) throws InterruptedException, ExecutionException {
+
+
+	/**
+	 * Function computes the estimated parameters for the non-parametric model
+	 * for the intensity of the peaks assigned to this ModelData object
+	 * @param ionType ionType
+	 * @throws InterruptedException
+	 * @throws ExecutionException
+	 */
+	void estimateNPIntensity(char ionType) throws InterruptedException, ExecutionException {
 		int N = 0;
 		double[] norm_ints = null;
 		double[] tickMarksInt = null;
@@ -369,7 +369,6 @@ public class ModelDataHCD {
 		else {
 			negTickMarksInt = tickMarksInt;
 			f_int_neg = f_int;
-			negIntBW = bw;
 		}
 		
 	}
@@ -377,7 +376,7 @@ public class ModelDataHCD {
 	
 	// Function computes the estimated parameters for the non-parametric model
 	// for the m/z distances for the positive peaks in this model object
-	void estimateNP_posDist() throws InterruptedException, ExecutionException {
+	void estimateNPPosDist() throws InterruptedException, ExecutionException {
 		
 		int N = 0;
 		double min_dist = 0, max_dist = 0;
