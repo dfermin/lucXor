@@ -30,11 +30,14 @@ import lucxor.utils.MathFunctions;
 import org.xml.sax.SAXException;
 import umich.ms.datatypes.LCMSData;
 import umich.ms.datatypes.LCMSDataSubset;
+import umich.ms.datatypes.index.Index;
 import umich.ms.datatypes.scan.IScan;
 import umich.ms.datatypes.scancollection.IScanCollection;
 import umich.ms.datatypes.scancollection.ScanIndex;
+import umich.ms.datatypes.scancollection.impl.ScanCollectionDefault;
 import umich.ms.datatypes.spectrum.ISpectrum;
 import umich.ms.fileio.exceptions.FileParsingException;
+import umich.ms.fileio.filetypes.LCMSDataSource;
 import umich.ms.fileio.filetypes.mzml.MZMLFile;
 import umich.ms.fileio.filetypes.mzxml.MZXMLFile;
 
@@ -295,7 +298,7 @@ public class LucXor {
 		// iterate over the charge states collecting data for all modeling PSMs
 		log.info("(CID) Building Parametric Models from high-scoring PSMs...");
 		for(int z = 2; z <= LucXorConfiguration.getMaxChargeState(); z++) {
-			ArrayList<Peak> modelingPks = new ArrayList<>();
+			ArrayList<Peak> modelingPks = new ArrayList<>(100);
 			
 			if(badZ.contains(z)) continue; // skip this charge state, you don't have enough data to model it
 			
@@ -533,7 +536,7 @@ public class LucXor {
         }
 
 		// Compute the statistics for the collected charge states
-        ArrayList<Integer> missedChargeStates = new ArrayList<>();
+        ArrayList<Integer> missedChargeStates = new ArrayList<>(5);
         int maxObsZ = 0;  // highest modeled charge state.
 		for(int z = 2; z <= LucXorConfiguration.getMaxChargeState(); z++) {
 
@@ -785,7 +788,7 @@ public class LucXor {
 
 
     private static void readInSpectra() throws IOException, IllegalStateException,
-            FileParsingException {
+            FileParsingException, ExecutionException, InterruptedException {
 
         log.info("\nReading spectra from " + LucXorConfiguration.getSpectrumPath()
                 .getCanonicalPath() + "  (" + LucXorConfiguration.getSpectrumPrefix().toUpperCase()
@@ -825,12 +828,15 @@ public class LucXor {
         }
 
         // Read mzXML files
+
         if(LucXorConfiguration.getSpectrumPrefix().equalsIgnoreCase(MZXML_TYPE))
-            readMzXML(scanMap, LucXorConfiguration.getSpectrumPath().getAbsolutePath());
+            readXMLFile(scanMap, LucXorConfiguration.getSpectrumPath().getAbsolutePath(),
+                    MZXML_TYPE);
 
         // Read mzML files
         if(LucXorConfiguration.getSpectrumPrefix().equalsIgnoreCase(MZML_TYPE))
-            readMzML(scanMap, LucXorConfiguration.getSpectrumPath().getAbsolutePath());
+            readXMLFile(scanMap, LucXorConfiguration.getSpectrumPath().getAbsolutePath(),
+                    MZML_TYPE);
     }
 
     /**
@@ -901,129 +907,198 @@ public class LucXor {
     }
 
 
-    /****************
-     * Function reads in spectral data from mzML files
-     * @param scanMap {@link Map} where the key is the filename and the value the list of scan
-     */
-    private static void readMzML(Map<String, List<Integer>> scanMap, String spectraPath) throws
-            FileParsingException {
+// --Commented out by Inspection START (2020-05-18 21:26):
+//    /****************
+//     * Function reads in spectral data from mzML files
+//     * @param scanMap {@link Map} where the key is the filename and the value the list of scan
+//     */
+//    private static void readMzML(Map<String, List<Integer>> scanMap, String spectraPath) throws
+//            FileParsingException {
+//
+//        long timeLo = System.nanoTime();
+//
+//        // Iterate over the file names
+//        for(Map.Entry<String, List<Integer>> stringListEntry : scanMap.entrySet()) {
+//            String baseFN = new File(spectraPath + "/" + stringListEntry.getKey()).getName();
+//            System.err.print("\n" + baseFN + ":  "); // beginning of info line
+//
+//            int ctr = 0;
+//            int iter = 0;
+//            List<Integer> scanNums = stringListEntry.getValue();
+//            Collections.sort(scanNums); // order scan numbers
+//
+//            // read in the mzXML file
+//            String mzML_path = LucXorConfiguration.getSpectrumPath() + "/" + baseFN;
+//
+//            final MZMLFile curMZML = new MZMLFile(mzML_path);
+//
+//            for(int scanNum : scanNums) {
+//                iter++;
+//                if( iter % 100 == 0 ) {
+//                    System.err.print("\r" + baseFN + ":  " + iter + "... ");
+//                    // beginning of info line
+//                }
+//                final IScan scan = curMZML.parseScan(scanNum, true);
+//                final ISpectrum spectrum = scan.getSpectrum();
+//                int N = spectrum.getMZs().length;
+//                if(N == 0) {
+//                    continue; // no valid spectrum for this scan number
+//                }
+//
+//                double[] mz = spectrum.getMZs();
+//                double[] intensities = spectrum.getIntensities();
+//
+//                // If this happens, there is something wrong with the spectrum so skip it
+//                if(mz.length != intensities.length) {
+//                    System.err.print(
+//                            "\nERROR:" + baseFN + " Scan: " + scanNum +
+//                                    "\n# of mz values != # intensity values: " +
+//                                    mz.length + " != " + intensities.length +
+//                                    "\nSkipping this scan...\n"
+//                    );
+//                    continue;
+//                }
+//
+//                Spectrum X = new Spectrum(mz, intensities);
+//
+//                PSM psm = psmList.getByScanOrder(baseFN, scanNum);
+//                psm.recordSpectra(X);
+//                ctr++;
+//            }
+//            // end of file reading
+//            System.err.print("\r" + baseFN +  ":  " + ctr + " spectra read in.            ");
+//        }
+//        long timeHi = System.nanoTime();
+//        log.info("Loading took: " + (timeHi - timeLo)/1e9f);
+//
+//    }
+// --Commented out by Inspection STOP (2020-05-18 21:26)
+
+    private static void readXMLFile(Map<String, List<Integer>> scanMap, String
+            pathSpectra, String fileType) throws FileParsingException, ExecutionException, InterruptedException {
 
         long timeLo = System.nanoTime();
 
-        // Iterate over the file names
         for(Map.Entry<String, List<Integer>> stringListEntry : scanMap.entrySet()) {
-            String baseFN = new File(spectraPath + "/" + stringListEntry.getKey()).getName();
-            System.err.print("\n" + baseFN + ":  "); // beginning of info line
+            String fileName = stringListEntry.getKey();
+            String absolutePath = new File(pathSpectra + "/" + stringListEntry.getKey()).getAbsolutePath();
 
-            int ctr = 0;
-            int iter = 0;
-            List<Integer> scanNums = stringListEntry.getValue();
-            Collections.sort(scanNums); // order scan numbers
+            LCMSDataSource<?> source;
+            switch (fileType) {
+                case MZML_TYPE:
+                    source = new MZMLFile(absolutePath);
+                    break;
+                case MZXML_TYPE:
+                    source = new MZXMLFile(absolutePath);
+                    break;
+                default:
+                    throw new UnsupportedOperationException("file not supported");
+            }
+            // create data structure to hold scans and load all scans
+            ScanCollectionDefault scans = new ScanCollectionDefault();
+            scans.setDataSource(source);
 
-            // read in the mzXML file
-            String mzML_path = LucXorConfiguration.getSpectrumPath() + "/" + baseFN;
+            Index<?> index = source.parseIndex();
+            index.getMapByNum();
+            final int batchSize = 100;
 
-            final MZMLFile curMZML = new MZMLFile(mzML_path);
-
-            for(int scanNum : scanNums) {
-                iter++;
-                if( iter % 100 == 0 ) {
-                    System.err.print("\r" + baseFN + ":  " + iter + "... ");
-                    // beginning of info line
+            Iterator<Integer> it = stringListEntry.getValue().iterator();
+            List<IScan> parsed = new ArrayList<>(stringListEntry.getValue().size());
+            while (it.hasNext()) {
+                List<Integer> scanNums = new ArrayList<>(batchSize);
+                scanNums.add(it.next());
+                while (it.hasNext() && scanNums.size() < batchSize) {
+                    scanNums.add(it.next());
                 }
-                final IScan scan = curMZML.parseScan(scanNum, true);
-                final ISpectrum spectrum = scan.getSpectrum();
+                parsed.addAll(source.parse(scanNums));
+                System.err.print("\r" + absolutePath + ":  " + parsed.size() + "... ");
+            }
+
+            // data index, can be used to locate scans by numbers or retention times at different ms levels
+
+            // Create a new Async ForJoinPool
+            ForkJoinPool forkJoinPool = new ForkJoinPool(LucXorConfiguration.getNumThreads(),
+                    ForkJoinPool.defaultForkJoinWorkerThreadFactory, null, true);
+            forkJoinPool.submit(() -> parsed.parallelStream().forEach(kv -> {
+
+                final ISpectrum spectrum = kv.getSpectrum();
                 int N = spectrum.getMZs().length;
-                if(N == 0) {
-                    continue; // no valid spectrum for this scan number
-                }
-
-                double[] mz = spectrum.getMZs();
-                double[] intensities = spectrum.getIntensities();
-
-                // If this happens, there is something wrong with the spectrum so skip it
-                if(mz.length != intensities.length) {
-                    System.err.print(
-                            "\nERROR:" + baseFN + " Scan: " + scanNum +
-                                    "\n# of mz values != # intensity values: " +
-                                    mz.length + " != " + intensities.length +
-                                    "\nSkipping this scan...\n"
-                    );
-                    continue;
-                }
-
-                Spectrum X = new Spectrum(mz, intensities);
-
-                PSM psm = psmList.getByScanOrder(baseFN, scanNum);
-                psm.recordSpectra(X);
-                ctr++;
-            }
-            // end of file reading
-            System.err.print("\r" + baseFN +  ":  " + ctr + " spectra read in.            ");
-        }
-        long timeHi = System.nanoTime();
-        log.info("Loading took %.1fs", (timeHi - timeLo)/1e9f);
-
-    }
-
-
-
-    /**
-     * Function to read spectra from mzXML file
-     * @param scanMap Scan Map
-     * @throws IllegalStateException Access exception
-     * @throws FileParsingException File parsing exception
-     */
-    private static void readMzXML(Map<String, List<Integer>> scanMap, String pathSpectra) throws
-            IllegalStateException,
-            FileParsingException {
-
-        // Iterate over the file names
-        for(Map.Entry<String, List<Integer>> stringListEntry : scanMap.entrySet()) {
-            String baseFN = new File(pathSpectra + "/" + stringListEntry.getKey()).getName();
-            System.err.print(baseFN + ":  "); // beginning of info line
-
-            int ctr = 0;
-            List<Integer> scanNums = stringListEntry.getValue();
-            Collections.sort(scanNums); // order the scan numbers
-
-            int N = LucXorConfiguration.getNumThreads();
-            if(LucXorConfiguration.getNumThreads() > 1) N -= 1;
-
-            final MZXMLFile mzxml = new MZXMLFile(stringListEntry.getKey(), false);
-            mzxml.setNumThreadsForParsing(N);
-            mzxml.setParsingTimeout(60L); // 1 minute before it times out trying to read a file
-            final LCMSData lcmsData = new LCMSData(mzxml);
-            lcmsData.load(LCMSDataSubset.MS2_WITH_SPECTRA);
-            final IScanCollection scans = lcmsData.getScans();
-            final ScanIndex ms2ScanIndex = scans.getMapMsLevel2index().get(2);
-
-            if( (ms2ScanIndex == null) || (ms2ScanIndex.getNum2scan().isEmpty()) ) {
-                log.info("\nERROR: LucXorConfiguration.readMzXML(): Unable to read MS2 scans from '" + stringListEntry.getKey() + "'\n");
-                System.exit(0);
-            }
-
-            for(Map.Entry<Integer, IScan> num2scan : ms2ScanIndex.getNum2scan().entrySet()) {
-                int scanNum = num2scan.getKey();
-                IScan scan = num2scan.getValue();
-                double[] mz = scan.getSpectrum().getMZs();
-                double[] intensities = scan.getSpectrum().getIntensities();
-
-                Spectrum curSpectrum = new Spectrum(mz, intensities);
-
-                // assign this spectrum to it's PSM
-                for(PSM p : psmList) {
-                    if( (p.getSrcFile().equalsIgnoreCase(baseFN)) && (p.getScanNum() == scanNum) ) {
-                        p.recordSpectra(curSpectrum);
-                        ctr++;
-                        break;
+                if(!(N == 0)) {
+                    double[] mz = spectrum.getMZs();
+                    double[] intensities = spectrum.getIntensities();
+                    // If this happens, there is something wrong with the spectrum so skip it
+                    if(mz.length == intensities.length) {
+                        Spectrum X = new Spectrum(mz, intensities);
+                        PSM psm = psmList.getByScanOrder(fileName, kv.getNum());
+                        psm.recordSpectra(X);
                     }
                 }
-            }
-
-            log.info(ctr + " spectra read in.");  // end of info line
+            })).get();
         }
+        long timeHi = System.nanoTime();
+        System.out.printf("\n\nLoading took %.1fs\n", (timeHi - timeLo)/1e9f);
+
+
     }
+
+// --Commented out by Inspection START (2020-05-18 21:27):
+//    /**
+//     * Function to read spectra from mzXML file
+//     * @param scanMap Scan Map
+//     * @throws IllegalStateException Access exception
+//     * @throws FileParsingException File parsing exception
+//     */
+//    private static void readMzXML(Map<String, List<Integer>> scanMap, String pathSpectra) throws
+//            IllegalStateException,
+//            FileParsingException {
+//
+//        // Iterate over the file names
+//        for(Map.Entry<String, List<Integer>> stringListEntry : scanMap.entrySet()) {
+//            String baseFN = new File(pathSpectra + "/" + stringListEntry.getKey()).getName();
+//            System.err.print(baseFN + ":  "); // beginning of info line
+//
+//            int ctr = 0;
+//            List<Integer> scanNums = stringListEntry.getValue();
+//            Collections.sort(scanNums); // order the scan numbers
+//
+//            int N = LucXorConfiguration.getNumThreads();
+//            if(LucXorConfiguration.getNumThreads() > 1) N -= 1;
+//
+//            final MZXMLFile mzxml = new MZXMLFile(stringListEntry.getKey(), false);
+//            mzxml.setNumThreadsForParsing(N);
+//            mzxml.setParsingTimeout(60L); // 1 minute before it times out trying to read a file
+//            final LCMSData lcmsData = new LCMSData(mzxml);
+//            lcmsData.load(LCMSDataSubset.MS2_WITH_SPECTRA);
+//            final IScanCollection scans = lcmsData.getScans();
+//            final ScanIndex ms2ScanIndex = scans.getMapMsLevel2index().get(2);
+//
+//            if( (ms2ScanIndex == null) || (ms2ScanIndex.getNum2scan().isEmpty()) ) {
+//                log.info("\nERROR: LucXorConfiguration.readMzXML(): Unable to read MS2 scans from '" + stringListEntry.getKey() + "'\n");
+//                System.exit(0);
+//            }
+//
+//            for(Map.Entry<Integer, IScan> num2scan : ms2ScanIndex.getNum2scan().entrySet()) {
+//                int scanNum = num2scan.getKey();
+//                IScan scan = num2scan.getValue();
+//                double[] mz = scan.getSpectrum().getMZs();
+//                double[] intensities = scan.getSpectrum().getIntensities();
+//
+//                Spectrum curSpectrum = new Spectrum(mz, intensities);
+//
+//                // assign this spectrum to it's PSM
+//                for(PSM p : psmList) {
+//                    if( (p.getSrcFile().equalsIgnoreCase(baseFN)) && (p.getScanNum() == scanNum) ) {
+//                        p.recordSpectra(curSpectrum);
+//                        ctr++;
+//                        break;
+//                    }
+//                }
+//            }
+//
+//            log.info(ctr + " spectra read in.");  // end of info line
+//        }
+//    }
+// --Commented out by Inspection STOP (2020-05-18 21:27)
 
 
     // Function assigns the global and local FLR for the current PSM from the FLRestimateMap

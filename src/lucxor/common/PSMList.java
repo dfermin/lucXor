@@ -10,10 +10,12 @@ import java.util.*;
 public class PSMList implements List<PSM>{
 
   // List of PSMs, minimun number of PSMs in PRIDE experiments are 10'000
-  private final List<PSM> psmList = new ArrayList<>(10_000);
+  private final List<PSM> psmList = Collections
+          .synchronizedList(new ArrayList<>(10_000));
 
   // This hash map controls the FileName + Scan, Order of the PSM in the psmList
-  private final Map<String, Integer> scanOrder = new HashMap<>(10_000);
+  private final Map<String, Integer> scanOrder = Collections
+          .synchronizedMap(new HashMap<>(10_000));
 
   //charge list
   private final Map<Integer, Integer> chargeCount = new HashMap<>(5);
