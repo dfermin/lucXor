@@ -4,6 +4,8 @@ import org.junit.Before;
 import org.junit.Ignore;
 import org.junit.Test;
 import umich.ms.datatypes.LCMSDataSubset;
+import umich.ms.datatypes.index.Index;
+import umich.ms.datatypes.index.IndexElement;
 import umich.ms.datatypes.scan.IScan;
 import umich.ms.datatypes.scan.StorageStrategy;
 import umich.ms.datatypes.scancollection.IScanCollection;
@@ -20,6 +22,7 @@ import java.text.SimpleDateFormat;
 import java.util.*;
 import java.util.concurrent.ExecutorService;
 import java.util.concurrent.Executors;
+import java.util.stream.Collectors;
 
 import static org.junit.Assert.*;
 
@@ -29,7 +32,8 @@ public class LucXorTest {
 
   @Before
   public void setUp() throws Exception {
-    file = "/Volumes/yasset_data/work/luxifor/020320_TiO2_Phospho.mzML";
+    //file = "/Volumes/yasset_data/work/luxifor/020320_TiO2_Phospho.mzML";
+    file = "D:\\ms-data\\batmass-io-errors\\HCC1806_F-2_E-1_M22_5ul_I-1_01.mzML";
   }
 
   @Test
@@ -52,22 +56,33 @@ public class LucXorTest {
     // create data structure to hold scans and load all scans
     ScanCollectionDefault scans = new ScanCollectionDefault();
     scans.setDataSource(source);
+
+    Index<?> index = source.parseIndex();
+    NavigableMap<Integer, ?> map = index.getMapByNum();
+    final int batchSize = 100;
+
     System.out.printf("Start loading whole file @ [%s]\n", fmt.format(new Date()));
     long timeLo = System.nanoTime();
-    scans.loadData(LCMSDataSubset.WHOLE_RUN);
+
+    Iterator<? extends Map.Entry<Integer, ?>> it = map.entrySet().iterator();
+    while (it.hasNext()) {
+      List<Integer> scanNums = new ArrayList<>();
+      scanNums.add(it.next().getKey());
+      while (it.hasNext() && scanNums.size() < batchSize) {
+        scanNums.add(it.next().getKey());
+      }
+      List<IScan> parsed = source.parse(scanNums);
+      System.out.printf("Read batch of %d scans, starting with: %s\n", parsed.size(), parsed.get(0).toString());
+    }
+
     long timeHi = System.nanoTime();
     System.out.printf("Done loading whole file @ [%s]\n", fmt.format(new Date()));
     System.out.printf("Loading took %.1fs", (timeHi - timeLo)/1e9f);
     // data index, can be used to locate scans by numbers or retention times at different ms levels
-    TreeMap<Integer, ScanIndex> index = scans.getMapMsLevel2index();
-    // iterate over MS2 scnas asynchronously, and calculate total intensity
-    ScanIndex ms2scans = index.get(2);
-    if (ms2scans == null || ms2scans.getNum2scan().isEmpty())
-      throw new IllegalStateException("empty ms2 index");
+
     ExecutorService exec = Executors
       .newFixedThreadPool(Runtime.getRuntime().availableProcessors());
-
-    for (final Map.Entry<Integer, IScan> kv : ms2scans.getNum2scan().entrySet()) {
+    for (final Map.Entry<Integer, IScan> kv : scans.getMapNum2scan().entrySet()) {
       exec.submit(() -> {
         IScan scan = kv.getValue();
         double spectrumIntensitySum = Arrays
