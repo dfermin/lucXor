@@ -31,11 +31,11 @@
   </profiles>
 
   <build>
-    <sourceDirectory>src</sourceDirectory>
-    <testSourceDirectory>test</testSourceDirectory>
+    <sourceDirectory>src/main</sourceDirectory>
+    <testSourceDirectory>src/test</testSourceDirectory>
     <testResources>
       <testResource>
-        <directory>test/resources</directory>
+        <directory>src/test/resources</directory>
       </testResource>
     </testResources>
 

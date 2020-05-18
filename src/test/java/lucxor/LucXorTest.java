@@ -18,6 +18,8 @@ import umich.ms.fileio.filetypes.mzml.MZMLFile;
 import umich.ms.fileio.filetypes.mzml.MZMLIndex;
 import umich.ms.fileio.filetypes.mzxml.MZXMLFile;
 
+import java.io.File;
+import java.net.URL;
 import java.text.SimpleDateFormat;
 import java.util.*;
 import java.util.concurrent.ExecutorService;
@@ -28,27 +30,26 @@ import static org.junit.Assert.*;
 
 public class LucXorTest {
 
-  private String file;
+  private File file;
 
   @Before
   public void setUp() throws Exception {
-    //file = "/Volumes/yasset_data/work/luxifor/020320_TiO2_Phospho.mzML";
-    file = "D:\\ms-data\\batmass-io-errors\\HCC1806_F-2_E-1_M22_5ul_I-1_01.mzML";
+    URL url = LucXorTest.class.getClassLoader().getResource("tiny.pwiz.1.1.mzML");
+    file = new File(url.toURI());
   }
 
   @Test
-  @Ignore
   public void readMZML() throws FileParsingException {
 
     SimpleDateFormat fmt= new SimpleDateFormat("HH:mm:ss");
-    String ext = afterLastDot(file).toLowerCase();
+    String ext = afterLastDot(file.getAbsolutePath()).toLowerCase();
     LCMSDataSource<?> source;
     switch (ext) {
       case "mzml":
-        source = new MZMLFile(file);
+        source = new MZMLFile(file.getAbsolutePath());
         break;
       case "mzxml":
-        source = new MZXMLFile(file);
+        source = new MZXMLFile(file.getAbsolutePath());
         break;
       default:
         throw new UnsupportedOperationException("file not supported");
