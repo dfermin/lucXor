@@ -8,7 +8,7 @@ public class Utils {
    * @return Result string
    */
   static String parseInputLine(String line) {
-    String ret = "";
+    String ret;
     StringBuilder sb = new StringBuilder();
     int N = line.length();
 

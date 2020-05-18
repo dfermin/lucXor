@@ -51,7 +51,7 @@ public class Constants {
 	public static final String MZML_TYPE = "MZML";
 	public static final String MZXML_TYPE = "MZXML";
 
-	public static Map<String, Double> AA_MASS_MAP = Stream.of(
+	public static final Map<String, Double> AA_MASS_MAP = Stream.of(
 			new AbstractMap.SimpleEntry<>("A", 71.03711),
 			new AbstractMap.SimpleEntry<>("R", 156.10111),
 			new AbstractMap.SimpleEntry<>("N", 114.04293),
@@ -74,7 +74,7 @@ public class Constants {
 			new AbstractMap.SimpleEntry<>("V", 99.06841)
 	).collect(Collectors.toMap(Map.Entry::getKey, Map.Entry::getValue));
 
-	public static Map<String, String> DECOY_AA_MAP = Stream.of(
+	public static final Map<String, String> DECOY_AA_MAP = Stream.of(
 					new AbstractMap.SimpleEntry<>("2", "A"),
 					new AbstractMap.SimpleEntry<>("3", "R"),
 					new AbstractMap.SimpleEntry<>("4", "N"),

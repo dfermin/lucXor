@@ -29,22 +29,26 @@ public class Peak {
   private double matchedIonMZ; // the m/z value of the matched ion
 
 
-  // Comparator to sort Peak objects based upon relative intensity from high to low
-  public static Comparator comparator_RAW_intensity_hi2low = (Comparator<Peak>) (o1, o2) -> Double
-    .compare(o2.rawIntensity, o1.rawIntensity);
+// --Commented out by Inspection START (2020-05-18 00:55):
+//  // Comparator to sort Peak objects based upon relative intensity from high to low
+//  public static Comparator comparator_RAW_intensity_hi2low = (Comparator<Peak>) (o1, o2) -> Double
+//    .compare(o2.rawIntensity, o1.rawIntensity);
+// --Commented out by Inspection STOP (2020-05-18 00:55)
 
   // Comparator to sort Peak objects based upon relative intensity from high to low
-  public static Comparator comparator_intensity_hi2low = (Comparator<Peak>) (o1, o2) -> Double
+  public static final Comparator comparator_intensity_hi2low = (Comparator<Peak>) (o1, o2) -> Double
     .compare(o2.relIntensity, o1.relIntensity);
 
-  // Comparator to sort Peak objects based upon relative intensity from low to high
-  public static Comparator comparator_intensity_low2hi = Comparator.comparingDouble(o -> ((Peak)o).relIntensity);
+// --Commented out by Inspection START (2020-05-18 00:55):
+//  // Comparator to sort Peak objects based upon relative intensity from low to high
+//  public static Comparator comparator_intensity_low2hi = Comparator.comparingDouble(o -> ((Peak)o).relIntensity);
+// --Commented out by Inspection STOP (2020-05-18 00:55)
 
   // Comparator to sort Peak objects based upon mz values from low to high
-  public static Comparator comparator_mz = Comparator.comparingDouble(o -> ((Peak)o).mz);
+  public static final Comparator comparator_mz = Comparator.comparingDouble(o -> ((Peak)o).mz);
 
   // Comparator to sort Peak objects based upon mz dist values from low to high
-  public static Comparator comparator_mz_abs_dist = Comparator.comparingDouble(o -> Math.abs(((Peak)o).dist));
+  public static final Comparator comparator_mz_abs_dist = Comparator.comparingDouble(o -> Math.abs(((Peak)o).dist));
 
   public Peak() {
     mz = 0;
@@ -70,16 +74,18 @@ public class Peak {
     this.matchedIonStr = other.matchedIonStr;
     this.matchedIonMZ = other.matchedIonMZ;
   }
-  // clear any previously assigned score data to a peak.
-  public void clear() {
-    distScore = 0;
-    dist = 0;
-    score = 0;
-    intensityScore = 0;
-    matchedIonMZ = 0;
-    matchedIonStr = "";
-    matched = false;
-  }
+// --Commented out by Inspection START (2020-05-18 00:57):
+//  // clear any previously assigned score data to a peak.
+//  public void clear() {
+//    distScore = 0;
+//    dist = 0;
+//    score = 0;
+//    intensityScore = 0;
+//    matchedIonMZ = 0;
+//    matchedIonStr = "";
+//    matched = false;
+//  }
+// --Commented out by Inspection STOP (2020-05-18 00:57)
 
 
   /**************************************************************************

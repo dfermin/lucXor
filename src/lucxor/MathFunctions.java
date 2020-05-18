@@ -66,33 +66,30 @@ public class MathFunctions {
 	 * @return
 	 */
 	static List<TIntList> getAllCombinations(TIntList candModSites, int k) {
-		List<TIntList> ret = new ArrayList<>();
 
 		// http://code.google.com/p/combinatoricslib/#3._Simple_combinations
 
-		ArrayList<Integer> vec = new ArrayList<>();
-		for(int i : candModSites.toArray()) vec.add(i);
+		ArrayList<Integer> vec = new ArrayList<>(candModSites.size());
+		for(int i : candModSites.toArray())
+		    vec.add(i);
 
 		ICombinatoricsVector<Integer> initialVector = Factory.createVector( vec );
 
 		Generator<Integer> gen = Factory.createSimpleCombinationGenerator(initialVector, k);
+        List<TIntList> ret = new ArrayList<>(initialVector.getSize());
 
-		for(ICombinatoricsVector<Integer> combination : gen) {
-			TIntArrayList curList = new TIntArrayList();
+        for(ICombinatoricsVector<Integer> combination : gen) {
+			TIntArrayList curList = new TIntArrayList(combination.getSize());
 			for(int i : combination)
 				curList.add(i);
-
 			ret.add(curList);
-			curList = null;
 		}
 
 		return ret;
 	}
 
 	static double logGaussianProb(double mu, double sigma2, double x) {
-		double ret = 0d;
-		ret = -0.5 * Math.pow((x-mu), 2.0) / sigma2 - 0.5 * Math.log( (2.0 * Math.PI * sigma2) );
-		return ret;
+		return  -0.5 * Math.pow((x-mu), 2.0) / sigma2 - 0.5 * Math.log( (2.0 * Math.PI * sigma2) );
 	}
 
 	/**
@@ -102,7 +99,7 @@ public class MathFunctions {
 	 * @return new Double.
 	 */
 	public static double roundDouble(double value, int numPlaces) {
-		double ret = 0;
+		double ret;
 		double N = Math.pow(10, numPlaces);
 		ret = (double)Math.round( (value * N) ) / N;
 		return ret;

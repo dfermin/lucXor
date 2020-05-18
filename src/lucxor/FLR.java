@@ -18,30 +18,42 @@ import java.util.concurrent.*;
  *
  * @author dfermin
  */
-public class FLR {
+class FLR {
 
-	List<PSM> realPSMs, decoyPSMs;
-    TMap<Integer, double[]> minorMapG, minorMapL;
+	final List<PSM> realPSMs;
+	final List<PSM> decoyPSMs;
+    private TMap<Integer, double[]> minorMapG;
+	private TMap<Integer, double[]> minorMapL;
 
     // f0 = decoy
     // f1 = real
 
-	double[] pos, neg;
-	double[] tickMarks, f0, f1;
-	double[] globalFDR, localFDR, globalFDR2, localFDR2;
+	private double[] pos;
+	private double[] neg;
+	private double[] tickMarks;
+	private double[] f0;
+	private double[] f1;
+	private double[] globalFDR;
+	private double[] localFDR;
+	private double[] globalFDR2;
+	private double[] localFDR2;
 	double maxDeltaScore;
 	
 	// variance of delta score for both distributions
-	double deltaScoreVar_pos, deltaScoreVar_neg;
+	private double deltaScoreVar_pos;
+	private double deltaScoreVar_neg;
 	
 	// mean of delta score for both distributions
-	double deltaScoreMu_pos, deltaScoreMu_neg;
+	private double deltaScoreMu_pos;
+	private double deltaScoreMu_neg;
 	
 	// bandwidth for histograms
-	double bw_real, bw_decoy;
-	int Nreal, Ndecoy;
+	private double bw_real;
+	private double bw_decoy;
+	private int Nreal;
+	private int Ndecoy;
 	
-	static final int NMARKS = 10001; // we want N+1 bins for the FLR
+	private static final int NMARKS = 10001; // we want N+1 bins for the FLR
 
 
 	FLR() {
@@ -105,10 +117,10 @@ public class FLR {
 
 	
 	private void getBandWidth(int dataType) {
-		double sigma = 0d;
-		double N = 0d;
-		double result = 0d;
-		double x = 0d;
+		double sigma;
+		double N;
+		double result;
+		double x;
 		
 		if(dataType == Constants.REAL) { // real
 			sigma = Math.sqrt(deltaScoreVar_pos);
@@ -134,7 +146,7 @@ public class FLR {
 	// Compute the mean of the delta score for each data type
 	private void calcDeltaScoreMean() {
 		double sum = 0d;
-		double N = 0;
+		double N;
 		
 		// for the forwards
 		for(double d : pos) sum += d;
@@ -154,8 +166,8 @@ public class FLR {
 	private void calcDeltaScoreVar() {
 		
 		double v = 0;
-		double N = 0;
-		double x = 0;
+		double N;
+		double x;
 		
 		// for the forwards
 		for(double d : pos) {
@@ -176,12 +188,17 @@ public class FLR {
 		deltaScoreVar_neg = v / N;
 	}
 
-	
-	// Function evaluates each deltaScore at each tick mark storing the result in
-	// either f0 (decoys) or f1 (real)
+
+	/**
+	 * Function evaluates each deltaScore at each tick mark storing the result in
+	 * either f0 (decoys) or f1 (real)
+	 * @param dataType
+	 * @throws InterruptedException
+	 * @throws ExecutionException
+	 */
 	void evalTickMarks(int dataType) throws InterruptedException, ExecutionException {
 		
-		double kernelResult = 0;
+		double kernelResult;
 		double[] dataAry = null;
 		double[] res = null;
 		double bw = 0;
@@ -228,7 +245,6 @@ public class FLR {
 				Callable<Double> C = new NormalDensityWorkerThread(subAry, tic, bw);
 				Future<Double> task = pool.submit(C);
 				taskList.add(task); // put the "task" to be executed into the queue
-				subAry = null;
 			}
 			
 			// Launch each task
@@ -253,9 +269,9 @@ public class FLR {
 	
 	// Function computes the local and global FDRs (FLR here)
 	void calcBothFDRs() {
-		double AUC_rev_0 = 0d; // Area-Under Curve from end of tick marks working backwards (f0 data)
-		double AUC_rev_1 = 0d; // Area-Under Curve from end of tick marks working backwards (f1 data)
-		double ratio = 0d;
+		double AUC_rev_0; // Area-Under Curve from end of tick marks working backwards (f0 data)
+		double AUC_rev_1; // Area-Under Curve from end of tick marks working backwards (f1 data)
+		double ratio;
 		
 		double Nreal2 = (double) Nreal;
 		double Ndecoy2 = (double) Ndecoy;
@@ -267,7 +283,6 @@ public class FLR {
 			
 			
 			// GlobalFLR
-			ratio = 0d;
 			AUC_rev_0 = getGlobalAUC(tmp_score, Constants.DECOY);
 			AUC_rev_1 = getGlobalAUC(tmp_score, Constants.REAL);
 			
@@ -275,7 +290,6 @@ public class FLR {
 			globalFDR[i] = ratio;
 			
 			// localFDR
-			ratio = 0d;
 			AUC_rev_0 = getLocalAUC(tmp_score, Constants.DECOY);
 			AUC_rev_1 = getLocalAUC(tmp_score, Constants.REAL);
 			
@@ -292,14 +306,14 @@ public class FLR {
 	private double getLocalAUC(double x, int whichF) {
 		double result = 0d;
 		
-		double a = 0, b = 0;
+		double a, b;
 		double sum = 0d;
-		double tmp1 = 0, tmp2 = 0;
-		double fx = 0;
+		double tmp1, tmp2;
+		double fx;
 		
 		double start_tick = tickMarks[0];
 		double end_tick = tickMarks[ (NMARKS-1) ];
-		double start_val = 0, end_val = 0;
+		double start_val, end_val;
 		
 		
 		// For f0
@@ -367,10 +381,10 @@ public class FLR {
 	// computes the area before and after the bin containing x
 	private double getGlobalAUC(double x, int whichF) {
 
-		double a = 0, b = 0;
+		double a, b;
 		double sum = 0d;
-		double tmp1 = 0, tmp2 = 0;
-		double fx = 0;
+		double tmp1, tmp2;
+		double fx;
 		
 		// For f0
 		if(whichF == Constants.DECOY) { // decoy
@@ -426,10 +440,10 @@ public class FLR {
 		
 		ArrayList<Double> scoreList = new ArrayList<>();
 		HashMap<Double, double[]> localMap = new HashMap<>();
-        double[] FDRary = null;
-		double ds = 0d; // deltaScore
-		double FDR = 0d;  // FDR
-		int i = 0;
+        double[] FDRary;
+		double ds; // deltaScore
+		double FDR;  // FDR
+		int i;
 
 
         // 0 = globalFDR, 1 = localFDR
@@ -446,9 +460,8 @@ public class FLR {
 
             localMap.clear();
             scoreList.clear();
-            i = 0;
 
-            for(i = 0; i < Nreal; i++) {
+			for(i = 0; i < Nreal; i++) {
                 ds = pos[i]; // delta score
                 FDR = FDRary[i];
                 scoreList.add(ds);
@@ -488,8 +501,8 @@ public class FLR {
         double slope;
         boolean cont;
 
-        double[] deqPtr = null;
-        TMap<Integer, double[]> mapPtr = null;
+        double[] deqPtr;
+        TMap<Integer, double[]> mapPtr;
 
         // 0 = global FDR, 1 = localFDR
         for(int iter = 0; iter < 2; iter++) {

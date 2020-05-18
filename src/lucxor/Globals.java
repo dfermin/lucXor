@@ -31,15 +31,15 @@ import static lucxor.Constants.*;
  * @author dfermin
  */
 @Slf4j
-public class Globals {
+class Globals {
 
-	static File spectrumPath = null;
+	private static File spectrumPath = null;
 	static String spectrumSuffix = null;
     static String matchedPkFile = null;
 	static File inputFile = null;
 	static String outputFile = null;
-	static String timeStamp = null;
-	static String dateStamp = null;
+	static final String timeStamp;
+	static final String dateStamp;
 	static int ms2tol_units;
 	static int inputType;
 	static int debugMode;
@@ -56,23 +56,22 @@ public class Globals {
 	static double ms2tol;
 	static double modelTH;
 	static double scoreTH;
-	static double decoyMass;
+	private static double decoyMass;
 	static double minMZ;
 	static double max_num_permutations;
 	static double precursorNLmass;
 	static double ntermMass = 0d;
 	static double ctermMass = 0d;
-	static double minRelIntensity;
     static boolean writeMatchedPeaks;
 	
-	static PSMList psmList = new PSMList();
+	static final PSMList psmList = new PSMList();
 
-    static TMap<String, Double> TargetModMap = new THashMap<>(); // mods user wants to search for
-	static TMap<String, Double> fixedModMap = new THashMap<>(); // fixed mods observed in data
-	static TMap<String, Double> varModMap = new THashMap<>(); // variable mods observed in data
-	static TMap<String, Double> nlMap = new THashMap<>(); // holds all neutral loss masses, k= list of amino acids v= NL mass
-	static TMap<String, Double> decoyNLmap = new THashMap<>();
-    static TMap<Double, double[]> FLRestimateMap = new THashMap<>(); // ary[0] = globalFLR, ary[1] = localFLR
+    static final TMap<String, Double> TargetModMap = new THashMap<>(); // mods user wants to search for
+	static final TMap<String, Double> fixedModMap = new THashMap<>(); // fixed mods observed in data
+	static final TMap<String, Double> varModMap = new THashMap<>(); // variable mods observed in data
+	static final TMap<String, Double> nlMap = new THashMap<>(); // holds all neutral loss masses, k= list of amino acids v= NL mass
+	static final TMap<String, Double> decoyNLmap = new THashMap<>();
+    private static TMap<Double, double[]> FLRestimateMap = new THashMap<>(); // ary[0] = globalFLR, ary[1] = localFLR
 
 	static TMap<Integer, ModelDataCID> modelingMapCID = null;
 	static TMap<Integer, ModelDataHCD> modelingMapHCD = null;
@@ -87,8 +86,7 @@ public class Globals {
 		
 		debugMode = 0; // 0 means no debugging output
         runMode = 0; // calculate FLR and rescore PSMs without decoys (2 iterations)
-		minRelIntensity = 0;
-		minNumPSMsForModeling = 50;
+        minNumPSMsForModeling = 50;
         maxPepLen = 40;
         reduceNL = 0;
 		numThreads = Runtime.getRuntime().availableProcessors();
@@ -246,20 +244,20 @@ public class Globals {
 			}
 			
 			if(line.startsWith("TARGET_MOD")) {
-				String[] ary = parse_input_mod_line(line);
+				String[] ary = parseInputModLine(line);
 				double m = Double.valueOf(ary[1]);
 				TargetModMap.put(ary[0].toUpperCase(), m);
 			}
 
 
             if(line.startsWith("VAR_MOD")) {
-                String[] ary = parse_input_mod_line(line);
+                String[] ary = parseInputModLine(line);
                 double m = Double.valueOf(ary[1]);
                 varModMap.put(ary[0].toLowerCase(), m); // variable mods are lower case
             }
 
             if(line.startsWith("FIXED_MOD")) {
-                String[] ary = parse_input_mod_line(line);
+                String[] ary = parseInputModLine(line);
                 double m = Double.valueOf(ary[1]);
                 fixedModMap.put(ary[0].toUpperCase(), m);
             }
@@ -269,13 +267,13 @@ public class Globals {
 			// from the input file if you are using TSV files
 //			if(Globals.inputType == Constants.TSV) {
 //				if(line.startsWith("VAR_MOD")) {
-//					String[] ary = parse_input_mod_line(line);
+//					String[] ary = parseInputModLine(line);
 //					double m = Double.valueOf(ary[1]);
 //					varModMap.put(ary[0].toLowerCase(), m); // variable mods are lower case
 //				}
 //
 //				if(line.startsWith("FIXED_MOD")) {
-//					String[] ary = parse_input_mod_line(line);
+//					String[] ary = parseInputModLine(line);
 //					double m = Double.valueOf(ary[1]);
 //					fixedModMap.put(ary[0].toUpperCase(), m);
 //				}
@@ -365,12 +363,12 @@ public class Globals {
 	}
 
 	
-	static String[] parse_input_mod_line(String line) {
+	private static String[] parseInputModLine(String line) {
 		String[] ret = new String[2];
 		
 		char aa = 0;
-		StringBuilder sb = new StringBuilder();
-		double mass = 0d;
+		StringBuilder sb = new StringBuilder(30);
+		double mass;
 		int N = line.length();
 		
 		int b = line.indexOf('=') + 1;
@@ -395,7 +393,7 @@ public class Globals {
 	}
 	
 	
-	static String[] parseNLLine(String line) {
+	private static String[] parseNLLine(String line) {
 		String[] ret = new String[2];
 		
 		line = line.replaceAll("#", "");
@@ -413,7 +411,6 @@ public class Globals {
 	 */
 	static {
 		// in case we need it, initialize the timestamp signature variable
-		timeStamp = "";
 		java.util.Date date = new java.util.Date();
 		SimpleDateFormat sdf = new SimpleDateFormat("yyyyMMMdd-hh_mm_ss");
 		timeStamp = sdf.format(date);
@@ -542,9 +539,8 @@ public class Globals {
 			if(TargetModMap.containsKey(C)) continue; // skip target residues
 			varModMap.put(stringDoubleEntry.getKey(), mass);
 		}
-		tmp = null;
-		
-		for(Map.Entry<String, Double> stringDoubleEntry : varModMap.entrySet()) {
+
+        for(Map.Entry<String, Double> stringDoubleEntry : varModMap.entrySet()) {
 			String C = stringDoubleEntry.getKey().toUpperCase();
 			double mass = AA_MASS_MAP.get(C) + stringDoubleEntry.getValue();
 			AA_MASS_MAP.put(stringDoubleEntry.getKey(), mass);
@@ -572,7 +568,7 @@ public class Globals {
 						Collectors.mapping(PSM::getScanNum, Collectors.toList())));
 
 		if(Globals.spectrumSuffix.equalsIgnoreCase(MGF_TYPE)) {
-			TIntObjectHashMap<Spectrum> curSpectra = null;
+			TIntObjectHashMap<Spectrum> curSpectra;
 			
 			for(String specFile : scanMap.keySet()) {
 				curSpectra = read_mgf(specFile);
@@ -604,7 +600,7 @@ public class Globals {
 
     /****************
      * Function reads in spectral data from mzML files
-     * @param scanMap
+     * @param scanMap {@link Map} where the key is the filename and the value the list of scan
      */
     private static void readMzML(Map<String, List<Integer>> scanMap, String spectraPath) throws
 			FileParsingException {
@@ -798,7 +794,7 @@ public class Globals {
 		BufferedReader br = new BufferedReader(new FileReader(mgf));
 		String line;
 		int scanNum = 0;
-        Spectrum S = null;
+        Spectrum S;
         ArrayList<Double> mzAL = null, intensityAL = null;
 
 		
@@ -821,16 +817,13 @@ public class Globals {
 
                     mzAL = null;
                     intensityAL = null;
-                    mz = null;
-                    I = null;
-				}
-				S = null;
-				scanNum = 0;
+                }
+                scanNum = 0;
 			}
 					
 			if(line.startsWith("BEGIN IONS")) {
-                mzAL = new ArrayList<>();
-                intensityAL = new ArrayList<>();
+                mzAL = new ArrayList<>(100);
+                intensityAL = new ArrayList<>(100);
 			}
 			
 			if(line.startsWith("TITLE=")) {
@@ -857,8 +850,8 @@ public class Globals {
 	/**
 	 * Function to read spectra from mzXML file
 	 * @param scanMap Scan Map
-	 * @throws IllegalStateException
-	 * @throws FileParsingException
+	 * @throws IllegalStateException Access exception
+	 * @throws FileParsingException File parsing exception
 	 */
 	private static void readMzXML(Map<String, List<Integer>> scanMap, String pathSpectra) throws
 			IllegalStateException,
@@ -934,7 +927,7 @@ public class Globals {
 	// character modification
 	static String getTPPresidue(String c) {
 		String ret = "";
-		String orig = "";
+		String orig;
 
         if(c.equalsIgnoreCase("[")) {
             int d = (int) Math.round(Globals.ntermMass) + 1; // adds a proton
@@ -1123,7 +1116,7 @@ public class Globals {
             assigned = false;
 
             // iterate over the delta scores until you find the value closest to this one
-            int i = 0;
+            int i;
             for(i = 1; i < N; i++) {
                 double curDS = obsDeltaScores.get(i);
                 if(curDS > obs_ds) { // hit the limit, get the *previous* delta score

@@ -16,9 +16,9 @@ import org.apache.commons.math3.util.FastMath;
 
 public class NormalDensityWorkerThread implements Callable<Double>{
 	
-	private double[] ary;
-	private double tic;
-	private double bw;
+	private final double[] ary;
+	private final double tic;
+	private final double bw;
 	private final double NORMAL_CONSTANT = 1.0 / Math.sqrt(2.0 * Math.PI);
 
 	
@@ -31,7 +31,7 @@ public class NormalDensityWorkerThread implements Callable<Double>{
 	@Override
 	public Double call() {
 		double sum = 0;
-		double x = 0;
+		double x;
 		
 		for(double d : ary) {
 			x = (tic - d) / this.bw;

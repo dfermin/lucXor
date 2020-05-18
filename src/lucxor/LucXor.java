@@ -8,7 +8,6 @@ import java.io.*;
 import java.util.*;
 import java.util.concurrent.*;
 import java.util.concurrent.atomic.AtomicInteger;
-import java.util.zip.DataFormatException;
 import javax.xml.parsers.ParserConfigurationException;
 
 import gnu.trove.list.array.TIntArrayList;
@@ -32,7 +31,7 @@ public class LucXor {
     private static long endTime;
 
     public static void main(String[] args) throws ParserConfigurationException,
-            SAXException, IOException, IllegalStateException, DataFormatException,
+            SAXException, IOException, IllegalStateException,
             InterruptedException, ExecutionException, FileParsingException {
 		
 		String releaseVersion = "1.2014Oct10";
@@ -120,7 +119,7 @@ public class LucXor {
 
 	    log.info("\nReading PSMs from pepXML file: " +
                 Globals.inputFile.getAbsolutePath());
-		PepXML p = new PepXML(Globals.inputFile);
+		PepXML.readPepXMLFile(Globals.inputFile);
 		log.info(Globals.psmList.size() + " Candidate PSMs read in.");
 	}
 
@@ -129,7 +128,7 @@ public class LucXor {
 	private static void parseTSVSrc() throws IOException {
 
 	    log.info("\nReading PSM from TSV file: " + Globals.inputFile.getAbsolutePath());
-		PSM curPSM = null;
+		PSM curPSM;
 
 		if( !Globals.inputFile.exists() ) {
 			log.info("ERROR: Unable to find " + Globals.inputFile.getAbsolutePath());
@@ -166,8 +165,7 @@ public class LucXor {
 
 
 			if(vars.length < 6) { // no modifications so skip this PSM
-				curPSM = null;
-				continue;
+                continue;
 			}
 			
 			// modification string syntax: <pos>=<mass_of_modified_AA>
@@ -197,8 +195,7 @@ public class LucXor {
 				curPSM.process();
 				if(curPSM.isKeeper()) Globals.psmList.add(curPSM);
 			}
-			curPSM = null;
-		}
+        }
 		br.close();
 
 		log.info("Read in " + Globals.psmList.size() + " PSMs");
@@ -325,10 +322,8 @@ public class LucXor {
 
             M.numPSM = numPSM;
 			Globals.modelingMapCID.put(z, M);
-			M = null;
-			modelingPks.clear();
-            modelingPks = null;
-		} // end loop over charge state for modeling
+            modelingPks.clear();
+        } // end loop over charge state for modeling
 
 
         if(Globals.modelingMapCID.size() < 1) {
@@ -350,7 +345,6 @@ public class LucXor {
                 m.printSummaryStats();
                 m.clearArrays();
                 Globals.modelingMapCID.put(z, m);
-                m = null;
                 if(z > maxObsZ) maxObsZ = z;
             }
 		}
@@ -360,8 +354,7 @@ public class LucXor {
         for(int missedZ : missedChargeStates.toArray()) {
             Globals.modelingMapCID.put(missedZ, m);
         }
-		m = null;
-		missedChargeStates.clear();
+        missedChargeStates.clear();
 
         System.gc(); // try and reclaim some memory
 
@@ -423,13 +416,10 @@ public class LucXor {
      * @throws InterruptedException Thread exception
      * @throws ExecutionException Execution exception
      */
-	private static void runHCDcode() throws IOException,
-            InterruptedException, ExecutionException {
-		log.info("\nRunning in HCD mode.\n");
+	private static void runHCDcode() throws IOException, InterruptedException, ExecutionException {
 
-        int NCPU = Globals.numThreads;
-        if(NCPU < Runtime.getRuntime().availableProcessors())
-            NCPU = Globals.numThreads + 1;
+	    log.info("\nRunning in HCD mode.\n");
+
 
 		Globals.modelingMapHCD = new THashMap<>();
 		
@@ -463,7 +453,7 @@ public class LucXor {
 
 		for(int z = 2; z <= Globals.maxChargeState; z++) {
 
-		    //We need a SynCronize List to be modified in the ParallelStream
+		    //We need a Synchronized List to be modified in the ParallelStream
 		    final List<Peak> modelingPks = Collections
                     .synchronizedList(new ArrayList<>(1));
 
@@ -538,7 +528,6 @@ public class LucXor {
                 log.info("\n");  // makes for prettier output
 
                 Globals.modelingMapHCD.put(z, m);
-                m = null;
                 if(z > maxObsZ) maxObsZ = z;
             }
 		}
@@ -549,7 +538,6 @@ public class LucXor {
         for(int missedZ : missedChargeStates) {
             Globals.modelingMapHCD.put(missedZ, m);
         }
-        m = null;
         missedChargeStates.clear();
 
 		// for debugging
@@ -672,8 +660,8 @@ public class LucXor {
 
         // You will only need these variables when the user wants the matched
         // peaks to be written to disk
-        File matchedPksF = null;
-        FileWriter fwPks = null;
+        File matchedPksF;
+        FileWriter fwPks;
         BufferedWriter bwPks = null;
 
         if(Globals.writeMatchedPeaks) {

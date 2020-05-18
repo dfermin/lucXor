@@ -20,13 +20,17 @@ import org.xml.sax.helpers.DefaultHandler;
  */
 class PepXML extends DefaultHandler {
 
-	String temp;
-	String searchEngine;
-	String AA_alphabet = "ACDEFGHIKLMNPQRSTVWY";
-	PSM curPSM = null;
-	boolean recordMods = true; // changes to false after the end of first search_summary section
+	private String temp;
+	private String searchEngine;
+	private final String AA_alphabet = "ACDEFGHIKLMNPQRSTVWY";
+	private PSM curPSM = null;
+	private boolean recordMods = true; // changes to false after the end of first search_summary section
+
+	public static void readPepXMLFile(File inputXML) throws ParserConfigurationException, SAXException, IOException {
+		new PepXML(inputXML);
+	}
 	
-	PepXML(File inputXML) throws ParserConfigurationException, SAXException, IOException {
+	private PepXML(File inputXML) throws ParserConfigurationException, SAXException, IOException {
 
 		SAXParserFactory factory = SAXParserFactory.newInstance();
 		factory.setValidating(false);
@@ -34,7 +38,7 @@ class PepXML extends DefaultHandler {
 		parser.parse(inputXML, this); // this class itself is the default handler, hence the use of 'this'
 	}
 	
-	public void startElement(String uri, String localName, String qName, Attributes attr) throws SAXException {
+	public void startElement(String uri, String localName, String qName, Attributes attr) {
 		temp = "";
 		
 		
@@ -73,8 +77,6 @@ class PepXML extends DefaultHandler {
 		if(qName.equalsIgnoreCase("terminal_modification")) {
 			String terminus = attr.getValue("terminus");
 			double modMass = Double.valueOf( attr.getValue("massdiff") );
-			
-			String aa = "x";
 			
 			if(terminus.equalsIgnoreCase("n")) Globals.ntermMass = modMass;
 			if(terminus.equalsIgnoreCase("c")) Globals.ctermMass = modMass;
@@ -143,9 +145,9 @@ class PepXML extends DefaultHandler {
 				curPSM.setPSMscore(Double.valueOf(attr.getValue("probability")));
 		}
 	}
-	
-	
-	public void endElement(String uri, String localName, String qName) throws SAXException {
+
+
+	public void endElement(String uri, String localName, String qName) {
 		
 		temp = null; // shouldn't need this anymore
 		

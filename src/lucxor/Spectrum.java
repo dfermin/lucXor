@@ -20,7 +20,7 @@ public class Spectrum {
     public double[] mz = null;
     public double[] raw_intensity = null;
 	public double[] rel_intensity = null;
-	public double[] norm_intensity = null; 
+	private double[] norm_intensity = null;
 
 
     /*
@@ -64,7 +64,6 @@ public class Spectrum {
         }
 
         candPks.clear();
-        candPks = null;
 
         // compute relative intensity and prep remaining arrays
         for(int i = 0; i < N; i++) {
@@ -92,7 +91,7 @@ public class Spectrum {
      */
     public void medianNormalizeSpectra() {
         int mid = N / 2;
-        double medianI = 0d;
+        double medianI;
 
         // Need to sort the peak intensities from low to high
         ArrayList<Double> pksI = new ArrayList<>(N);
@@ -117,54 +116,60 @@ public class Spectrum {
         }
     }
 
-    /*
-     * Get a particular peak value mz or intensity
-     */
-    public double getPeak(int idx, int dt) {
-        double ret = 0;
+// --Commented out by Inspection START (2020-05-18 00:52):
+//    /*
+//     * Get a particular peak value mz or intensity
+//     */
+//    public double getPeak(int idx, int dt) {
+//        double ret = 0;
+//
+//        switch(dt) {
+//            case 1:
+//                ret = this.mz[idx];
+//                break;
+//            case 2:
+//                ret = this.raw_intensity[idx];
+//                break;
+//            case 3:
+//                ret = this.rel_intensity[idx];
+//                break;
+//            case 4:
+//                ret = this.norm_intensity[idx];
+//                break;
+//        }
+//
+//        return ret;
+//    }
+// --Commented out by Inspection STOP (2020-05-18 00:52)
 
-        switch(dt) {
-            case 1:
-                ret = this.mz[idx];
-                break;
-            case 2:
-                ret = this.raw_intensity[idx];
-                break;
-            case 3:
-                ret = this.rel_intensity[idx];
-                break;
-            case 4:
-                ret = this.norm_intensity[idx];
-                break;
-        }
-
-        return ret;
-    }
-
-    /*
-     * Returns true if the mz variable is empty or unset
-     * @return
-     */
-    public boolean isEmpty() {
-        if(null == this.mz) return true;
-        return this.mz.length == 0;
-    }
+// --Commented out by Inspection START (2020-05-18 00:52):
+//    /*
+//     * Returns true if the mz variable is empty or unset
+//     * @return
+//     */
+//    public boolean isEmpty() {
+//        if(null == this.mz) return true;
+//        return this.mz.length == 0;
+//    }
+// --Commented out by Inspection STOP (2020-05-18 00:52)
 
 
-    /**********
-     * This function returns the index for the element corresponding to the given mz value
-     */
-    public int findIndexByMZ(double passed_mz) {
-        int ret = -1;
-
-        for(int i = 0; i < N; i++) {
-            if(this.mz[i] == passed_mz) {
-                ret = i;
-                break;
-            }
-        }
-        return ret;
-    }
+// --Commented out by Inspection START (2020-05-18 00:52):
+//    /**********
+//     * This function returns the index for the element corresponding to the given mz value
+//     */
+//    public int findIndexByMZ(double passed_mz) {
+//        int ret = -1;
+//
+//        for(int i = 0; i < N; i++) {
+//            if(this.mz[i] == passed_mz) {
+//                ret = i;
+//                break;
+//            }
+//        }
+//        return ret;
+//    }
+// --Commented out by Inspection STOP (2020-05-18 00:52)
 
     /**
      * Get the peak information

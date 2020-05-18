@@ -19,23 +19,23 @@ import java.util.List;
 public class ModelDataCID {
 
 
-	int chargeState;
+	private final int chargeState;
 	int numPSM; // holds number of PSMs used for this charge state
 	double mu_int_B, mu_int_Y, mu_int_U;
 	double var_int_B, var_int_Y, var_int_U;
 	double mu_dist_B, mu_dist_Y, mu_dist_U;
 	double var_dist_B, var_dist_Y, var_dist_U;
 
-	double[] b_intensity = null;
-	double[] b_distance = null;
-	double[] y_intensity = null;
-	double[] y_distance = null;
-	double[] u_intensity = null;
-	double[] u_distance = null;
+	private double[] b_intensity;
+	private double[] b_distance;
+	private double[] y_intensity;
+	private double[] y_distance;
+	private double[] u_intensity;
+	private double[] u_distance;
 
 	
 	// This is an adjustment factor for the standard deviation suggested by hwchoi
-	static final double CID_ADJUST = 16.0 / 25.0;
+	private static final double CID_ADJUST = 16.0 / 25.0;
 	
 	public ModelDataCID(int z, List<Peak> peaks) {
         chargeState = z;
@@ -90,7 +90,7 @@ public class ModelDataCID {
         u_intensity = new double[ limitN ];
         u_distance = new double[ limitN ];
 
-        ArrayList<Peak> negPks = new ArrayList<>();
+        ArrayList<Peak> negPks = new ArrayList<>(peaks.size());
         for (Peak pk : peaks) {
             if (!pk.isMatched()) negPks.add(pk);
         }
@@ -101,9 +101,8 @@ public class ModelDataCID {
             u_distance[i]  = pk.getDist();
         }
         negPks.clear();
-        negPks = null;
 
-    }
+  }
 	
 
 	public void calcMean() {
@@ -140,8 +139,7 @@ public class ModelDataCID {
         mu_dist_Y = (sum / N);
 		
 		sum = 0;
-		N = (double) u_distance.length;
-		for(double d : u_distance) sum += d;
+    for(double d : u_distance) sum += d;
 		mu_dist_U = 0;
 
 	}
@@ -260,7 +258,6 @@ public class ModelDataCID {
     /***************
      * Function clears out arrays to make more memory available. You call this function AFTER you have all the
      * modeling parameters recorded.
-     * @param
      */
     public void clearArrays() {
 

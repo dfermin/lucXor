@@ -26,7 +26,7 @@ class Peptide {
 	private String modPeptide;
 	private int charge = 0;
 	private TIntDoubleMap modPosMap = new TIntDoubleHashMap(); // total mass of each modified amino acid
-	private TMap<Integer, String> nonTargetMods = new THashMap<>();// holds the mod coordinates for non-target mods
+	private final TMap<Integer, String> nonTargetMods = new THashMap<>();// holds the mod coordinates for non-target mods
 	private TMap<String, Double> bIons = null, yIons = null;
 
 	private int pepLen = 0;  // peptide's length
@@ -174,9 +174,9 @@ class Peptide {
 		yIons = new THashMap<>();
 
 
-		String b = null, y = null;
-		double bm = 0d, ym = 0d; // ion mass
-		double bmz = 0d, ymz = 0d; // ion mass divided by charge z
+		String b, y;
+		double bm, ym; // ion mass
+		double bmz, ymz; // ion mass divided by charge z
 		double ntermM = 0d, ctermM = 0d;
 
 		final int minLen = 2; // minimum number of residues a fragment must contain
@@ -311,26 +311,13 @@ class Peptide {
 	}
 
 
-	void printIons() {
-		for(Entry<String, Double> stringDoubleEntry : bIons.entrySet()) {
-			double m = MathFunctions.roundDouble(stringDoubleEntry.getValue(), 4);
-			System.out.println(modPeptide + "\t" + stringDoubleEntry.getKey() + "\t" + m);
-		}
-
-		for(Entry<String, Double> stringDoubleEntry : yIons.entrySet()) {
-			double m = MathFunctions.roundDouble(stringDoubleEntry.getValue(), 4);
-			System.out.println(modPeptide + "\t" + stringDoubleEntry.getKey() + "\t" + m);
-		}
-	}
-
-
 	// function will return a map where the key is each possible permutation
 	// of the peptide and the value is the score this permutation recieves later on
 	TMap<String, Double> getPermutations(int permType) {
 		THashMap<String, Double> ret = new THashMap<>();
 		TIntList candModSites = new TIntArrayList();
-		List<TIntList> x = new ArrayList<>();
-		int i = 0;
+		List<TIntList> x;
+		int i;
 
 		if(permType == 0) { // generate forward (positive) permutations
 
@@ -432,11 +419,11 @@ class Peptide {
 
 			// Now compute the scores for these peaks
 			double intensityM = 0;
-			double intensityU = 0;
+			double intensityU;
 			double distM = 0;
-			double distU = 0;
-			double Iscore = 0d;
-			double Dscore = 0d;
+			double distU;
+			double Iscore;
+			double Dscore;
 			score = 0;
 
 			for(Peak pk : matchedPeaks) {
@@ -464,7 +451,7 @@ class Peptide {
 				Dscore = distM - distU;
 
 				double intense_wt = 1.0 / ( 1.0 + FastMath.exp(-Iscore) );
-				double x = 0d;
+				double x;
 
 				if(Double.isNaN(Dscore) || Double.isInfinite(Dscore)) x = 0;
 				else x = intense_wt * Dscore;
@@ -510,22 +497,16 @@ class Peptide {
 		else {
 			ModelDataHCD MD = Globals.modelingMapHCD.get(this.charge);
 
-			double matchErr = 0;
-			double decoyPadding = 1;
-			double a = 0, b = 0;
-
 			// we double the error window size for decoys. Otherwise they may not get matched peaks
-			if(isDecoyPep())
-				decoyPadding = 2.0;
-
+			isDecoyPep();
 
 			// Now compute the scores for these peaks
-			double intensityM = 0;
-			double intensityU = 0;
-			double distM = 0;
-			double distU = 0;
-			double Iscore = 0d;
-			double Dscore = 0d;
+			double intensityM;
+			double intensityU;
+			double distM;
+			double distU;
+			double Iscore;
+			double Dscore;
 			score = 0;
 
 			for(Peak pk : matchedPeaks) {
@@ -567,8 +548,8 @@ class Peptide {
 //            System.exit(0);
 //        }
 
-		double matchErr = 0;
-		double a = 0, b = 0;
+		double matchErr;
+		double a, b;
 
 		matchedPeaks = new ArrayList<>();
 
@@ -619,7 +600,6 @@ class Peptide {
 				if(bestMatchMap.containsKey(pk.getMz())) {
 					Peak oldPK = bestMatchMap.get(pk.getMz());
 					if(Math.abs(oldPK.getDist()) > (Math.abs(pk.getDist()))) bestMatchMap.put(pk.getMz(), pk);
-					oldPK = null;
 				}
 				else bestMatchMap.put(pk.getMz(), pk);
 			}
@@ -664,7 +644,6 @@ class Peptide {
 				if(bestMatchMap.containsKey(pk.getMz())) {
 					Peak oldPK = bestMatchMap.get(pk.getMz());
 					if(Math.abs(oldPK.getDist()) > (Math.abs(pk.getDist()))) bestMatchMap.put(pk.getMz(), pk);
-					oldPK = null;
 				}
 				else bestMatchMap.put(pk.getMz(), pk);
 			}
@@ -674,7 +653,6 @@ class Peptide {
 		// MM holds the best match for each observed peak.
 		for(double mz : bestMatchMap.keys()) matchedPeaks.add( bestMatchMap.get(mz) );
 		bestMatchMap.clear();
-		bestMatchMap = null;
 	}
 
 	public String getPeptide() {
@@ -689,56 +667,16 @@ class Peptide {
 		return modPeptide;
 	}
 
-	public void setModPeptide(String modPeptide) {
-		this.modPeptide = modPeptide;
-	}
-
-	public int getCharge() {
-		return charge;
-	}
-
 	public void setCharge(int charge) {
 		this.charge = charge;
-	}
-
-	public TIntDoubleMap getModPosMap() {
-		return modPosMap;
-	}
-
-	public void setModPosMap(TIntDoubleHashMap modPosMap) {
-		this.modPosMap = modPosMap;
 	}
 
 	public TMap<Integer, String> getNonTargetMods() {
 		return nonTargetMods;
 	}
 
-	public void setNonTargetMods(THashMap<Integer, String> nonTargetMods) {
-		this.nonTargetMods = nonTargetMods;
-	}
-
-	public TMap<String, Double> getbIons() {
-		return bIons;
-	}
-
-	public void setbIons(THashMap<String, Double> bIons) {
-		this.bIons = bIons;
-	}
-
-	public TMap<String, Double> getyIons() {
-		return yIons;
-	}
-
-	public void setyIons(THashMap<String, Double> yIons) {
-		this.yIons = yIons;
-	}
-
 	public int getPepLen() {
 		return pepLen;
-	}
-
-	public void setPepLen(int pepLen) {
-		this.pepLen = pepLen;
 	}
 
 	public int getNumRPS() {
@@ -757,30 +695,6 @@ class Peptide {
 		this.numPPS = numPPS;
 	}
 
-	public boolean isIs_unambiguous() {
-		return is_unambiguous;
-	}
-
-	public void setIs_unambiguous(boolean is_unambiguous) {
-		this.is_unambiguous = is_unambiguous;
-	}
-
-	public double getNumPermutations() {
-		return numPermutations;
-	}
-
-	public void setNumPermutations(double numPermutations) {
-		this.numPermutations = numPermutations;
-	}
-
-	public double getNumDecoyPermutations() {
-		return numDecoyPermutations;
-	}
-
-	public void setNumDecoyPermutations(double numDecoyPermutations) {
-		this.numDecoyPermutations = numDecoyPermutations;
-	}
-
 	public double getScore() {
 		return score;
 	}
@@ -793,7 +707,4 @@ class Peptide {
 		return matchedPeaks;
 	}
 
-	public void setMatchedPeaks(ArrayList<Peak> matchedPeaks) {
-		this.matchedPeaks = matchedPeaks;
-	}
 }

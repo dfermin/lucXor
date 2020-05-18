@@ -41,7 +41,7 @@ class PSM {
 	private boolean isUnambiguous; // true means the number potential PTM sites is equal to the number
 	                               // of reported PTM sites
 	
-	private TIntDoubleHashMap modCoordMap = null; // holds modified amino acid positions
+	private final TIntDoubleHashMap modCoordMap; // holds modified amino acid positions
 	
 	private TMap<String, Double> posPermutationScoreMap = null;
 	private TMap<String, Double> negPermutationScoreMap = null;
@@ -50,10 +50,10 @@ class PSM {
 	private List<Peak> posPeaks = null;
     private List<Peak> negPeaks = null;
 
-	private Spectrum PeakList = null;
+	private Spectrum PeakList;
 	
 	
-	private Peptide origPep;
+	private final Peptide origPep;
 	private Peptide score1pep; // top scoring peptide permutation
 	private Peptide score2pep; // 2nd best scoring peptide permutation
 
@@ -188,12 +188,10 @@ class PSM {
 
             // identify the second-most intense peak in the spectrum
             double new_maxI = 0d;
-            int new_maxI_index = 0;
             for(int i = 0; i < PeakList.N; i++) {
                 if( PeakList.raw_intensity[i] > new_maxI ) {
                     new_maxI = PeakList.raw_intensity[i];
-                    new_maxI_index = i;
-                }
+				}
             }
             PeakList.maxI = new_maxI;
 
@@ -228,7 +226,7 @@ class PSM {
 		int startAt = 0;
 		
 		for(int i = startAt; i < modPep.length(); i++) {
-			double mass = 0;
+			double mass;
 			char c = modPep.charAt(i);
 			
 			// record decoy-modified residues
@@ -319,7 +317,6 @@ class PSM {
             posPeaks.add(ary.get(0));
         }
         candMatchedPks.clear();
-        candMatchedPks = null;
 
 
 		// This can happen if there are no matched peaks 
@@ -342,7 +339,7 @@ class PSM {
 
             if( !posPeaks.contains(negPk) ) {
 
-                double finalDist = 0;
+                double finalDist;
 
                 // record the distance of this unmatched peak to the nearest peak in 'posPeaks'
                 ArrayList<Double> dist = new ArrayList<>( posPeaks.size() );
@@ -384,8 +381,8 @@ class PSM {
 
         Peak ret = null;
 
-        double matchErr = 0;
-        double a = 0, b = 0;
+        double matchErr;
+        double a, b;
 
         // Compute the fragment error tolerance that will be used
         if(Globals.ms2tol_units == Constants.PPM_UNITS) {
@@ -459,10 +456,10 @@ class PSM {
 	 * @throws IOException
 	 */
 	void scorePermutations() throws IOException {
-		TIntDoubleHashMap mcp = null;
+		TIntDoubleHashMap mcp;
 		
-		File debugF = null;
-		FileWriter fw = null;
+		File debugF;
+		FileWriter fw;
 		BufferedWriter bw = null;
 		String line;
 
@@ -539,7 +536,6 @@ class PSM {
 
 			// Scores for decoy sequences
 			for(Entry<String, Double> curSeq : negPermutationScoreMap.entrySet()) {
-				mcp = this.getModMap(curSeq.getKey());
 
 				Peptide curPep = new Peptide();
 				mcp = this.getModMap(curSeq.getKey());
@@ -660,8 +656,7 @@ class PSM {
 		score1pep.initialize(origPep.getPeptide(), pep1, charge, mcp);
 		score1pep.setScore(score1);
 		isDecoy = score1pep.isDecoyPep(); // determine if this PSM is a decoy hit
-		mcp = null;
-		
+
 		if(isUnambiguous) {
 			// This is an unambiguous case.
 			// Make a duplicate of score1pep and assign it to score2pep.
@@ -670,7 +665,6 @@ class PSM {
 			score2pep = new Peptide();
 			score2pep.initialize(origPep.getPeptide(), pep1, charge, mcp);
 			score2pep.setScore(0);
-			mcp = null;
 			deltaScore = score1;
 		}
 		else {
@@ -680,7 +674,6 @@ class PSM {
 			score2pep = new Peptide();
 			score2pep.initialize(origPep.getPeptide(), pep2, charge, mcp);
 			score2pep.setScore(score2);
-			mcp = null;
 			deltaScore = score1 - score2;
 		}
 	}
@@ -737,7 +730,7 @@ class PSM {
 		DecimalFormat df = new DecimalFormat("#.#####");
 		int numDecimals = 4;
 		
-		String tsvFileName = "";
+		String tsvFileName;
 		if(Globals.inputType == Constants.PEPXML) tsvFileName = specId + ".tsv";
 		else {
 			int i = srcFile.lastIndexOf(Globals.spectrumSuffix);

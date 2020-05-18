@@ -19,35 +19,44 @@ import java.util.concurrent.*;
  */
 @Slf4j
 public class ModelDataHCD {
-	private final static double NORMAL_CONSTANT = 1.0 / Math.sqrt(2.0 * Math.PI);
-	int chargeState;
+
+	// --Commented out by Inspection (2020-05-18 00:58):private final static double NORMAL_CONSTANT = 1.0 / Math.sqrt(2.0 * Math.PI);
+
+	private final int chargeState;
 	int numPSM;
-	static final int ntick = 2000;
-	
-	double bIntBW, yIntBW;  // positive peak intensity bandwidth
-	double posDistBW; // positive peak distance bandwidth
+	private static final int ntick = 2000;
 
-	double bIntMean, bIntVar, yIntMean, yIntVar;
-	double negIntMean, negIntVar;
-	double posDistMean, posDistVar;
+    private double bIntMean;
+    private double bIntVar;
+    private double yIntMean;
+    private double yIntVar;
+	private double negIntMean;
+    private double negIntVar;
+	private double posDistMean;
+    private double posDistVar;
 
 
-	double[] bTickMarksInt, yTickMarksInt, negTickMarksInt;
-	double[] posTickMarksDist;
-	double[] f_int_b, f_int_y, f_int_neg;
-	double[] f_dist;
-	
-	ArrayList<Peak> posPks, negPks;
-	double[] b_int, y_int, n_int;
-	double[] pos_dist;
+	private double[] bTickMarksInt;
+    private double[] yTickMarksInt;
+    private double[] negTickMarksInt;
+	private double[] posTickMarksDist;
+	private double[] f_int_b;
+    private double[] f_int_y;
+    private double[] f_int_neg;
+	private double[] f_dist;
+
+    private final double[] b_int;
+    private final double[] y_int;
+    private final double[] n_int;
+	private final double[] pos_dist;
 
 	// Default constructor
 	public ModelDataHCD(int z, List<Peak> peaks) {
 
 		chargeState = z;
 		numPSM = 0;
-		posPks = new ArrayList<>();
-		negPks = new ArrayList<>();
+        ArrayList<Peak> posPks = new ArrayList<>(peaks.size());
+        ArrayList<Peak> negPks = new ArrayList<>(peaks.size());
 		
 		int b = 0;
 		int y = 0;
@@ -99,72 +108,73 @@ public class ModelDataHCD {
 
         n_int = new double[ limitN ];
         Collections.shuffle(negPks);
-        n = 0;
 		for(n = 0; n < limitN; n++) {
             Peak pk = negPks.get(n);
 			n_int[ n ] = pk.getNormIntensity();
 		}
 		
-		posPks.clear(); posPks = null;
-		negPks.clear(); negPks = null;
+		posPks.clear();
+		negPks.clear();
 	}
 
 	
-	// This function trims the extreme values out of the distributions
-	public void percentileTrim(char ionType, int dataType, double percentTrim) {
-		double[] d = null;
-		double[] f = null;
-		int N = 0;
-		int n = 0;
-		int a = 0;
-		int b = 0;
-		
-		if(ionType == 'b') {
-			if(dataType == 0) d = b_int;
-//			if(dataType == 1) d = b_dist;
-		}
-		
-		if(ionType == 'y') {
-			if(dataType == 0) d = y_int;
-//			if(dataType == 1) d = y_dist;
-		}
-		
-		if(ionType == 'n') d = n_int;
-		
-		N = d.length;
-		
-		n = (int) (((double) N) * (percentTrim * 0.5)); // we want 1/2  of the trim from both sides
-		
-		// get the limits
-		a = n;
-		b = (N - 1 - n);
-		
-		Arrays.sort(d);
-		
-		f = Arrays.copyOfRange(d, a, b);
-		
-		if(ionType == 'b') {
-			if(dataType == 0) b_int = f;
-//			if(dataType == 1) b_dist = f;
-		}
-		
-		if(ionType == 'y') {
-			if(dataType == 0) y_int = f;
-//			if(dataType == 1) y_dist = f;
-		}
-		
-		if(ionType == 'n') n_int = f;
-		
-	}
-	
+// --Commented out by Inspection START (2020-05-18 00:55):
+//	// This function trims the extreme values out of the distributions
+//	public void percentileTrim(char ionType, int dataType, double percentTrim) {
+//		double[] d = null;
+//		double[] f;
+//		int N;
+//		int n;
+//		int a;
+//		int b;
+//
+//		if(ionType == 'b') {
+//			if(dataType == 0) d = b_int;
+////			if(dataType == 1) d = b_dist;
+//		}
+//
+//		if(ionType == 'y') {
+//			if(dataType == 0) d = y_int;
+////			if(dataType == 1) d = y_dist;
+//		}
+//
+//		if(ionType == 'n') d = n_int;
+//
+//		N = Objects.requireNonNull(d).length;
+//
+//		n = (int) (((double) N) * (percentTrim * 0.5)); // we want 1/2  of the trim from both sides
+//
+//		// get the limits
+//		a = n;
+//		b = (N - 1 - n);
+//
+//		Arrays.sort(d);
+//
+//		f = Arrays.copyOfRange(d, a, b);
+//
+//		if(ionType == 'b') {
+//			if(dataType == 0) b_int = f;
+////			if(dataType == 1) b_dist = f;
+//		}
+//
+//		if(ionType == 'y') {
+//			if(dataType == 0) y_int = f;
+////			if(dataType == 1) y_dist = f;
+//		}
+//
+//		if(ionType == 'n') n_int = f;
+//
+//	}
+// --Commented out by Inspection STOP (2020-05-18 00:55)
+
 	
 	
 	
 	// Compute the mean for pos and neg data. This function must be called
 	// *before* the calcVar function
 	public void calcMean() {
-		double N = 0;
-		double sum = 0;
+		double N;
+		double sum;
 		
 		
 		// B-ions
@@ -253,13 +263,13 @@ public class ModelDataHCD {
 	 * @throws ExecutionException
 	 */
 	void estimateNPIntensity(char ionType) throws InterruptedException, ExecutionException {
-		int N = 0;
-		double[] norm_ints = null;
-		double[] tickMarksInt = null;
-		double[] f_int = null;
+		int N;
+		double[] norm_ints;
+		double[] tickMarksInt;
+		double[] f_int;
 		double minI, maxI;
-		double variance = 0, bw = 0;
-		double kernelResult = 0;
+		double variance, bw;
+		double kernelResult;
 		double t;
 		
 		if(ionType == 'b') {
@@ -338,8 +348,7 @@ public class ModelDataHCD {
 				Callable<Double> C = new NormalDensityWorkerThread(subAry, tic, bw);
 				Future<Double> task = pool.submit(C);
 				taskList.add(task);
-				
-				subAry = null;
+
 			}
 			
 			// Actually launch the tasks and store the results to kernelResults
@@ -359,13 +368,11 @@ public class ModelDataHCD {
 		if(ionType == 'b') {
 			bTickMarksInt = tickMarksInt;
 			f_int_b = f_int;
-			bIntBW = bw;
-		}
+        }
 		else if(ionType == 'y') {
 			yTickMarksInt = tickMarksInt;
 			f_int_y = f_int;
-			yIntBW = bw;
-		}
+        }
 		else {
 			negTickMarksInt = tickMarksInt;
 			f_int_neg = f_int;
@@ -378,10 +385,10 @@ public class ModelDataHCD {
 	// for the m/z distances for the positive peaks in this model object
 	void estimateNPPosDist() throws InterruptedException, ExecutionException {
 		
-		int N = 0;
-		double min_dist = 0, max_dist = 0;
-		double variance = 0, bw = 0;
-		double kernelResult = 0;
+		int N;
+		double min_dist, max_dist;
+		double bw;
+		double kernelResult;
 		double t;
 		double[] f_ary;
 
@@ -444,7 +451,6 @@ public class ModelDataHCD {
 				Callable<Double> C = new NormalDensityWorkerThread(subAry, tic, bw);
 				Future<Double> task = pool.submit(C);
 				taskList.add(task); // put the "task" into the queue to be executed
-				subAry = null;
 			}
 			
 			// Now launch each task
@@ -462,24 +468,29 @@ public class ModelDataHCD {
 		}
 		
 		f_dist = f_ary;
-		posDistBW = bw;
-	}
+    }
 	
 	
-	public double normalDensity(double curTickMark, double curScore, double h) {
-		double res = 0;
+// --Commented out by Inspection START (2020-05-18 00:55):
+//	public static double normalDensity(double curTickMark, double curScore, double h) {
+//		double res;
+//
+//		double x = (curTickMark - curScore) / h;
+//
+//		res = NORMAL_CONSTANT * Math.exp( (-0.5*x*x) );
+//		return res;
+//	}
+// --Commented out by Inspection STOP (2020-05-18 00:55)
+
+
+    /**
+     * Function computes the mode of the given list of values
+     * @param ary
+     * @return
+     */
+	private static double getMode(double[] ary) {
 		
-		double x = (curTickMark - curScore) / h;
-		
-		res = NORMAL_CONSTANT * Math.exp( (-0.5*x*x) );
-		return res;
-	}
-	
-	
-	// Function computes the mode of the given list of values
-	private double getMode(double[] ary) {
-		
-		double mode = 0;
+		double mode;
 		int Nbins = ntick;
 		double binWidth = 0.0001;
 		final double LIMIT = 0.1;
@@ -526,25 +537,22 @@ public class ModelDataHCD {
 		double[] f_int = null;
 		
 		if(ionType == 'b') {
-			N = bTickMarksInt.length;
 			tickMarksInt = bTickMarksInt;
 			f_int = f_int_b;
 		}
 		else if(ionType == 'y') {
-			N = yTickMarksInt.length;
 			tickMarksInt = yTickMarksInt;
 			f_int = f_int_y;
 		}
 		else if(ionType == 'n') {
-			N = negTickMarksInt.length;
 			tickMarksInt = negTickMarksInt;
 			f_int = f_int_neg;
 		}
 		
 		
-		double start_tick = tickMarksInt[ 0 ];
+		double start_tick = Objects.requireNonNull(tickMarksInt)[ 0 ];
 		double end_tick = tickMarksInt[ (ntick-1) ];
-		double start_val = f_int[0];
+		double start_val = Objects.requireNonNull(f_int)[0];
 		double end_val = f_int[ (ntick-1) ];
 		
 		// Figure out which two bins encompass the value of 'x'
@@ -576,7 +584,6 @@ public class ModelDataHCD {
 	// peak distance using the positive model
 	double getLogNPdensityDistPos(double x) {
 		double a, b, tmp1, tmp2, fx;
-		int N = 0;
 		double sum = 0;
 		
 		double start_tick = posTickMarksDist[ 0 ];
@@ -612,10 +619,10 @@ public class ModelDataHCD {
 	
 	void writeModelPks() throws IOException {	
 		File debugF = new File("debug_model_pks_HCD.txt");
-		FileWriter fw = null;
-		BufferedWriter bw = null;
+		FileWriter fw;
+		BufferedWriter bw;
 		String line;
-		double mz, dist, relI, normI;
+		double  dist,  normI;
 		
 		if(!debugF.exists()) {
 			fw = new FileWriter(debugF);
@@ -692,8 +699,8 @@ public class ModelDataHCD {
 	public void write_density_data(int dataType) throws IOException {
 		
 		String outName = null;
-		FileWriter fw = null;
-		BufferedWriter bw = null;
+		FileWriter fw;
+		BufferedWriter bw;
 		
 		switch(dataType) {
 			case 1:
@@ -706,7 +713,7 @@ public class ModelDataHCD {
 				break;
 		}
 		
-		File outF = new File(outName);
+		File outF = new File(Objects.requireNonNull(outName));
 		if(!outF.exists()) {
 			fw = new FileWriter(outF);
 			bw = new BufferedWriter(fw);

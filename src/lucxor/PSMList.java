@@ -8,24 +8,28 @@ import java.util.*;
 public class PSMList implements List<PSM>{
 
   // List of PSMs, minimun number of PSMs in PRIDE experiments are 10'000
-  List<PSM> psmList = new ArrayList<>(10_000);
+  private final List<PSM> psmList = new ArrayList<>(10_000);
 
   // This hash map controls the FileName + Scan, Order of the PSM in the psmList
-  Map<String, Integer> scanOrder = new HashMap<>(10_000);
+  private final Map<String, Integer> scanOrder = new HashMap<>(10_000);
 
   //charge list
-  Map<Integer, Integer> chargeCount = new HashMap<>(5);
+  private final Map<Integer, Integer> chargeCount = new HashMap<>(5);
 
-  int numDecoys = 0;
-  int numTargets = 0;
+  private int numDecoys = 0;
+  private int numTargets = 0;
 
-  public int getNumDecoys() {
-    return numDecoys;
-  }
+// --Commented out by Inspection START (2020-05-18 00:52):
+//  public int getNumDecoys() {
+//    return numDecoys;
+//  }
+// --Commented out by Inspection STOP (2020-05-18 00:52)
 
-  public int getNumTargets() {
-    return numTargets;
-  }
+// --Commented out by Inspection START (2020-05-18 00:52):
+//  public int getNumTargets() {
+//    return numTargets;
+//  }
+// --Commented out by Inspection STOP (2020-05-18 00:52)
 
   @Override
   public int size() {
