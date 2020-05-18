@@ -24,32 +24,32 @@ public class LucXorConfiguration {
 
 	private static File SPECTRUM_PATH = null;
 	private static String SPECTRUM_PREFIX = null;
-    private static String matchedPkFile = null;
-	private static File inputFile = null;
-	private static String outputFile = null;
+    private static String MATCHED_PKFILE = null;
+	private static File INPUT_FILE = null;
+	private static String OUTPUT_FILE = null;
 	private static int MS2TOL_UNITS;
-	private static int inputType;
-	private static int debugMode;
-	private static int reduceNL;
-	private static int peptideRepresentation;
-	private static int scoringMethod;
-	private static int scoringAlgorithm;
-	private static int maxChargeState;
-	private static int minNumPSMsForModeling;
-	private static int numThreads;
-    private static int runMode;
-    private static int tsvHdr;
-    private static int maxPepLen;
-	private static double ms2tol;
-	private static double modelTH;
-	private static double scoreTH;
+	private static int INPUT_TYPE;
+	private static int DEBUG_MODE;
+	private static int REDUCENL;
+	private static int PEPTIDE_REPRESENTATION;
+	private static int SCORING_METHOD;
+	private static int SCORING_ALGORITHM;
+	private static int MAX_CHARGE_STATE;
+	private static int MIN_NUM_PSM_MODELING;
+	private static int NUM_THREADS;
+    private static int RUN_MODE;
+    private static int TSV_HDR;
+    private static int MAX_PEP_LENGTH;
+	private static double MS2TOL;
+	private static double MODELTH;
+	private static double SCORETH;
 	private static double DECOY_MASS;
-	private static double minMZ;
-	private static double max_num_permutations;
-	private static double precursorNLmass;
-	private static double ntermMass = 0d;
-	private static double ctermMass = 0d;
-    private static boolean writeMatchedPeaks;
+	private static double MIN_MZ;
+	private static double MAX_NUM_PERMUTATIONS;
+	private static double PRECURSOR_NL_MASS;
+	private static double NTERM_MASS = 0d;
+	private static double CTERM_MASS = 0d;
+    private static boolean WRITE_MATCHED_PEAKS;
 
 	// mods user wants to search for
 	private static final TMap<String, Double> TARGET_MOD_MAP = new THashMap<>();
@@ -69,14 +69,14 @@ public class LucXorConfiguration {
 			System.exit(0);
 		}
 		
-		debugMode = 0; // 0 means no debugging output
-        runMode = 0; // calculate FLR and rescore PSMs without decoys (2 iterations)
-        minNumPSMsForModeling = 50;
-        maxPepLen = 40;
-        reduceNL = 0;
-		numThreads = Runtime.getRuntime().availableProcessors();
-		tsvHdr = 0; // default is no header
-        writeMatchedPeaks = false; // true means you will generate the matched peaks
+		DEBUG_MODE = 0; // 0 means no debugging output
+        RUN_MODE = 0; // calculate FLR and rescore PSMs without decoys (2 iterations)
+        MIN_NUM_PSM_MODELING = 50;
+        MAX_PEP_LENGTH = 40;
+        REDUCENL = 0;
+		NUM_THREADS = Runtime.getRuntime().availableProcessors();
+		TSV_HDR = 0; // default is no header
+        WRITE_MATCHED_PEAKS = false; // true means you will generate the matched peaks
 
 		BufferedReader br = new BufferedReader(new FileReader(inF));
 		String line;
@@ -96,36 +96,36 @@ public class LucXorConfiguration {
 			
 			if(line.startsWith("INPUT_DATA")) {
 				String s = Utils.parseInputLine(line);
-				inputFile = new File(s);
+				INPUT_FILE = new File(s);
 			}
 			
 			if(line.startsWith("OUTPUT_FILE")) {
-				outputFile = Utils.parseInputLine(line);
+				OUTPUT_FILE = Utils.parseInputLine(line);
 			}
 			
 			if(line.startsWith("INPUT_TYPE")) {
 				String s = Utils.parseInputLine(line);
-				inputType = Integer.valueOf(s);
+				INPUT_TYPE = Integer.valueOf(s);
 			}
 
             if(line.startsWith("MAX_PEP_LEN")) {
                 String s = Utils.parseInputLine(line);
-                maxPepLen = Integer.valueOf(s);
+                MAX_PEP_LENGTH = Integer.valueOf(s);
             }
 
 			if(line.startsWith("MAX_NUM_PERM")) {
 				String s = Utils.parseInputLine(line);
-				max_num_permutations = Double.valueOf(s);
+				MAX_NUM_PERMUTATIONS = Double.valueOf(s);
 			}
 			
 			if(line.startsWith("MIN_NUM_PSMS_MODEL")) {
 				String s = Utils.parseInputLine(line);
-				minNumPSMsForModeling = Integer.valueOf(s);
+				MIN_NUM_PSM_MODELING = Integer.valueOf(s);
 			}
 			
 			if(line.startsWith("MS2_TOL") && !line.contains("_UNITS")) {
 				String s = Utils.parseInputLine(line);
-				ms2tol = Double.valueOf(s);
+				MS2TOL = Double.valueOf(s);
 			}
 			
 			if(line.startsWith("MS2_TOL_UNITS")) {
@@ -135,37 +135,37 @@ public class LucXorConfiguration {
 			
 			if(line.startsWith("ALGORITHM")) {
 				String s = Utils.parseInputLine(line);
-				scoringAlgorithm = Integer.valueOf(s);
+				SCORING_ALGORITHM = Integer.valueOf(s);
 			}
 
             if(line.startsWith("TSV_HEADER")) {
                 String s = Utils.parseInputLine(line);
-                tsvHdr = Integer.valueOf(s);
+                TSV_HDR = Integer.valueOf(s);
             }
 
 			if(line.startsWith("REDUCE_PRECURSOR_NL")) {
 				String s = Utils.parseInputLine(line);
-				reduceNL = Integer.valueOf(s);
+				REDUCENL = Integer.valueOf(s);
 			}
 			
 			if(line.startsWith("PRECURSOR_NL_MASS_DIFF")) {
 				String s = Utils.parseInputLine(line);
-				precursorNLmass = Double.valueOf(s);
+				PRECURSOR_NL_MASS = Double.valueOf(s);
 			}
 			
 			if(line.startsWith("SELECTION_METHOD")) {
 				String s = Utils.parseInputLine(line);
-				scoringMethod = Integer.valueOf(s);
+				SCORING_METHOD = Integer.valueOf(s);
 			}
 			
 			if(line.startsWith("MODELING_SCORE_THRESHOLD")) {
 				String s = Utils.parseInputLine(line);
-				modelTH = Double.valueOf(s);
+				MODELTH = Double.valueOf(s);
 			}
 			
 			if(line.startsWith("MAX_CHARGE_STATE")) {
 				String s = Utils.parseInputLine(line);
-				maxChargeState = Integer.valueOf(s);
+				MAX_CHARGE_STATE = Integer.valueOf(s);
 			}
 			
 			if(line.startsWith("NUM_THREADS")) {
@@ -173,31 +173,31 @@ public class LucXorConfiguration {
 				int x = Integer.valueOf(s);
 				// We do minus 1 because 1 thread already goes to 
 				// running the whole program
-				if(x < 0) numThreads = 1;
-                else if(x == 0 || (numThreads > Runtime.getRuntime().availableProcessors()))
-                	numThreads = Runtime.getRuntime().availableProcessors() - 1;
-                else numThreads = x;
+				if(x < 0) NUM_THREADS = 1;
+                else if(x == 0 || (NUM_THREADS > Runtime.getRuntime().availableProcessors()))
+                	NUM_THREADS = Runtime.getRuntime().availableProcessors() - 1;
+                else NUM_THREADS = x;
 			}
 			
 			if(line.startsWith("DEBUG_MODE")) {
 				String s = Utils.parseInputLine(line);
-				debugMode = Integer.valueOf(s);
+				DEBUG_MODE = Integer.valueOf(s);
 			}
 
             if(line.startsWith("WRITE_MATCHED_PEAKS_FILE")) {
                 String s = Utils.parseInputLine(line);
-                if(s.equals("1")) writeMatchedPeaks = true;
+                if(s.equals("1")) WRITE_MATCHED_PEAKS = true;
             }
 
             if(line.startsWith("RUN_MODE")) {
                 String s = Utils.parseInputLine(line);
-                runMode = Integer.valueOf(s);
-                if(runMode > 1) runMode = 0;
+                RUN_MODE = Integer.valueOf(s);
+                if(RUN_MODE > 1) RUN_MODE = 0;
             }
 			
 			if(line.startsWith("SCORING_THRESHOLD")) {
 				String s = Utils.parseInputLine(line);
-				scoreTH = Double.valueOf(s);
+				SCORETH = Double.valueOf(s);
 			}
 			
 			if(line.startsWith("DECOY_MASS")) {
@@ -220,12 +220,12 @@ public class LucXorConfiguration {
 			
 			if(line.startsWith("MIN_MZ")) {
 				String s = Utils.parseInputLine(line);
-				minMZ = Double.valueOf(s);
+				MIN_MZ = Double.valueOf(s);
 			}
 
 			if(line.startsWith("MOD_PEP_REP")) {
 				String s = Utils.parseInputLine(line);
-				peptideRepresentation = Integer.valueOf(s); 
+				PEPTIDE_REPRESENTATION = Integer.valueOf(s);
 			}
 			
 			if(line.startsWith("TARGET_MOD")) {
@@ -250,7 +250,7 @@ public class LucXorConfiguration {
 
 			// You only need to extract the VAR_MOD and FIXED_MOD values
 			// from the input file if you are using TSV files
-//			if(LucXorConfiguration.inputType == Constants.TSV) {
+//			if(LucXorConfiguration.INPUT_TYPE == Constants.TSV) {
 //				if(line.startsWith("VAR_MOD")) {
 //					String[] ary = parseInputModLine(line);
 //					double m = Double.valueOf(ary[1]);
@@ -267,11 +267,11 @@ public class LucXorConfiguration {
 		}
 		br.close();
 		
-		if( (null == outputFile) || (outputFile.isEmpty()) )
-			outputFile = "luciphor_results.tsv";
+		if( (null == OUTPUT_FILE) || (OUTPUT_FILE.isEmpty()) )
+			OUTPUT_FILE = "luciphor_results.tsv";
 		
 		String classStr = "";
-		switch(scoringMethod) {
+		switch(SCORING_METHOD) {
 			case Constants.PEPPROPHET:
 				classStr = "Peptide Prophet Prob.";
 				break;
@@ -288,38 +288,38 @@ public class LucXorConfiguration {
                 classStr = "Sequest XCorr";
                 break;
 			default:
-				System.err.print("\nERROR! Unknown scoring method: " + scoringMethod+ "\n\n");
+				System.err.print("\nERROR! Unknown scoring method: " + SCORING_METHOD + "\n\n");
 				System.exit(0);
 				break;
 		}
 
-        int NCPU = numThreads;
-        if( (numThreads > 1) && (numThreads < Runtime.getRuntime().availableProcessors()) ) NCPU = (numThreads + 1);
+        int NCPU = NUM_THREADS;
+        if( (NUM_THREADS > 1) && (NUM_THREADS < Runtime.getRuntime().availableProcessors()) ) NCPU = (NUM_THREADS + 1);
 
 		log.info("Spectrum Path:           " + SPECTRUM_PATH.getAbsolutePath());
 		log.info("Spectrum Suffix:         " + SPECTRUM_PREFIX);
-		log.info("Input file:              " + inputFile);
-		log.info("Input type:              " + (inputType == Constants.PEPXML ? "pepXML" : "tsv"));
-		log.info("MS2 tolerance:           " + ms2tol + (MS2TOL_UNITS == Constants.DALTONS ? " Da" : " ppm"));
-		log.info("Luciphor Algorithm:      " + (scoringAlgorithm == Constants.CID ? "CID" : "HCD") );
+		log.info("Input file:              " + INPUT_FILE);
+		log.info("Input type:              " + (INPUT_TYPE == Constants.PEPXML ? "pepXML" : "tsv"));
+		log.info("MS2 tolerance:           " + MS2TOL + (MS2TOL_UNITS == Constants.DALTONS ? " Da" : " ppm"));
+		log.info("Luciphor Algorithm:      " + (SCORING_ALGORITHM == Constants.CID ? "CID" : "HCD") );
 		log.info("Classifying on:          " + classStr);
-        log.info("Run Mode:                " + (runMode == 0 ? "Default" : "Report Decoys"));
+        log.info("Run Mode:                " + (RUN_MODE == 0 ? "Default" : "Report Decoys"));
 		log.info("Num of Threads:          " + NCPU );
-		log.info("Modeling Threshold:      " + modelTH);
-		log.info("Scoring Threshold:       " + scoreTH);
-		log.info("Permutation Limit:       " + max_num_permutations);
-        log.info("Max peptide length:      " + maxPepLen);
-		log.info("Min num PSMs for model:  " + minNumPSMsForModeling);
+		log.info("Modeling Threshold:      " + MODELTH);
+		log.info("Scoring Threshold:       " + SCORETH);
+		log.info("Permutation Limit:       " + MAX_NUM_PERMUTATIONS);
+        log.info("Max peptide length:      " + MAX_PEP_LENGTH);
+		log.info("Min num PSMs for model:  " + MIN_NUM_PSM_MODELING);
 		log.info("Decoy Mass Adduct:       " + DECOY_MASS);
-		log.info("Max Charge State:        " + maxChargeState);
-		log.info("Reduce NL:               " + (reduceNL == 0 ? "no" : "yes"));
-		log.info("Output File:             " + outputFile);
-        log.info("Write matched Peaks:     " + (writeMatchedPeaks ? "yes" : "no"));
+		log.info("Max Charge State:        " + MAX_CHARGE_STATE);
+		log.info("Reduce NL:               " + (REDUCENL == 0 ? "no" : "yes"));
+		log.info("Output File:             " + OUTPUT_FILE);
+        log.info("Write matched Peaks:     " + (WRITE_MATCHED_PEAKS ? "yes" : "no"));
         System.err.print("\n");
 
-		if(debugMode != 0) {
-			log.info("Debug mode:              " + debugMode + "  (Limiting to 1 CPU)\n");
-		    LucXorConfiguration.numThreads = 1;
+		if(DEBUG_MODE != 0) {
+			log.info("Debug mode:              " + DEBUG_MODE + "  (Limiting to 1 CPU)\n");
+		    LucXorConfiguration.NUM_THREADS = 1;
         }
 		
 		log.info("Mods to score:");
@@ -338,12 +338,12 @@ public class LucXorConfiguration {
 		}
 
 		// If the scores are going to be e-values, convert them to -log(evalues)
-		if(scoringMethod == Constants.NEGLOGEXPECT) {
-			double tmp = -1.0 * Math.log( modelTH );
-			modelTH = tmp;
+		if(SCORING_METHOD == Constants.NEGLOGEXPECT) {
+			double tmp = -1.0 * Math.log(MODELTH);
+			MODELTH = tmp;
 
-			tmp = -1.0 * Math.log(scoreTH);
-			scoreTH = tmp;
+			tmp = -1.0 * Math.log(SCORETH);
+			SCORETH = tmp;
 		}
 		
 	}
@@ -418,10 +418,10 @@ public class LucXorConfiguration {
 		for(Map.Entry<String, Double> stringDoubleEntry : FIXED_MOD_MAP.entrySet()) {
 
 		    if( stringDoubleEntry.getKey().equalsIgnoreCase("[") ) {
-                LucXorConfiguration.ntermMass = stringDoubleEntry.getValue();
+                LucXorConfiguration.NTERM_MASS = stringDoubleEntry.getValue();
             }
             else if( stringDoubleEntry.getKey().equalsIgnoreCase("]") ) {
-                LucXorConfiguration.ctermMass = stringDoubleEntry.getValue();
+                LucXorConfiguration.CTERM_MASS = stringDoubleEntry.getValue();
             }
 		    else {
                 double mass = AA_MASS_MAP.get(stringDoubleEntry.getKey()) + stringDoubleEntry.getValue();
@@ -433,10 +433,10 @@ public class LucXorConfiguration {
 		for(Map.Entry<String, Double> stringDoubleEntry : VAR_MOD_MAP.entrySet()) { // this will be a lower case key
 			
 			if( stringDoubleEntry.getKey().equalsIgnoreCase("[") ) {
-				LucXorConfiguration.ntermMass = stringDoubleEntry.getValue();
+				LucXorConfiguration.NTERM_MASS = stringDoubleEntry.getValue();
 			}
 			else if( stringDoubleEntry.getKey().equalsIgnoreCase("]") ) {
-				LucXorConfiguration.ctermMass = stringDoubleEntry.getValue();
+				LucXorConfiguration.CTERM_MASS = stringDoubleEntry.getValue();
 			}
 			else {
 				double mass = AA_MASS_MAP.get(stringDoubleEntry.getKey().toUpperCase()) + stringDoubleEntry.getValue();
@@ -457,105 +457,6 @@ public class LucXorConfiguration {
 		}
 
 	}
-
-//	/****************
-//	 * Function reads in spectral data from mzML files
-//	 * @param scanMap
-//	 */
-//	private static void readXMLFile(Map<String, List<Integer>> scanMap,
-//									String SPECTRUM_PATH, String fileType) throws FileParsingException {
-//
-//		scanMap.entrySet().stream().forEach( fileEntry -> {
-//
-//			AtomicInteger ctr = new AtomicInteger();
-//			SimpleDateFormat fmt= new SimpleDateFormat("HH:mm:ss");
-//
-//			String fileName = fileEntry.getKey();
-//			LCMSDataSource<?> source = null;
-//
-//
-//			if(fileType.equalsIgnoreCase(MZML_TYPE))
-//				source = new MZMLFile(SPECTRUM_PATH + "/" + fileName);
-//
-//			if(fileType.equalsIgnoreCase(MZXML_TYPE))
-//				source = new MZXMLFile(SPECTRUM_PATH + "/" + fileName);
-//
-//			if(source == null)
-//				new IOException("Error, file Type not supported");
-//
-//			// create data structure to hold scans and load all scans
-//			ScanCollectionDefault scans = new ScanCollectionDefault();
-//			scans.setDataSource(source);
-//
-//			try {
-//				System.out.printf("Start loading whole file @ [%s]\n", fmt.format(new Date()));
-//				long timeLo = System.nanoTime();
-//
-//				scans.loadData(LCMSDataSubset.WHOLE_RUN);
-//				long timeHi = System.nanoTime();
-//
-//				System.out.printf("Done loading whole file @ [%s]\n", fmt.format(new Date()));
-//				System.out.printf("Loading took %.1fs", (timeHi - timeLo)/1e9f);
-//
-//				// data index, can be used to locate scans by numbers or retention times at different ms levels
-//				TreeMap<Integer, ScanIndex> index = scans.getMapMsLevel2index();
-//
-//				// iterate over MS2 scnas asynchronously, and calculate total intensity
-//				ScanIndex ms2scansIndex = index.get(2);
-//				if (ms2scansIndex == null || ms2scansIndex.getNum2scan().isEmpty())
-//					throw new IllegalStateException("empty ms2 index");
-//
-//				ExecutorService exec = Executors
-//						.newFixedThreadPool(Runtime.getRuntime().availableProcessors());
-//
-//
-//				Set<Map.Entry<Integer, IScan>> ms2scans = ms2scansIndex.getNum2scan().entrySet();
-//
-//				for (final Map.Entry<Integer, IScan> kv : ms2scansIndex.getNum2scan().entrySet()) {
-//					exec.submit(() -> {
-//						IScan scan = kv.getValue();
-//
-//						// assign this spectrum to it's PSM
-//						// Todo: This is really slow Better to have a hashMap
-//						for (PSM p : psmList) {
-//							if (p.srcFile.equalsIgnoreCase(fileName) && (p.scanNum == kv.getKey())) {
-//								final ISpectrum spectrum = scan.getSpectrum();
-//								int N = spectrum.getMZs().length;
-//								if(N == 0) {
-//									continue; // no valid spectrum for this scan number
-//								}
-//
-//								double[] mz = spectrum.getMZs();
-//								double[] intensities = spectrum.getIntensities();
-//
-//								// If this happens, there is something wrong with the spectrum so skip it
-//								if(mz.length != intensities.length) {
-//									System.err.print(
-//											"\nERROR:" + fileName + " Scan: " + kv.getValue() +
-//													"\n# of mz values != # intensity values: " +
-//													mz.length + " != " + intensities.length +
-//													"\nSkipping this scan...\n"
-//									);
-//									continue;
-//								}
-//
-//								Spectrum X = new Spectrum(mz, intensities);
-//								p.recordSpectra(X);
-//								ctr.getAndIncrement();
-//								break;
-//							}
-//						}
-//						System.err.print("\r" + fileName +  ":  " + ctr + " spectra read in.            ");
-//					});
-//				}
-//
-//			} catch (FileParsingException e) {
-//				e.printStackTrace();
-//			}
-//		});
-//
-//	}
-
 
     // Function writes a sample input file for LucXor to disk
 	static File writeTemplateInputFile() throws IOException {
@@ -675,16 +576,16 @@ public class LucXorConfiguration {
 		return SPECTRUM_PREFIX;
 	}
 
-	public static String getMatchedPkFile() {
-		return matchedPkFile;
+	public static String getMatchedPkfile() {
+		return MATCHED_PKFILE;
 	}
 
 	public static File getInputFile() {
-		return inputFile;
+		return INPUT_FILE;
 	}
 
 	public static String getOutputFile() {
-		return outputFile;
+		return OUTPUT_FILE;
 	}
 
 	public static int getMs2tolUnits() {
@@ -692,87 +593,87 @@ public class LucXorConfiguration {
 	}
 
 	public static int getInputType() {
-		return inputType;
+		return INPUT_TYPE;
 	}
 
 	public static int getDebugMode() {
-		return debugMode;
+		return DEBUG_MODE;
 	}
 
-	public static int getReduceNL() {
-		return reduceNL;
+	public static int getREDUCENL() {
+		return REDUCENL;
 	}
 
 	public static int getPeptideRepresentation() {
-		return peptideRepresentation;
+		return PEPTIDE_REPRESENTATION;
 	}
 
 	public static int getScoringMethod() {
-		return scoringMethod;
+		return SCORING_METHOD;
 	}
 
 	public static int getScoringAlgorithm() {
-		return scoringAlgorithm;
+		return SCORING_ALGORITHM;
 	}
 
 	public static int getMaxChargeState() {
-		return maxChargeState;
+		return MAX_CHARGE_STATE;
 	}
 
-	public static int getMinNumPSMsForModeling() {
-		return minNumPSMsForModeling;
+	public static int getMinNumPsmModeling() {
+		return MIN_NUM_PSM_MODELING;
 	}
 
 	public static int getNumThreads() {
-		return numThreads;
+		return NUM_THREADS;
 	}
 
 	public static int getRunMode() {
-		return runMode;
+		return RUN_MODE;
 	}
 
 	public static int getTsvHdr() {
-		return tsvHdr;
+		return TSV_HDR;
 	}
 
-	public static int getMaxPepLen() {
-		return maxPepLen;
+	public static int getMaxPepLength() {
+		return MAX_PEP_LENGTH;
 	}
 
-	public static double getMs2tol() {
-		return ms2tol;
+	public static double getMS2TOL() {
+		return MS2TOL;
 	}
 
-	public static double getModelTH() {
-		return modelTH;
+	public static double getMODELTH() {
+		return MODELTH;
 	}
 
-	public static double getScoreTH() {
-		return scoreTH;
+	public static double getSCORETH() {
+		return SCORETH;
 	}
 
-	public static double getMinMZ() {
-		return minMZ;
+	public static double getMinMz() {
+		return MIN_MZ;
 	}
 
-	public static double getMax_num_permutations() {
-		return max_num_permutations;
+	public static double getMaxNumPermutations() {
+		return MAX_NUM_PERMUTATIONS;
 	}
 
-	public static double getPrecursorNLmass() {
-		return precursorNLmass;
+	public static double getPrecursorNlMass() {
+		return PRECURSOR_NL_MASS;
 	}
 
 	public static double getNtermMass() {
-		return ntermMass;
+		return NTERM_MASS;
 	}
 
 	public static double getCtermMass() {
-		return ctermMass;
+		return CTERM_MASS;
 	}
 
 	public static boolean isWriteMatchedPeaks() {
-		return writeMatchedPeaks;
+		return WRITE_MATCHED_PEAKS;
 	}
 
 	public static TMap<String, Double> getTargetModMap() {
@@ -796,11 +697,11 @@ public class LucXorConfiguration {
 	}
 
 	public static void setNTermMass(double modMass) {
-		ntermMass = modMass;
+		NTERM_MASS = modMass;
 	}
 
 	public static void setCTermMass(double modMass) {
-		ctermMass = modMass;
+		CTERM_MASS = modMass;
 	}
 
 	public static void clearVarMods() {

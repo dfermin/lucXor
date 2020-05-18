@@ -87,15 +87,15 @@ public class PSM {
 		int keepingScore = 0;
 		if(origPep.getNumPPS() > 0) keepingScore++;
 		if(origPep.getNumRPS() > 0) keepingScore++;
-		if(PSMscore >= LucXorConfiguration.getScoreTH()) keepingScore++;
+		if(PSMscore >= LucXorConfiguration.getSCORETH()) keepingScore++;
         if(charge <= LucXorConfiguration.getMaxChargeState()) keepingScore++;
-        if(origPep.getPepLen() <= LucXorConfiguration.getMaxPepLen()) keepingScore++;
+        if(origPep.getPepLen() <= LucXorConfiguration.getMaxPepLength()) keepingScore++;
 		
 		if(origPep.getNumPPS() == origPep.getNumRPS()) isUnambiguous = true;
 		
 		if(keepingScore == 5) isKeeper = true;
 		
-		if(isKeeper && (PSMscore >= LucXorConfiguration.getModelTH()))
+		if(isKeeper && (PSMscore >= LucXorConfiguration.getMODELTH()))
 			useForModel = true;
 		
 		
@@ -154,7 +154,7 @@ public class PSM {
 	public void recordSpectra(Spectrum S) {
 		PeakList = S;
 		// reduce the impact of the neutral loss peak (if any)
-		if(LucXorConfiguration.getReduceNL() == 1) reduceNLpeak();
+		if(LucXorConfiguration.getREDUCENL() == 1) reduceNLpeak();
 		// normalize the peak intensities to the median
 		PeakList.medianNormalizeSpectra();
 	}
@@ -168,7 +168,7 @@ public class PSM {
 
 		// the LucXorConfiguration.precursorNLmass is a negative number
 		double NLmass = MathFunctions
-				.roundDouble( (pepMHplus + LucXorConfiguration.getPrecursorNLmass()), 3 );
+				.roundDouble( (pepMHplus + LucXorConfiguration.getPrecursorNlMass()), 3 );
 
 		double NLmz = MathFunctions
 				.roundDouble( (NLmass / (double) charge), 3 );
@@ -391,10 +391,10 @@ public class PSM {
 
         // Compute the fragment error tolerance that will be used
         if(LucXorConfiguration.getMs2tolUnits() == Constants.PPM_UNITS) {
-            double ppmErr = LucXorConfiguration.getMs2tol() / Constants.PPM;
+            double ppmErr = LucXorConfiguration.getMS2TOL() / Constants.PPM;
             matchErr = theo_mz * ppmErr;
         }
-        else matchErr = LucXorConfiguration.getMs2tol();
+        else matchErr = LucXorConfiguration.getMS2TOL();
 
         matchErr *= 0.5; // split in half
 

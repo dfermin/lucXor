@@ -184,7 +184,7 @@ public class PepXML extends DefaultHandler {
 			}
 			
 			// Skip PSMs that exceed the number of candidate permutations
-			if(curPSM.getOrigPep().getNumPerm() > LucXorConfiguration.getMax_num_permutations())
+			if(curPSM.getOrigPep().getNumPerm() > LucXorConfiguration.getMaxNumPermutations())
 				numBadChars = 100;
 
 			if(numBadChars == 0) {

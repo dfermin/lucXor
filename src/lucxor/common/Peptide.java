@@ -207,7 +207,7 @@ public class Peptide {
 
 					if(Z > 1.0) b += "/+" + (int) Z;
 
-					if(bmz > LucXorConfiguration.getMinMZ()) {
+					if(bmz > LucXorConfiguration.getMinMz()) {
 						bIons.put(b, bmz);
 
 						// Determine if this ion sequence can under go a neutral loss
@@ -224,7 +224,7 @@ public class Peptide {
 
 					if(Z > 1.0) y += "/+" + (int) Z;
 
-					if(ymz > LucXorConfiguration.getMinMZ()) {
+					if(ymz > LucXorConfiguration.getMinMz()) {
 						yIons.put(y, ymz);
 
 						// Determine if this ion sequence can under go a neutral loss
@@ -267,7 +267,7 @@ public class Peptide {
 					double mass = orig_ion_mass + nl_mass;
 					double mz = MathFunctions.roundDouble((mass / z), 4);
 
-					if(mz > LucXorConfiguration.getMinMZ()) {
+					if(mz > LucXorConfiguration.getMinMz()) {
 						if(ion.startsWith("b")) bIons.put(nl_str, mz);
 						if(ion.startsWith("y")) yIons.put(nl_str, mz);
 					}
@@ -285,7 +285,7 @@ public class Peptide {
 				double mass = orig_ion_mass + nl_mass;
 				double mz = MathFunctions.roundDouble((mass / z), 4);
 
-				if(mz > LucXorConfiguration.getMinMZ()) {
+				if(mz > LucXorConfiguration.getMinMz()) {
 					if(ion.startsWith("b")) bIons.put(nl_str, mz);
 					if(ion.startsWith("y")) yIons.put(nl_str, mz);
 				}
@@ -573,10 +573,10 @@ public class Peptide {
 			double theo_mz  = stringDoubleEntry.getValue();
 
 			if(LucXorConfiguration.getMs2tolUnits() == Constants.PPM_UNITS) {
-				double ppmErr = LucXorConfiguration.getMs2tol() / Constants.PPM;
+				double ppmErr = LucXorConfiguration.getMS2TOL() / Constants.PPM;
 				matchErr = theo_mz * ppmErr;
 			}
-			else matchErr = LucXorConfiguration.getMs2tol();
+			else matchErr = LucXorConfiguration.getMS2TOL();
 
 			matchErr *= 0.5; // split in half
 			a = MathFunctions.roundDouble((theo_mz - matchErr), 4);
@@ -617,10 +617,10 @@ public class Peptide {
 			double theo_mz  = stringDoubleEntry.getValue();
 
 			if(LucXorConfiguration.getMs2tolUnits() == Constants.PPM_UNITS) {
-				double ppmErr = LucXorConfiguration.getMs2tol() / Constants.PPM;
+				double ppmErr = LucXorConfiguration.getMS2TOL() / Constants.PPM;
 				matchErr = theo_mz * ppmErr;
 			}
-			else matchErr = LucXorConfiguration.getMs2tol();
+			else matchErr = LucXorConfiguration.getMS2TOL();
 
 			matchErr *= 0.5; // split in half
 			a = MathFunctions.roundDouble((theo_mz - matchErr), 4);

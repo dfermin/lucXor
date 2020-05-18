@@ -222,7 +222,7 @@ public class LucXor {
 			}
 
 			// Skip PSMs that exceed the number of candidate permutations
-			if(curPSM.getOrigPep().getNumPerm() > LucXorConfiguration.getMax_num_permutations()) numBadChars = 100;
+			if(curPSM.getOrigPep().getNumPerm() > LucXorConfiguration.getMaxNumPermutations()) numBadChars = 100;
 
 			if(numBadChars == 0) {
 				curPSM.process();
@@ -277,15 +277,15 @@ public class LucXor {
 			int n = chargeMap.get(z);
             log.info("+" + z + ": " + n + " PSMs");
 
-            if(n < LucXorConfiguration.getMinNumPSMsForModeling()) badZ.add(z);
+            if(n < LucXorConfiguration.getMinNumPsmModeling()) badZ.add(z);
 		}
         log.info("\n");
 
         // Check to see if you have enough hi-scoring PSMs to construct an accurate model.
         // If not quit now
-        if( (numPSM < LucXorConfiguration.getMinNumPSMsForModeling()) || (badZ.size() == chargeMap.size()) ) {
-            log.info("You do not have enough PSMs with a score > " + LucXorConfiguration.getModelTH() +
-                " to accurately model the data. (Minimum number of PSMs required per charge state: " + LucXorConfiguration.getMinNumPSMsForModeling() + ")\n" +
+        if( (numPSM < LucXorConfiguration.getMinNumPsmModeling()) || (badZ.size() == chargeMap.size()) ) {
+            log.info("You do not have enough PSMs with a score > " + LucXorConfiguration.getMODELTH() +
+                " to accurately model the data. (Minimum number of PSMs required per charge state: " + LucXorConfiguration.getMinNumPsmModeling() + ")\n" +
                 "Exiting now.\n"
             );
             System.exit(0);
@@ -390,8 +390,6 @@ public class LucXor {
 
         System.gc(); // try and reclaim some memory
 
-
-
 		// Score the PSMs
         for(int RN = 0; RN < 2; RN++) { // RN = run number, 0 = calc. FDR 1 = assign FDR estimates
 
@@ -464,16 +462,16 @@ public class LucXor {
         for(int z = 2; z <= LucXorConfiguration.getMaxChargeState(); z++) {
 			int n = chargeMap.get(z);
             log.info("+" + z + ": " + n + " PSMs");
-            if(n < LucXorConfiguration.getMinNumPSMsForModeling())
+            if(n < LucXorConfiguration.getMinNumPsmModeling())
                 badZ.add(z);
 		}
         log.info("\n");
 
         // Check to see if you have enough hi-scoring PSMs to construct an accurate model.
         // If not quit now
-        if( (numPSM.get() < LucXorConfiguration.getMinNumPSMsForModeling()) || (badZ.size() == chargeMap.size()) ) {
-            log.info("You do not have enough PSMs with a score > " + LucXorConfiguration.getModelTH() +
-                    " to accurately model the data. (Minimum number of PSMs required per charge state: " + LucXorConfiguration.getMinNumPSMsForModeling() + ")\n" +
+        if( (numPSM.get() < LucXorConfiguration.getMinNumPsmModeling()) || (badZ.size() == chargeMap.size()) ) {
+            log.info("You do not have enough PSMs with a score > " + LucXorConfiguration.getMODELTH() +
+                    " to accurately model the data. (Minimum number of PSMs required per charge state: " + LucXorConfiguration.getMinNumPsmModeling() + ")\n" +
                     "Exiting now.\n"
             );
             System.exit(0);
@@ -1060,7 +1058,9 @@ public class LucXor {
         }
     }
 
-    // Record the global and local FLR values estimated for all of the delta scores
+    /**
+     * Record the global and local FLR values estimated for all of the delta scores
+     */
     private static void recordFLRestimates() {
         FLRestimateMap = new THashMap<>();
 
@@ -1072,11 +1072,4 @@ public class LucXor {
             FLRestimateMap.put( p.getDeltaScore(), d );
         }
     }
-
-
-
-
-
-
-
 }
