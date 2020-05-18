@@ -35,8 +35,6 @@ class FLR {
 	private double[] f1;
 	private double[] globalFDR;
 	private double[] localFDR;
-	private double[] globalFDR2;
-	private double[] localFDR2;
 	double maxDeltaScore;
 	
 	// variance of delta score for both distributions
@@ -98,10 +96,7 @@ class FLR {
 		// initialize other arrayLists
 		localFDR = new double[ Nreal ];
 		globalFDR = new double[ Nreal ];
-		
-		localFDR2 = new double[ Nreal ];
-		globalFDR2 = new double[ Nreal ];
-		
+
 		calcDeltaScoreMean();
 		calcDeltaScoreVar();
 		

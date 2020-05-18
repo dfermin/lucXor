@@ -21,8 +21,6 @@ import org.xml.sax.helpers.DefaultHandler;
 class PepXML extends DefaultHandler {
 
 	private String temp;
-	private String searchEngine;
-	private final String AA_alphabet = "ACDEFGHIKLMNPQRSTVWY";
 	private PSM curPSM = null;
 	private boolean recordMods = true; // changes to false after the end of first search_summary section
 
@@ -44,6 +42,7 @@ class PepXML extends DefaultHandler {
 		
 		if(qName.equalsIgnoreCase("search_summary")) {
 			String se = attr.getValue("search_engine");
+			String searchEngine;
 			if(se.startsWith("Hydra")) searchEngine = "hydra";
 			else if(se.equalsIgnoreCase("MASCOT")) searchEngine = "mascot";
 			else if(se.contains("Tandem")) searchEngine = "tandem";
@@ -56,7 +55,8 @@ class PepXML extends DefaultHandler {
 			String aa = attr.getValue("aminoacid");
 			double modMass = Double.valueOf( attr.getValue("massdiff") );
 			String varStatus = attr.getValue("variable");
-			
+
+			String AA_alphabet = "ACDEFGHIKLMNPQRSTVWY";
 			if( AA_alphabet.contains(aa) ) {
 				// if this is a valid AA character that is a variable modification, record it
 				// as a lower case character in the varModMap

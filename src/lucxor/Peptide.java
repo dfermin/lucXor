@@ -33,8 +33,6 @@ class Peptide {
 	private int numRPS; // number of _R_eported _P_hospho_S_ites
 	private int numPPS; // number of _P_otential _P_hospho_S_ites
 
-	private boolean is_unambiguous = false;
-
 	private double numPermutations = 0;
 	private double numDecoyPermutations = 0;
 	private double score = 0;
@@ -107,6 +105,7 @@ class Peptide {
 		numPermutations = MathFunctions.combinatorial(numPPS, numRPS);
 		calcNumDecoyPermutations();
 
+		boolean is_unambiguous = false;
 		if(numPPS == numRPS) is_unambiguous = true;
 	}
 

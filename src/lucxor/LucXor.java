@@ -285,7 +285,7 @@ public class LucXor {
                 int ctr = 1;
                 for (PSM p : Globals.psmList) {
                     if ((p.getCharge() == z) && p.isUseForModel()) {
-                        Runnable worker = new ModelParameterWorkerThread(p, ctr++);
+                        Runnable worker = new ModelParameterWorkerThread(p);
                         executor.execute(worker);
                     }
                 }
