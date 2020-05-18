@@ -8,13 +8,13 @@ import gnu.trove.map.TMap;
 import gnu.trove.map.hash.TDoubleObjectHashMap;
 import gnu.trove.map.hash.THashMap;
 import gnu.trove.map.hash.TIntDoubleHashMap;
-import lombok.extern.slf4j.Slf4j;
 import lucxor.algorithm.ModelDataCID;
 import lucxor.algorithm.ModelDataHCD;
 import lucxor.utils.Constants;
 import lucxor.LucXorConfiguration;
 import lucxor.utils.MathFunctions;
 import lucxor.utils.Utils;
+import org.slf4j.LoggerFactory;
 
 import java.io.BufferedWriter;
 import java.io.File;
@@ -30,8 +30,10 @@ import java.util.regex.Pattern;
  *
  * @author dfermin
  */
-@Slf4j
+
 public class PSM {
+
+	private static final org.slf4j.Logger log = LoggerFactory.getLogger(PSM.class);
 
 	private String specId; // TPP-based name
 	private String srcFile; // name of file from which spectrum is derived

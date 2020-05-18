@@ -216,3 +216,4 @@ gradle-app.setting
 # End of https://www.gitignore.io/api/maven,gradle,intellij+all,windows,macos,linux,vim
 
 *.txt
+*.log

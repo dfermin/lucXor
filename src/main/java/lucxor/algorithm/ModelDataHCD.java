@@ -4,12 +4,13 @@
  */
 package lucxor.algorithm;
 
-import lombok.extern.slf4j.Slf4j;
+import lucxor.LucXor;
 import lucxor.utils.Constants;
 import lucxor.LucXorConfiguration;
 import lucxor.utils.MathFunctions;
 import lucxor.common.Peak;
 import org.slf4j.Logger;
+import org.slf4j.LoggerFactory;
 
 import java.io.BufferedWriter;
 import java.io.File;
@@ -22,10 +23,13 @@ import java.util.concurrent.*;
  *
  * @author dfermin
  */
-@Slf4j
+
 public class ModelDataHCD {
 
 	// --Commented out by Inspection (2020-05-18 00:58):private final static double NORMAL_CONSTANT = 1.0 / Math.sqrt(2.0 * Math.PI);
+
+	private static final org.slf4j.Logger log = LoggerFactory
+			.getLogger(ModelDataHCD.class);
 
 	private final int chargeState;
 	private int numPSM;

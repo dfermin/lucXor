@@ -19,7 +19,6 @@ import gnu.trove.map.hash.TIntIntHashMap;
 import gnu.trove.map.hash.TIntObjectHashMap;
 import gnu.trove.set.hash.THashSet;
 import gnu.trove.set.hash.TIntHashSet;
-import lombok.extern.slf4j.Slf4j;
 import lucxor.algorithm.FLR;
 import lucxor.algorithm.ModelDataCID;
 import lucxor.algorithm.ModelDataHCD;
@@ -27,6 +26,7 @@ import lucxor.algorithm.ModelParameterWorkerThread;
 import lucxor.common.*;
 import lucxor.utils.Constants;
 import lucxor.utils.MathFunctions;
+import org.slf4j.LoggerFactory;
 import org.xml.sax.SAXException;
 import umich.ms.datatypes.index.Index;
 import umich.ms.datatypes.scan.IScan;
@@ -44,8 +44,10 @@ import static lucxor.utils.Constants.*;
  * @author dfermin
  * @author ypriverol
  */
-@Slf4j
+
 public class LucXor {
+
+    private static final org.slf4j.Logger log = LoggerFactory.getLogger(LucXor.class);
 
     private static long startTime;
     private static long endTime;
@@ -135,6 +137,11 @@ public class LucXor {
         int hh   = (int) ((milliseconds / (1000*60*60)) % 24);
 
          log.info("\nTotal run time (HH:MM:SS) = " +
+                String.format("%02d", hh) + ":" +
+                String.format("%02d", mm) + ":" +
+                String.format("%02d", ss) + "\n");
+
+        System.err.println("\nTotal run time (HH:MM:SS) = " +
                 String.format("%02d", hh) + ":" +
                 String.format("%02d", mm) + ":" +
                 String.format("%02d", ss) + "\n");
@@ -479,6 +486,7 @@ public class LucXor {
 		
 		// iterate over the charge states collecting data for all modeling PSMs
 		log.info("(HCD) Acquiring Non-Parametric Model features from high-scoring PSMs...");
+        System.err.println("(HCD) Acquiring Non-Parametric Model features from high-scoring PSMs...");
 
 		for(int z = 2; z <= LucXorConfiguration.getMaxChargeState(); z++) {
 
@@ -594,14 +602,20 @@ public class LucXor {
                 numThreads = Runtime.getRuntime().availableProcessors();
 
             if(LucXorConfiguration.getRunMode() == Constants.DEFAULT_RUN_MODE)
-                if(RN == 0)
+                if(RN == 0){
                     log.info("\n[ " + RN + " ] Estimating FLR with decoys (" + numThreads + " threads)...");
-                if(RN == 1)
+                    System.err.println("\n[ " + RN + " ] Estimating FLR with decoys (" + numThreads + " threads)...");
+                }
+                if(RN == 1){
                     log.info("\n[ " + RN + " ] Scoring " + psmList.size() +
                             " PSMs (" + numThreads + " threads)...");
-             else
-                log.info("\nScoring " + psmList.size() + " PSMs (" + numThreads + " threads)...");
-
+                    System.err.println("\n[ " + RN + " ] Scoring " + psmList.size() +
+                            " PSMs (" + numThreads + " threads)...");
+                }
+             else{
+                 log.info("\nScoring " + psmList.size() + " PSMs (" + numThreads + " threads)...");
+                 System.err.println("\nScoring " + psmList.size() + " PSMs (" + numThreads + " threads)...");
+             }
 
             parallelFLP(numThreads, RN);
             System.err.println("\n");
@@ -649,8 +663,12 @@ public class LucXor {
                         if(LucXorConfiguration.getDebugMode() == Constants.WRITE_SCORED_PKS) p.debugWriteScoredPeaks(timeStamp, modelingMapHCD, modelingMapCID);
                         ctr.getAndIncrement();
 
-                        if( (ctr.get() % 100) == 0 )  System.err.print(ctr + " ");
-                        if( (ctr.get() % 1000) == 0 ) System.err.print("\n");
+                        if( (ctr.get() % 100) == 0 ){
+                            System.err.print(ctr + " ");
+                            log.info(ctr + " ");
+                        }if( (ctr.get() % 1000) == 0 ){
+                            System.err.print("\n");
+                        }
                     } catch (IOException e) {
                         e.printStackTrace();
                     }
@@ -663,7 +681,10 @@ public class LucXor {
                         if(LucXorConfiguration.getDebugMode() == Constants.WRITE_SCORED_PKS) p.debugWriteScoredPeaks(timeStamp, modelingMapHCD, modelingMapCID);
                         ctr.getAndIncrement();
 
-                        if( (ctr.get() % 100) == 0 )  System.err.print(ctr + " ");
+                        if( (ctr.get() % 100) == 0 ) {
+                            System.err.print(ctr + " ");
+                            log.info(ctr + " ");
+                        }
                         if( (ctr.get() % 1000) == 0 ) System.err.print("\n");
                     } catch (IOException e) {
                         e.printStackTrace();
@@ -1032,7 +1053,8 @@ public class LucXor {
             })).get();
         }
         long timeHi = System.nanoTime();
-        System.out.printf("\n\nLoading took %.1fs\n", (timeHi - timeLo)/1e9f);
+        System.out.printf("\n\nLoading all the PSM spectra %d took %.1fs\n\n",
+                psmList.size(), (timeHi - timeLo)/1e9f);
 
 
     }

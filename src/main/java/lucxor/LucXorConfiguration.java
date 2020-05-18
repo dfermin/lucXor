@@ -6,9 +6,9 @@ package lucxor;
 
 import gnu.trove.map.TMap;
 import gnu.trove.map.hash.THashMap;
-import lombok.extern.slf4j.Slf4j;
 import lucxor.utils.Constants;
 import lucxor.utils.Utils;
+import org.slf4j.LoggerFactory;
 
 import java.io.*;
 import java.util.*;
@@ -19,8 +19,11 @@ import static lucxor.utils.Constants.*;
  *
  * @author dfermin
  */
-@Slf4j
+
 public class LucXorConfiguration {
+
+	private static final org.slf4j.Logger log = LoggerFactory
+			.getLogger(LucXorConfiguration.class);
 
 	private static File SPECTRUM_PATH = null;
 	private static String SPECTRUM_PREFIX = null;
