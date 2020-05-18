@@ -2,7 +2,7 @@
  * To change this template, choose Tools | Templates
  * and open the template in the editor.
  */
-package lucxor;
+package lucxor.algorithm;
 
 import java.util.concurrent.Callable;
 import org.apache.commons.math3.util.FastMath;
@@ -12,8 +12,6 @@ import org.apache.commons.math3.util.FastMath;
  *
  * @author dfermin
  */
-
-
 public class NormalDensityWorkerThread implements Callable<Double>{
 	
 	private final double[] ary;

@@ -2,9 +2,14 @@
  * To change this template, choose Tools | Templates
  * and open the template in the editor.
  */
-package lucxor;
+package lucxor.algorithm;
 
 import lombok.extern.slf4j.Slf4j;
+import lucxor.utils.Constants;
+import lucxor.LucXorConfiguration;
+import lucxor.utils.MathFunctions;
+import lucxor.common.Peak;
+import org.slf4j.Logger;
 
 import java.io.BufferedWriter;
 import java.io.File;
@@ -262,7 +267,7 @@ public class ModelDataHCD {
 	 * @throws InterruptedException
 	 * @throws ExecutionException
 	 */
-	void estimateNPIntensity(char ionType) throws InterruptedException, ExecutionException {
+	public void estimateNPIntensity(char ionType) throws InterruptedException, ExecutionException {
 		int N;
 		double[] norm_ints;
 		double[] tickMarksInt;
@@ -321,7 +326,7 @@ public class ModelDataHCD {
 		f_int = new double[ ntick ]; // this will hold the estimated height
 		
 		//how big a chunk of the norm_ints each task will process
-		int block = norm_ints.length / Globals.numThreads;
+		int block = norm_ints.length / LucXorConfiguration.getNumThreads();
 		
 		
 		// Iterate over each tick mark
@@ -329,17 +334,17 @@ public class ModelDataHCD {
 			double tic = tickMarksInt[i];
 			
 			// Threadpool of executor objects
-			ExecutorService pool = Executors.newFixedThreadPool(Globals.numThreads);
+			ExecutorService pool = Executors.newFixedThreadPool(LucXorConfiguration.getNumThreads());
 		
 			// Create a List to hold the tasks to be performed
-			List< Future<Double> > taskList = new ArrayList<>(Globals.numThreads);
+			List< Future<Double> > taskList = new ArrayList<>(LucXorConfiguration.getNumThreads());
 		
 			
 			// break up the data in norm_ints into thread chunks
-			for(int cpu = 0; cpu < Globals.numThreads; cpu++) {
+			for(int cpu = 0; cpu < LucXorConfiguration.getNumThreads(); cpu++) {
 				int start = cpu * block;
 				int end   = start + block;
-				if(cpu == (Globals.numThreads-1) ) end = norm_ints.length;
+				if(cpu == (LucXorConfiguration.getNumThreads()-1) ) end = norm_ints.length;
 				
 				// get a subset of the data to submit to the worker thread
 				double[] subAry = Arrays.copyOfRange(norm_ints, start, end);
@@ -383,7 +388,7 @@ public class ModelDataHCD {
 	
 	// Function computes the estimated parameters for the non-parametric model
 	// for the m/z distances for the positive peaks in this model object
-	void estimateNPPosDist() throws InterruptedException, ExecutionException {
+	public void estimateNPPosDist() throws InterruptedException, ExecutionException {
 		
 		int N;
 		double min_dist, max_dist;
@@ -425,7 +430,7 @@ public class ModelDataHCD {
 		f_ary = new double[ ntick ];
 
 		//how big a chunk of the norm_ints each task will process
-		int block = pos_dist.length / Globals.numThreads;
+		int block = pos_dist.length / LucXorConfiguration.getNumThreads();
 		
 		
 		// Iterate over each tick mark
@@ -433,17 +438,17 @@ public class ModelDataHCD {
 			double tic = posTickMarksDist[i];
 			
 			// Threadpool of executor objects
-			ExecutorService pool = Executors.newFixedThreadPool(Globals.numThreads);
+			ExecutorService pool = Executors.newFixedThreadPool(LucXorConfiguration.getNumThreads());
 
 			// Create a list to hold the tasks to be performed
-			List< Future<Double> > taskList = new ArrayList<>(Globals.numThreads);
+			List< Future<Double> > taskList = new ArrayList<>(LucXorConfiguration.getNumThreads());
 
 			
 			// break up the data in D into thread chunks
-			for(int cpu = 0; cpu < Globals.numThreads; cpu++) {
+			for(int cpu = 0; cpu < LucXorConfiguration.getNumThreads(); cpu++) {
 				int start = cpu * block;
 				int end   = start + block;
-				if(cpu == (Globals.numThreads-1)) end = pos_dist.length;
+				if(cpu == (LucXorConfiguration.getNumThreads()-1)) end = pos_dist.length;
 				
 				double[] subAry = Arrays.copyOfRange(pos_dist, start, end);
 				
@@ -529,7 +534,7 @@ public class ModelDataHCD {
 	
 	// Function returns the log-transformed non-parametric density for the given
 	// peak intensity using the specified ion type
-	double getLogNPdensityInt(char ionType, double x) {
+	public double getLogNPdensityInt(char ionType, double x) {
 		double a, b, tmp1, tmp2, fx;
 		int N = 0;
 		double sum = 0;
@@ -582,7 +587,7 @@ public class ModelDataHCD {
 	
 	// Function returns the log-transformed non-parametric density for the given
 	// peak distance using the positive model
-	double getLogNPdensityDistPos(double x) {
+	public double getLogNPdensityDistPos(double x) {
 		double a, b, tmp1, tmp2, fx;
 		double sum = 0;
 		
@@ -617,7 +622,7 @@ public class ModelDataHCD {
 	
 	
 	
-	void writeModelPks() throws IOException {	
+	public void writeModelPks() throws IOException {
 		File debugF = new File("debug_model_pks_HCD.txt");
 		FileWriter fw;
 		BufferedWriter bw;
@@ -764,6 +769,104 @@ public class ModelDataHCD {
 		
 		bw.close();
 	}
-	
-	
+
+	public void setNumPSM(int numPSM) {
+		this.numPSM = numPSM;
+	}
+
+	public int getChargeState() {
+		return chargeState;
+	}
+
+	public int getNumPSM() {
+		return numPSM;
+	}
+
+	public static int getNtick() {
+		return ntick;
+	}
+
+	public double getbIntMean() {
+		return bIntMean;
+	}
+
+	public double getbIntVar() {
+		return bIntVar;
+	}
+
+	public double getyIntMean() {
+		return yIntMean;
+	}
+
+	public double getyIntVar() {
+		return yIntVar;
+	}
+
+	public double getNegIntMean() {
+		return negIntMean;
+	}
+
+	public double getNegIntVar() {
+		return negIntVar;
+	}
+
+	public double getPosDistMean() {
+		return posDistMean;
+	}
+
+	public double getPosDistVar() {
+		return posDistVar;
+	}
+
+	public double[] getbTickMarksInt() {
+		return bTickMarksInt;
+	}
+
+	public double[] getyTickMarksInt() {
+		return yTickMarksInt;
+	}
+
+	public double[] getNegTickMarksInt() {
+		return negTickMarksInt;
+	}
+
+	public double[] getPosTickMarksDist() {
+		return posTickMarksDist;
+	}
+
+	public double[] getF_int_b() {
+		return f_int_b;
+	}
+
+	public double[] getF_int_y() {
+		return f_int_y;
+	}
+
+	public double[] getF_int_neg() {
+		return f_int_neg;
+	}
+
+	public double[] getF_dist() {
+		return f_dist;
+	}
+
+	public double[] getB_int() {
+		return b_int;
+	}
+
+	public double[] getY_int() {
+		return y_int;
+	}
+
+	public double[] getN_int() {
+		return n_int;
+	}
+
+	public double[] getPos_dist() {
+		return pos_dist;
+	}
+
+	public static Logger getLog() {
+		return log;
+	}
 }

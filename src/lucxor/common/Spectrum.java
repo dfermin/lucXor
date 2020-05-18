@@ -1,4 +1,4 @@
-package lucxor;
+package lucxor.common;
 
 
 import gnu.trove.list.array.TIntArrayList;

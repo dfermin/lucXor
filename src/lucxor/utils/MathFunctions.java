@@ -2,7 +2,7 @@
  * To change this template, choose Tools | Templates
  * and open the template in the editor.
  */
-package lucxor;
+package lucxor.utils;
 
 import java.util.ArrayList;
 import java.util.List;
@@ -65,7 +65,7 @@ public class MathFunctions {
 	 * @param k Number of combinations
 	 * @return
 	 */
-	static List<TIntList> getAllCombinations(TIntList candModSites, int k) {
+	public static List<TIntList> getAllCombinations(TIntList candModSites, int k) {
 
 		// http://code.google.com/p/combinatoricslib/#3._Simple_combinations
 
@@ -88,7 +88,7 @@ public class MathFunctions {
 		return ret;
 	}
 
-	static double logGaussianProb(double mu, double sigma2, double x) {
+	public static double logGaussianProb(double mu, double sigma2, double x) {
 		return  -0.5 * Math.pow((x-mu), 2.0) / sigma2 - 0.5 * Math.log( (2.0 * Math.PI * sigma2) );
 	}
 

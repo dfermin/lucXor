@@ -1,4 +1,6 @@
-package lucxor;
+package lucxor.algorithm;
+
+import lucxor.common.PSM;
 
 /**
  * Created by dfermin on 5/15/14.
@@ -10,7 +12,7 @@ public class ModelParameterWorkerThread implements Runnable {
     // Default constructor for this class
     public ModelParameterWorkerThread(PSM externalPSM) {
         this.curPSM = externalPSM;
-        // index of this PSM in Globals.psmList
+        // index of this PSM in LucXorConfiguration.psmList
     }
 
     @Override

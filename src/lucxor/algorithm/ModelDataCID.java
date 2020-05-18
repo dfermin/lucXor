@@ -2,7 +2,11 @@
  * To change this template, choose Tools | Templates
  * and open the template in the editor.
  */
-package lucxor;
+package lucxor.algorithm;
+
+import lucxor.utils.Constants;
+import lucxor.utils.MathFunctions;
+import lucxor.common.Peak;
 
 import java.io.BufferedWriter;
 import java.io.File;
@@ -20,7 +24,7 @@ public class ModelDataCID {
 
 
 	private final int chargeState;
-	int numPSM; // holds number of PSMs used for this charge state
+	private int numPSM; // holds number of PSMs used for this charge state
 	double mu_int_B, mu_int_Y, mu_int_U;
 	double var_int_B, var_int_Y, var_int_U;
 	double mu_dist_B, mu_dist_Y, mu_dist_U;
@@ -329,5 +333,93 @@ public class ModelDataCID {
       }
 
         bw.close();
+    }
+
+    public void setNumPSM(int numPSM) {
+        this.numPSM = numPSM;
+    }
+
+    public int getChargeState() {
+        return chargeState;
+    }
+
+    public int getNumPSM() {
+        return numPSM;
+    }
+
+    public double getMu_int_B() {
+        return mu_int_B;
+    }
+
+    public double getMu_int_Y() {
+        return mu_int_Y;
+    }
+
+    public double getMu_int_U() {
+        return mu_int_U;
+    }
+
+    public double getVar_int_B() {
+        return var_int_B;
+    }
+
+    public double getVar_int_Y() {
+        return var_int_Y;
+    }
+
+    public double getVar_int_U() {
+        return var_int_U;
+    }
+
+    public double getMu_dist_B() {
+        return mu_dist_B;
+    }
+
+    public double getMu_dist_Y() {
+        return mu_dist_Y;
+    }
+
+    public double getMu_dist_U() {
+        return mu_dist_U;
+    }
+
+    public double getVar_dist_B() {
+        return var_dist_B;
+    }
+
+    public double getVar_dist_Y() {
+        return var_dist_Y;
+    }
+
+    public double getVar_dist_U() {
+        return var_dist_U;
+    }
+
+    public double[] getB_intensity() {
+        return b_intensity;
+    }
+
+    public double[] getB_distance() {
+        return b_distance;
+    }
+
+    public double[] getY_intensity() {
+        return y_intensity;
+    }
+
+    public double[] getY_distance() {
+        return y_distance;
+    }
+
+    public double[] getU_intensity() {
+        return u_intensity;
+    }
+
+    public double[] getU_distance() {
+        return u_distance;
+    }
+
+    public static double getCidAdjust() {
+        return CID_ADJUST;
     }
 }

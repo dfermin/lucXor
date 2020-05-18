@@ -8,6 +8,12 @@ import gnu.trove.map.TMap;
 import gnu.trove.map.hash.THashMap;
 import gnu.trove.map.hash.TIntObjectHashMap;
 import lombok.extern.slf4j.Slf4j;
+import lucxor.algorithm.FLR;
+import lucxor.common.PSM;
+import lucxor.common.Spectrum;
+import lucxor.utils.Constants;
+import lucxor.utils.MathFunctions;
+import lucxor.utils.Utils;
 import umich.ms.datatypes.LCMSData;
 import umich.ms.datatypes.LCMSDataSubset;
 import umich.ms.datatypes.scan.IScan;
@@ -24,59 +30,55 @@ import java.util.*;
 import java.util.concurrent.ExecutionException;
 import java.util.stream.Collectors;
 
-import static lucxor.Constants.*;
+import static lucxor.utils.Constants.*;
 
 /**
  *
  * @author dfermin
  */
 @Slf4j
-class Globals {
+public class LucXorConfiguration {
 
-	private static File spectrumPath = null;
-	static String spectrumSuffix = null;
-    static String matchedPkFile = null;
-	static File inputFile = null;
-	static String outputFile = null;
-	static final String timeStamp;
-	static final String dateStamp;
-	static int ms2tol_units;
-	static int inputType;
-	static int debugMode;
-	static int reduceNL;
-	static int peptideRepresentation;
-	static int scoringMethod;
-	static int scoringAlgorithm;
-	static int maxChargeState;
-	static int minNumPSMsForModeling;
-	static int numThreads;
-    static int runMode;
-    static int tsvHdr;
-    static int maxPepLen;
-	static double ms2tol;
-	static double modelTH;
-	static double scoreTH;
-	private static double decoyMass;
-	static double minMZ;
-	static double max_num_permutations;
-	static double precursorNLmass;
-	static double ntermMass = 0d;
-	static double ctermMass = 0d;
-    static boolean writeMatchedPeaks;
-	
-	static final PSMList psmList = new PSMList();
+	private static File SPECTRUM_PATH = null;
+	private static String SPECTRUM_PREFIX = null;
+    private static String matchedPkFile = null;
+	private static File inputFile = null;
+	private static String outputFile = null;
+	private static int MS2TOL_UNITS;
+	private static int inputType;
+	private static int debugMode;
+	private static int reduceNL;
+	private static int peptideRepresentation;
+	private static int scoringMethod;
+	private static int scoringAlgorithm;
+	private static int maxChargeState;
+	private static int minNumPSMsForModeling;
+	private static int numThreads;
+    private static int runMode;
+    private static int tsvHdr;
+    private static int maxPepLen;
+	private static double ms2tol;
+	private static double modelTH;
+	private static double scoreTH;
+	private static double DECOY_MASS;
+	private static double minMZ;
+	private static double max_num_permutations;
+	private static double precursorNLmass;
+	private static double ntermMass = 0d;
+	private static double ctermMass = 0d;
+    private static boolean writeMatchedPeaks;
 
-    static final TMap<String, Double> TargetModMap = new THashMap<>(); // mods user wants to search for
-	static final TMap<String, Double> fixedModMap = new THashMap<>(); // fixed mods observed in data
-	static final TMap<String, Double> varModMap = new THashMap<>(); // variable mods observed in data
-	static final TMap<String, Double> nlMap = new THashMap<>(); // holds all neutral loss masses, k= list of amino acids v= NL mass
-	static final TMap<String, Double> decoyNLmap = new THashMap<>();
-    private static TMap<Double, double[]> FLRestimateMap = new THashMap<>(); // ary[0] = globalFLR, ary[1] = localFLR
+	// mods user wants to search for
+	static final TMap<String, Double> TARGET_MOD_MAP = new THashMap<>();
+	// fixed mods observed in data
+	static final TMap<String, Double> FIXED_MOD_MAP = new THashMap<>();
+	// variable mods observed in data
+	static final TMap<String, Double> VAR_MOD_MAP = new THashMap<>();
+	// holds all neutral loss masses, k= list of amino acids v= NL mass
+	static final TMap<String, Double> NEUTRAL_LOSS_MAP = new THashMap<>();
+	static final TMap<String, Double> DECOY_NEUTRAL_LOSS_MAP = new THashMap<>();
 
-	static TMap<Integer, ModelDataCID> modelingMapCID = null;
-	static TMap<Integer, ModelDataHCD> modelingMapHCD = null;
-	
-	static void parseInputFile(String str) throws IOException {
+	public static void parseConfigurationFile(String str) throws IOException {
 		
 		File inF = new File(str);
 		if(!inF.exists()) { 
@@ -101,12 +103,12 @@ class Globals {
 			
 			if(line.startsWith("SPECTRUM_PATH")) {
 				String s = Utils.parseInputLine(line);
-				spectrumPath = new File(s).getCanonicalFile();
+				SPECTRUM_PATH = new File(s).getCanonicalFile();
 			}
 			
 			if(line.startsWith("SPECTRUM_SUFFIX")) {
 				String s = Utils.parseInputLine(line);
-				spectrumSuffix = s.toLowerCase();
+				SPECTRUM_PREFIX = s.toLowerCase();
 			}
 			
 			if(line.startsWith("INPUT_DATA")) {
@@ -145,7 +147,7 @@ class Globals {
 			
 			if(line.startsWith("MS2_TOL_UNITS")) {
 				String s = Utils.parseInputLine(line);
-				ms2tol_units = Integer.valueOf(s);
+				MS2TOL_UNITS = Integer.valueOf(s);
 			}
 			
 			if(line.startsWith("ALGORITHM")) {
@@ -217,20 +219,20 @@ class Globals {
 			
 			if(line.startsWith("DECOY_MASS")) {
 				String s = Utils.parseInputLine(line);
-				decoyMass = Double.valueOf(s);
+				DECOY_MASS = Double.valueOf(s);
 			}
 
             if(line.startsWith("DECOY_NL")) {
                 String[] ary = parseNLLine(line);
                 String k = ary[0].substring(1);
                 double m = Double.valueOf(ary[1]);
-                decoyNLmap.put(k,m);
+                DECOY_NEUTRAL_LOSS_MAP.put(k,m);
             }
 			
 			if(line.startsWith("NL")) {
 				String[] ary = parseNLLine(line);
 				double m = Double.valueOf(ary[1]);
-				nlMap.put(ary[0], m);
+				NEUTRAL_LOSS_MAP.put(ary[0], m);
 			}
 			
 			if(line.startsWith("MIN_MZ")) {
@@ -246,43 +248,44 @@ class Globals {
 			if(line.startsWith("TARGET_MOD")) {
 				String[] ary = parseInputModLine(line);
 				double m = Double.valueOf(ary[1]);
-				TargetModMap.put(ary[0].toUpperCase(), m);
+				TARGET_MOD_MAP.put(ary[0].toUpperCase(), m);
 			}
 
 
             if(line.startsWith("VAR_MOD")) {
                 String[] ary = parseInputModLine(line);
                 double m = Double.valueOf(ary[1]);
-                varModMap.put(ary[0].toLowerCase(), m); // variable mods are lower case
+                VAR_MOD_MAP.put(ary[0].toLowerCase(), m); // variable mods are lower case
             }
 
             if(line.startsWith("FIXED_MOD")) {
                 String[] ary = parseInputModLine(line);
                 double m = Double.valueOf(ary[1]);
-                fixedModMap.put(ary[0].toUpperCase(), m);
+                FIXED_MOD_MAP.put(ary[0].toUpperCase(), m);
             }
 
 
 			// You only need to extract the VAR_MOD and FIXED_MOD values
 			// from the input file if you are using TSV files
-//			if(Globals.inputType == Constants.TSV) {
+//			if(LucXorConfiguration.inputType == Constants.TSV) {
 //				if(line.startsWith("VAR_MOD")) {
 //					String[] ary = parseInputModLine(line);
 //					double m = Double.valueOf(ary[1]);
-//					varModMap.put(ary[0].toLowerCase(), m); // variable mods are lower case
+//					VAR_MOD_MAP.put(ary[0].toLowerCase(), m); // variable mods are lower case
 //				}
 //
 //				if(line.startsWith("FIXED_MOD")) {
 //					String[] ary = parseInputModLine(line);
 //					double m = Double.valueOf(ary[1]);
-//					fixedModMap.put(ary[0].toUpperCase(), m);
+//					FIXED_MOD_MAP.put(ary[0].toUpperCase(), m);
 //				}
 //			}
 
 		}
 		br.close();
 		
-		if( (null == outputFile) || (outputFile.isEmpty()) ) outputFile = "luciphor_results.tsv";
+		if( (null == outputFile) || (outputFile.isEmpty()) )
+			outputFile = "luciphor_results.tsv";
 		
 		String classStr = "";
 		switch(scoringMethod) {
@@ -310,11 +313,11 @@ class Globals {
         int NCPU = numThreads;
         if( (numThreads > 1) && (numThreads < Runtime.getRuntime().availableProcessors()) ) NCPU = (numThreads + 1);
 
-		log.info("Spectrum Path:           " + spectrumPath.getAbsolutePath());
-		log.info("Spectrum Suffix:         " + spectrumSuffix);
+		log.info("Spectrum Path:           " + SPECTRUM_PATH.getAbsolutePath());
+		log.info("Spectrum Suffix:         " + SPECTRUM_PREFIX);
 		log.info("Input file:              " + inputFile);
 		log.info("Input type:              " + (inputType == Constants.PEPXML ? "pepXML" : "tsv"));
-		log.info("MS2 tolerance:           " + ms2tol + (ms2tol_units == Constants.DALTONS ? " Da" : " ppm"));
+		log.info("MS2 tolerance:           " + ms2tol + (MS2TOL_UNITS == Constants.DALTONS ? " Da" : " ppm"));
 		log.info("Luciphor Algorithm:      " + (scoringAlgorithm == Constants.CID ? "CID" : "HCD") );
 		log.info("Classifying on:          " + classStr);
         log.info("Run Mode:                " + (runMode == 0 ? "Default" : "Report Decoys"));
@@ -324,7 +327,7 @@ class Globals {
 		log.info("Permutation Limit:       " + max_num_permutations);
         log.info("Max peptide length:      " + maxPepLen);
 		log.info("Min num PSMs for model:  " + minNumPSMsForModeling);
-		log.info("Decoy Mass Adduct:       " + decoyMass);
+		log.info("Decoy Mass Adduct:       " + DECOY_MASS);
 		log.info("Max Charge State:        " + maxChargeState);
 		log.info("Reduce NL:               " + (reduceNL == 0 ? "no" : "yes"));
 		log.info("Output File:             " + outputFile);
@@ -333,20 +336,20 @@ class Globals {
 
 		if(debugMode != 0) {
 			log.info("Debug mode:              " + debugMode + "  (Limiting to 1 CPU)\n");
-		    Globals.numThreads = 1;
+		    LucXorConfiguration.numThreads = 1;
         }
 		
 		log.info("Mods to score:");
-		for(Map.Entry<String, Double> stringDoubleEntry : TargetModMap.entrySet()) {
+		for(Map.Entry<String, Double> stringDoubleEntry : TARGET_MOD_MAP.entrySet()) {
 			log.info(stringDoubleEntry.getKey() + "\t" + stringDoubleEntry.getValue());
 		}
 		
-		if(!nlMap.isEmpty()) {
+		if(!NEUTRAL_LOSS_MAP.isEmpty()) {
 			log.info("\nAllowed Neutral Losses:");
-			for(Map.Entry<String, Double> stringDoubleEntry : nlMap.entrySet()) {
+			for(Map.Entry<String, Double> stringDoubleEntry : NEUTRAL_LOSS_MAP.entrySet()) {
 				log.info(stringDoubleEntry.getKey() + "\t" + stringDoubleEntry.getValue());
 			}
-            for(Map.Entry<String, Double> stringDoubleEntry : decoyNLmap.entrySet()) {
+            for(Map.Entry<String, Double> stringDoubleEntry : DECOY_NEUTRAL_LOSS_MAP.entrySet()) {
                 log.info("<X>" + stringDoubleEntry.getKey() + "\t" + stringDoubleEntry.getValue() + "  (Decoy NL)");
             }
 		}
@@ -362,7 +365,11 @@ class Globals {
 		
 	}
 
-	
+	/**
+	 * Parse a configuration line with the sutructre key = value
+	 * @param line Configuration line
+	 * @return values
+	 */
 	private static String[] parseInputModLine(String line) {
 		String[] ret = new String[2];
 		
@@ -391,8 +398,12 @@ class Globals {
 		
 		return ret;
 	}
-	
-	
+
+	/**
+	 * Parse a line with the structure key=value
+	 * @param line Configuration line
+	 * @return List of values
+	 */
 	private static String[] parseNLLine(String line) {
 		String[] ret = new String[2];
 		
@@ -406,50 +417,6 @@ class Globals {
 		return ret;
 	}
 
-	/*
-	 * In Java 8, you can call to an initilization method
-	 */
-	static {
-		// in case we need it, initialize the timestamp signature variable
-		java.util.Date date = new java.util.Date();
-		SimpleDateFormat sdf = new SimpleDateFormat("yyyyMMMdd-hh_mm_ss");
-		timeStamp = sdf.format(date);
-		sdf = new SimpleDateFormat("yyyMMMdd");
-		dateStamp = sdf.format(date);
-	}
-
-	// Function to compute the False Localization Rate of the PSMs
-	public static void calcFLR() throws InterruptedException, ExecutionException {
-		double maxDeltaScore = -1.0;
-		FLR flr = new FLR();
-
-		log.info("\nComputing False Localization Rate (FLR)");
-
-		// Identify maxDeltaScore
-		for(PSM psm : Globals.psmList) {
-			if(psm.getDeltaScore() > maxDeltaScore) maxDeltaScore = psm.getDeltaScore();
-
-			if(psm.getDeltaScore() > Constants.MIN_DELTA_SCORE) {
-				if(psm.isDecoy()) flr.decoyPSMs.add(psm);
-				else flr.realPSMs.add(psm);
-			}
-		}
-
-		flr.maxDeltaScore = maxDeltaScore;
-		flr.prepArrays();
-
-		flr.initializeTickMarks();
-		flr.evalTickMarks(Constants.REAL);
-		flr.evalTickMarks(Constants.DECOY);
-
-		flr.calcBothFDRs();
-		flr.setMinorMaps();
-		flr.performMinorization();
-		flr.assignFDRs();
-//		flr.debugFLR();
-	}
-
-
 	/**
 	 * Function to incorporate information read in from input file into the
 	 * AA_MASS_MAP object
@@ -459,19 +426,19 @@ class Globals {
 		// Assign the information you got from the input file to the 
 		// relevant map. If none were given, then this should just proceed
 		// without changing anything.
-		for(Map.Entry<String, Double> stringDoubleEntry : TargetModMap.entrySet()) {
+		for(Map.Entry<String, Double> stringDoubleEntry : TARGET_MOD_MAP.entrySet()) {
 			double mass = AA_MASS_MAP.get(stringDoubleEntry.getKey()) + stringDoubleEntry.getValue();
 			String symbol = stringDoubleEntry.getKey().toLowerCase();
 			AA_MASS_MAP.put(symbol, mass);
 		}
 		
-		for(Map.Entry<String, Double> stringDoubleEntry : fixedModMap.entrySet()) {
+		for(Map.Entry<String, Double> stringDoubleEntry : FIXED_MOD_MAP.entrySet()) {
 
 		    if( stringDoubleEntry.getKey().equalsIgnoreCase("[") ) {
-                Globals.ntermMass = stringDoubleEntry.getValue();
+                LucXorConfiguration.ntermMass = stringDoubleEntry.getValue();
             }
             else if( stringDoubleEntry.getKey().equalsIgnoreCase("]") ) {
-                Globals.ctermMass = stringDoubleEntry.getValue();
+                LucXorConfiguration.ctermMass = stringDoubleEntry.getValue();
             }
 		    else {
                 double mass = AA_MASS_MAP.get(stringDoubleEntry.getKey()) + stringDoubleEntry.getValue();
@@ -480,13 +447,13 @@ class Globals {
             }
 		}
 		
-		for(Map.Entry<String, Double> stringDoubleEntry : varModMap.entrySet()) { // this will be a lower case key
+		for(Map.Entry<String, Double> stringDoubleEntry : VAR_MOD_MAP.entrySet()) { // this will be a lower case key
 			
 			if( stringDoubleEntry.getKey().equalsIgnoreCase("[") ) {
-				Globals.ntermMass = stringDoubleEntry.getValue();
+				LucXorConfiguration.ntermMass = stringDoubleEntry.getValue();
 			}
 			else if( stringDoubleEntry.getKey().equalsIgnoreCase("]") ) {
-				Globals.ctermMass = stringDoubleEntry.getValue();
+				LucXorConfiguration.ctermMass = stringDoubleEntry.getValue();
 			}
 			else {
 				double mass = AA_MASS_MAP.get(stringDoubleEntry.getKey().toUpperCase()) + stringDoubleEntry.getValue();
@@ -499,176 +466,21 @@ class Globals {
 		for(Map.Entry<String, String> stringStringEntry : DECOY_AA_MAP.entrySet()) {
 			String trueAA = stringStringEntry.getValue();
 			
-			if(varModMap.containsKey(trueAA)) continue;
-			if(TargetModMap.containsKey(trueAA)) continue;
+			if(VAR_MOD_MAP.containsKey(trueAA)) continue;
+			if(TARGET_MOD_MAP.containsKey(trueAA)) continue;
 			
-			double mass = AA_MASS_MAP.get(trueAA) + Globals.decoyMass;
+			double mass = AA_MASS_MAP.get(trueAA) + LucXorConfiguration.DECOY_MASS;
 			AA_MASS_MAP.put(stringStringEntry.getKey(), mass);
 		}
 
 	}
-
-
-	/**
-	 * This function is only called if we are getting our modifications from
-	 * a pepXML file.
-	 */
-	static void recordModsFromPepXML() {
-		
-		String alphabet = "ACDEFGHIKLMNPQRSTVWY";
-		
-		for(Map.Entry<String, Double> stringDoubleEntry : fixedModMap.entrySet()) {
-			
-			if(!alphabet.contains(stringDoubleEntry.getKey())) continue; // skip non-amino acid characters
-		
-			double mass = AA_MASS_MAP.get(stringDoubleEntry.getKey()) + stringDoubleEntry.getValue();
-			String symbol = stringDoubleEntry.getKey().toUpperCase();
-			AA_MASS_MAP.put(symbol, mass);
-		}
-		
-		// First filter the data in varModMap.
-		// We want to remove non-standard amino acid characters and remove
-		// the amino acids that are in our 'TargetModMap' variable.
-		HashMap<String, Double> tmp = new HashMap<>(varModMap);
-		varModMap.clear();
-		
-		for(Map.Entry<String, Double> stringDoubleEntry : tmp.entrySet()) {
-			String C = stringDoubleEntry.getKey().toUpperCase();
-			double mass = stringDoubleEntry.getValue();
-			if(!alphabet.contains(C)) continue; // skip non-amino acid characters
-			if(TargetModMap.containsKey(C)) continue; // skip target residues
-			varModMap.put(stringDoubleEntry.getKey(), mass);
-		}
-
-        for(Map.Entry<String, Double> stringDoubleEntry : varModMap.entrySet()) {
-			String C = stringDoubleEntry.getKey().toUpperCase();
-			double mass = AA_MASS_MAP.get(C) + stringDoubleEntry.getValue();
-			AA_MASS_MAP.put(stringDoubleEntry.getKey(), mass);
-		}
-	}
-
-
-	static void readInSpectra() throws IOException, IllegalStateException,
-			FileParsingException {
-		
-		log.info("\nReading spectra from " + Globals.spectrumPath
-				.getCanonicalPath() + "  (" + Globals.spectrumSuffix.toUpperCase()
-				+ " format)");
-
-		log.info("This can take a while so please be patient.");
-
-		Map<String, List<Integer>> scanMap;
-		
-		scanMap = psmList.parallelStream()
-				.filter( p -> {
-					String pathStr = Globals.spectrumPath + "/" + p.getSrcFile();
-					File f = new File(pathStr);
-					return f.exists();
-				}).collect(Collectors.groupingBy(PSM::getSrcFile,
-						Collectors.mapping(PSM::getScanNum, Collectors.toList())));
-
-		if(Globals.spectrumSuffix.equalsIgnoreCase(MGF_TYPE)) {
-			TIntObjectHashMap<Spectrum> curSpectra;
-			
-			for(String specFile : scanMap.keySet()) {
-				curSpectra = read_mgf(specFile);
-				String fn = new File(specFile).getName(); // get just the file name of specFile
-				int assignedSpectraCtr = 0;
-				
-				// Assign the spectra to their respective PSMs
-				for(PSM p : psmList) {
-					if(p.getSrcFile().equalsIgnoreCase(fn)) {
-						if(curSpectra.containsKey(p.getScanNum())) {
-							p.recordSpectra( curSpectra.get(p.getScanNum()) );
-							assignedSpectraCtr++;
-						}
-					}
-				}
-				log.info(fn + ": " + assignedSpectraCtr + " spectra read in.");
-			}
-		}
-
-		// Read mzXML files
-		if(Globals.spectrumSuffix.equalsIgnoreCase(MZXML_TYPE))
-			readMzXML(scanMap, spectrumPath.getAbsolutePath());
-
-		// Read mzML files
-		if(Globals.spectrumSuffix.equalsIgnoreCase(MZML_TYPE))
-			readMzML(scanMap, spectrumPath.getAbsolutePath());
-	}
-
-
-    /****************
-     * Function reads in spectral data from mzML files
-     * @param scanMap {@link Map} where the key is the filename and the value the list of scan
-     */
-    private static void readMzML(Map<String, List<Integer>> scanMap, String spectraPath) throws
-			FileParsingException {
-
-		long timeLo = System.nanoTime();
-
-        // Iterate over the file names
-        for(Map.Entry<String, List<Integer>> stringListEntry : scanMap.entrySet()) {
-            String baseFN = new File(spectraPath + "/" + stringListEntry.getKey()).getName();
-            System.err.print("\n" + baseFN + ":  "); // beginning of info line
-
-            int ctr = 0;
-            int iter = 0;
-            List<Integer> scanNums = stringListEntry.getValue();
-            Collections.sort(scanNums); // order scan numbers
-
-            // read in the mzXML file
-            String mzML_path = Globals.spectrumPath + "/" + baseFN;
-
-			final MZMLFile curMZML = new MZMLFile(mzML_path);
-
-            for(int scanNum : scanNums) {
-                iter++;
-                if( iter % 100 == 0 ) {
-                    System.err.print("\r" + baseFN + ":  " + iter + "... ");
-                    // beginning of info line
-                }
-				final IScan scan = curMZML.parseScan(scanNum, true);
-				final ISpectrum spectrum = scan.getSpectrum();
-				int N = spectrum.getMZs().length;
-                if(N == 0) {
-                    continue; // no valid spectrum for this scan number
-                }
-
-                double[] mz = spectrum.getMZs();
-                double[] intensities = spectrum.getIntensities();
-
-                // If this happens, there is something wrong with the spectrum so skip it
-                if(mz.length != intensities.length) {
-                    System.err.print(
-                            "\nERROR:" + baseFN + " Scan: " + scanNum +
-                            "\n# of mz values != # intensity values: " +
-                            mz.length + " != " + intensities.length +
-                            "\nSkipping this scan...\n"
-                    );
-                    continue;
-                }
-
-                Spectrum X = new Spectrum(mz, intensities);
-
-                PSM psm = psmList.getByScanOrder(baseFN, scanNum);
-                psm.recordSpectra(X);
-                ctr++;
-            }
-			// end of file reading
-            System.err.print("\r" + baseFN +  ":  " + ctr + " spectra read in.            ");
-        }
-		long timeHi = System.nanoTime();
-        log.info("Loading took %.1fs", (timeHi - timeLo)/1e9f);
-
-    }
 
 //	/****************
 //	 * Function reads in spectral data from mzML files
 //	 * @param scanMap
 //	 */
 //	private static void readXMLFile(Map<String, List<Integer>> scanMap,
-//									String spectrumPath, String fileType) throws FileParsingException {
+//									String SPECTRUM_PATH, String fileType) throws FileParsingException {
 //
 //		scanMap.entrySet().stream().forEach( fileEntry -> {
 //
@@ -680,10 +492,10 @@ class Globals {
 //
 //
 //			if(fileType.equalsIgnoreCase(MZML_TYPE))
-//				source = new MZMLFile(spectrumPath + "/" + fileName);
+//				source = new MZMLFile(SPECTRUM_PATH + "/" + fileName);
 //
 //			if(fileType.equalsIgnoreCase(MZXML_TYPE))
-//				source = new MZXMLFile(spectrumPath + "/" + fileName);
+//				source = new MZXMLFile(SPECTRUM_PATH + "/" + fileName);
 //
 //			if(source == null)
 //				new IOException("Error, file Type not supported");
@@ -762,224 +574,7 @@ class Globals {
 //	}
 
 
-    static double getFragmentIonMass(String x, double z, double addl_mass) {
-		double ret = 1.00728 * z;
-		
-		int start = x.indexOf(':') + 1;
-		int stop  = x.length();
-		
-		if(x.contains("-")) stop = x.indexOf('-');
-		
-		for(int i = start; i < stop; i++) {
-			String c = Character.toString( x.charAt(i) );
-			
-			if( AA_MASS_MAP.containsKey(c) ) {
-				double mass = AA_MASS_MAP.get(c);
-				ret += mass;
-			}
-		}
-		
-		ret += addl_mass; // y-ions have a water molecule extra
-		
-		return ret;
-	}
-
-	
-	// Function reads in an MGF file and returns it as a HashMap
-	private static TIntObjectHashMap<Spectrum> read_mgf(String specFile) throws
-			IOException {
-		TIntObjectHashMap<Spectrum> ret = new TIntObjectHashMap<>();
-		
-		File mgf = new File(specFile);
-		BufferedReader br = new BufferedReader(new FileReader(mgf));
-		String line;
-		int scanNum = 0;
-        Spectrum S;
-        ArrayList<Double> mzAL = null, intensityAL = null;
-
-		
-		while( (line = br.readLine()) != null ) {
-			
-			if(line.length() < 2) continue;
-			
-			if(line.startsWith("END IONS")) {
-				if( (null != mzAL) && (!mzAL.isEmpty()) ) {
-
-                    int N = mzAL.size();
-                    double[] mz = new double[ N ];
-                    double[] I = new double[ N ];
-                    for(short i = 0; i < N; i++) {
-                        mz[i] = mzAL.get(i);
-                        I[i] = intensityAL.get(i);
-                    }
-                    S = new Spectrum(mz, I);
-                    ret.put(scanNum, S);
-
-                    mzAL = null;
-                    intensityAL = null;
-                }
-                scanNum = 0;
-			}
-					
-			if(line.startsWith("BEGIN IONS")) {
-                mzAL = new ArrayList<>(100);
-                intensityAL = new ArrayList<>(100);
-			}
-			
-			if(line.startsWith("TITLE=")) {
-				int i = line.indexOf('.') + 1;
-				int j = line.indexOf('.', i);
-				String s = line.substring(i,j);
-				scanNum = Integer.valueOf(s);
-			}
-			
-			if(line.startsWith("CHARGE") || line.startsWith("PEPMASS")) continue;
-			
-			if( Character.isDigit( line.charAt(0) ) ) {
-				String[] ary = line.split("\\s+");
-				double mz = MathFunctions.roundDouble( Double.valueOf(ary[0]), 8 );
-				double I  = MathFunctions.roundDouble( Double.valueOf(ary[1]), 8 );
-				mzAL.add(mz);
-                intensityAL.add(I);
-			}
-		}
-		
-		return ret;
-	}
-
-	/**
-	 * Function to read spectra from mzXML file
-	 * @param scanMap Scan Map
-	 * @throws IllegalStateException Access exception
-	 * @throws FileParsingException File parsing exception
-	 */
-	private static void readMzXML(Map<String, List<Integer>> scanMap, String pathSpectra) throws
-			IllegalStateException,
-			FileParsingException {
-		
-		// Iterate over the file names
-		for(Map.Entry<String, List<Integer>> stringListEntry : scanMap.entrySet()) {
-			String baseFN = new File(pathSpectra + "/" + stringListEntry.getKey()).getName();
-			System.err.print(baseFN + ":  "); // beginning of info line
-			
-			int ctr = 0;
-			List<Integer> scanNums = stringListEntry.getValue();
-			Collections.sort(scanNums); // order the scan numbers
-
-            int N = numThreads;
-            if(numThreads > 1) N -= 1;
-
-			final MZXMLFile mzxml = new MZXMLFile(stringListEntry.getKey(), false);
-			mzxml.setNumThreadsForParsing(N);
-            mzxml.setParsingTimeout(60L); // 1 minute before it times out trying to read a file
-			final LCMSData lcmsData = new LCMSData(mzxml);
-			lcmsData.load(LCMSDataSubset.MS2_WITH_SPECTRA);
-			final IScanCollection scans = lcmsData.getScans();
-			final ScanIndex ms2ScanIndex = scans.getMapMsLevel2index().get(2);
-
-			if( (ms2ScanIndex == null) || (ms2ScanIndex.getNum2scan().isEmpty()) ) {
-				log.info("\nERROR: Globals.readMzXML(): Unable to read MS2 scans from '" + stringListEntry.getKey() + "'\n");
-				System.exit(0);
-			}
-			
-			for(Map.Entry<Integer, IScan> num2scan : ms2ScanIndex.getNum2scan().entrySet()) {
-				int scanNum = num2scan.getKey();
-				IScan scan = num2scan.getValue();
-				double[] mz = scan.getSpectrum().getMZs();
-				double[] intensities = scan.getSpectrum().getIntensities();
-
-                Spectrum curSpectrum = new Spectrum(mz, intensities);
-
-				// assign this spectrum to it's PSM
-				for(PSM p : psmList) {
-					if( (p.getSrcFile().equalsIgnoreCase(baseFN)) && (p.getScanNum() == scanNum) ) {
-						p.recordSpectra(curSpectrum);
-						ctr++;
-						break;
-					}
-				}
-			}
-			
-			log.info(ctr + " spectra read in.");  // end of info line
-		}
-	}
-
-	
-	// Function returns the decoy 'key' from the decoy map for the given residue
-	static String getDecoySymbol(char c) {
-		String ret = "";
-		String srcChar = Character.toString(c);
-		
-		for(String k : DECOY_AA_MAP.keySet()) {
-			String v = DECOY_AA_MAP.get(k);
-			
-			if(v.equalsIgnoreCase(srcChar)) {
-				ret = k;
-				break;
-			}
-		}
-		
-		return ret;
-	}
-
-	
-	// Function returns the TPP-formatted representation of the given single
-	// character modification
-	static String getTPPresidue(String c) {
-		String ret = "";
-		String orig;
-
-        if(c.equalsIgnoreCase("[")) {
-            int d = (int) Math.round(Globals.ntermMass) + 1; // adds a proton
-            ret = "n[" + d + "]";
-        }
-        else if(c.equals("]")) {
-            int d = (int) Math.round(Globals.ctermMass);
-            ret += "c[" + d + "]";
-        }
-        else {
-            int i = (int) Math.round(AA_MASS_MAP.get(c));
-
-            if (isDecoyResidue(c)) {
-                orig = DECOY_AA_MAP.get(c);
-            } else orig = c.toUpperCase();
-
-            ret = orig + "[" + i + "]";
-        }
-		
-		return ret;
-	}
-
-	
-	// Function returns true if the given sequence contains decoy characters
-	static boolean isDecoySeq(String seq) {
-		boolean ret = false;
-		
-		int score = 0;
-		for(int i = 0; i < seq.length(); i++) {
-			String c = Character.toString( seq.charAt(i) );
-			if(c.equalsIgnoreCase("[")) continue; // n-term mod symbol
-			if(c.equalsIgnoreCase("]")) continue; // c-term mod symbol
-			
-			if(isDecoyResidue(c)) score++;
-		}
-		
-		if(score > 0) ret = true;
-		
-		return ret;
-	}
-	
-	
-	// Function returns true if the given residue is from the decoy list
-	static boolean isDecoyResidue(String AA) {
-		boolean ret = false;
-		if(DECOY_AA_MAP.containsKey(AA))
-			ret = true;
-		return ret;
-	}
-	
-	
-	// Function writes a sample input file for LucXor to disk
+    // Function writes a sample input file for LucXor to disk
 	static File writeTemplateInputFile() throws IOException {
 		File outF = new File("luciphor2_input_template.txt");
 		
@@ -1089,56 +684,151 @@ class Globals {
 		return outF;
     }
 
+	public static File getSpectrumPath() {
+		return SPECTRUM_PATH;
+	}
 
-    // Record the global and local FLR values estimated for all of the delta scores
-    public static void recordFLRestimates() {
-        FLRestimateMap = new THashMap<>();
+	public static String getSpectrumPrefix() {
+		return SPECTRUM_PREFIX;
+	}
 
-        for(PSM p : Globals.psmList) {
-            if(p.isDecoy()) continue; // skip FLR data from decoys
-            double[] d = new double[2];
-            d[0] = p.getGlobalFDR();
-            d[1] = p.getLocalFDR();
-            FLRestimateMap.put( p.getDeltaScore(), d );
-        }
-    }
+	public static String getMatchedPkFile() {
+		return matchedPkFile;
+	}
 
+	public static File getInputFile() {
+		return inputFile;
+	}
 
-    // Function assigns the global and local FLR for the current PSM from the FLRestimateMap
-    public static void assignFLR() {
+	public static String getOutputFile() {
+		return outputFile;
+	}
 
-        ArrayList<Double> obsDeltaScores = new ArrayList<>(FLRestimateMap.keySet());
-        Collections.sort(obsDeltaScores);  // sort them from low to high
-        int N = obsDeltaScores.size();
-        boolean assigned;
-        for(PSM p : Globals.psmList) {
-            double obs_ds = p.getDeltaScore();
-            assigned = false;
+	public static int getMs2tolUnits() {
+		return MS2TOL_UNITS;
+	}
 
-            // iterate over the delta scores until you find the value closest to this one
-            int i;
-            for(i = 1; i < N; i++) {
-                double curDS = obsDeltaScores.get(i);
-                if(curDS > obs_ds) { // hit the limit, get the *previous* delta score
-                    double[] d = FLRestimateMap.get( obsDeltaScores.get((i-1)) );
-                    p.setGlobalFDR(d[0]);
-                    p.setLocalFDR(d[1]);
-                    assigned = true;
-                    break;
-                }
-            }
+	public static int getInputType() {
+		return inputType;
+	}
 
-            if(!assigned) { // very high scoring PSM
-                double[] d = FLRestimateMap.get( obsDeltaScores.get((N-1)) );
-                p.setGlobalFDR(d[0]);
-                p.setLocalFDR(d[1]);
-            }
-        }
-    }
+	public static int getDebugMode() {
+		return debugMode;
+	}
 
+	public static int getReduceNL() {
+		return reduceNL;
+	}
 
-    // This function prepares each PSM for the second iteration (the one after the FLR has been estimated)
-    public static void clearPSMs() {
-        for(PSM p : psmList) p.clearScores();
-    }
+	public static int getPeptideRepresentation() {
+		return peptideRepresentation;
+	}
+
+	public static int getScoringMethod() {
+		return scoringMethod;
+	}
+
+	public static int getScoringAlgorithm() {
+		return scoringAlgorithm;
+	}
+
+	public static int getMaxChargeState() {
+		return maxChargeState;
+	}
+
+	public static int getMinNumPSMsForModeling() {
+		return minNumPSMsForModeling;
+	}
+
+	public static int getNumThreads() {
+		return numThreads;
+	}
+
+	public static int getRunMode() {
+		return runMode;
+	}
+
+	public static int getTsvHdr() {
+		return tsvHdr;
+	}
+
+	public static int getMaxPepLen() {
+		return maxPepLen;
+	}
+
+	public static double getMs2tol() {
+		return ms2tol;
+	}
+
+	public static double getModelTH() {
+		return modelTH;
+	}
+
+	public static double getScoreTH() {
+		return scoreTH;
+	}
+
+	public static double getDecoyMass() {
+		return DECOY_MASS;
+	}
+
+	public static double getMinMZ() {
+		return minMZ;
+	}
+
+	public static double getMax_num_permutations() {
+		return max_num_permutations;
+	}
+
+	public static double getPrecursorNLmass() {
+		return precursorNLmass;
+	}
+
+	public static double getNtermMass() {
+		return ntermMass;
+	}
+
+	public static double getCtermMass() {
+		return ctermMass;
+	}
+
+	public static boolean isWriteMatchedPeaks() {
+		return writeMatchedPeaks;
+	}
+
+	public static TMap<String, Double> getTargetModMap() {
+		return TARGET_MOD_MAP;
+	}
+
+	public static TMap<String, Double> getFixedModMap() {
+		return FIXED_MOD_MAP;
+	}
+
+	public static TMap<String, Double> getVarModMap() {
+		return VAR_MOD_MAP;
+	}
+
+	public static TMap<String, Double> getNeutralLossMap() {
+		return NEUTRAL_LOSS_MAP;
+	}
+
+	public static TMap<String, Double> getDecoyNeutralLossMap() {
+		return DECOY_NEUTRAL_LOSS_MAP;
+	}
+
+	public static void setNTermMass(double modMass) {
+		ntermMass = modMass;
+	}
+
+	public static void setCTermMass(double modMass) {
+		ctermMass = modMass;
+	}
+
+	public static void clearVarMods() {
+		VAR_MOD_MAP.clear();
+	}
+
+	public static void addVarMod(String key, double mass) {
+		VAR_MOD_MAP.put(key, mass);
+	}
 }

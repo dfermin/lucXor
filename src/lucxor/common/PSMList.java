@@ -1,4 +1,6 @@
-package lucxor;
+package lucxor.common;
+
+import lucxor.utils.Utils;
 
 import java.util.*;
 
@@ -185,5 +187,10 @@ public class PSMList implements List<PSM>{
    */
   public Map<Integer, Integer> getChargeCount() {
     return chargeCount;
+  }
+
+  public void clearScores(){
+    for(PSM psm: psmList)
+      psm.clearScores();;
   }
 }

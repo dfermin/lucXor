@@ -2,37 +2,46 @@
  * To change this template, choose Tools | Templates
  * and open the template in the editor.
  */
-package lucxor;
+package lucxor.common;
 
 import java.io.File;
 import java.io.IOException;
+import java.util.HashMap;
+import java.util.Map;
 import javax.xml.parsers.ParserConfigurationException;
 import javax.xml.parsers.SAXParser;
 import javax.xml.parsers.SAXParserFactory;
+
+import lucxor.utils.Constants;
+import lucxor.LucXorConfiguration;
 import org.xml.sax.Attributes;
 import org.xml.sax.SAXException;
 import org.xml.sax.helpers.DefaultHandler;
+
+import static lucxor.utils.Constants.AA_MASS_MAP;
 
 
 /**
  *
  * @author dfermin
  */
-class PepXML extends DefaultHandler {
+public class PepXML extends DefaultHandler {
 
+	private final PSMList psmList;
 	private String temp;
 	private PSM curPSM = null;
 	private boolean recordMods = true; // changes to false after the end of first search_summary section
 
-	public static void readPepXMLFile(File inputXML) throws ParserConfigurationException, SAXException, IOException {
-		new PepXML(inputXML);
+	public static void readPepXMLFile(File inputXML, PSMList psmList) throws ParserConfigurationException, SAXException, IOException {
+		new PepXML(inputXML, psmList);
 	}
 	
-	private PepXML(File inputXML) throws ParserConfigurationException, SAXException, IOException {
+	private PepXML(File inputXML, PSMList psmList) throws ParserConfigurationException, SAXException, IOException {
 
 		SAXParserFactory factory = SAXParserFactory.newInstance();
 		factory.setValidating(false);
 		SAXParser parser = factory.newSAXParser();
+		this.psmList = psmList;
 		parser.parse(inputXML, this); // this class itself is the default handler, hence the use of 'this'
 	}
 	
@@ -61,13 +70,13 @@ class PepXML extends DefaultHandler {
 				// if this is a valid AA character that is a variable modification, record it
 				// as a lower case character in the varModMap
 				if(varStatus.equalsIgnoreCase("y")) {
-					if(!Globals.varModMap.containsKey(aa.toLowerCase())) {
-						Globals.varModMap.put(aa.toLowerCase(), modMass);
+					if(!LucXorConfiguration.getVarModMap().containsKey(aa.toLowerCase())) {
+						LucXorConfiguration.getVarModMap().put(aa.toLowerCase(), modMass);
 					}
 				}
 				else {
-					if(!Globals.fixedModMap.containsKey(aa.toUpperCase())) {
-						Globals.fixedModMap.put(aa.toUpperCase(), modMass);
+					if(!LucXorConfiguration.getFixedModMap().containsKey(aa.toUpperCase())) {
+						LucXorConfiguration.getFixedModMap().put(aa.toUpperCase(), modMass);
 					}
 				}
 			}
@@ -78,8 +87,10 @@ class PepXML extends DefaultHandler {
 			String terminus = attr.getValue("terminus");
 			double modMass = Double.valueOf( attr.getValue("massdiff") );
 			
-			if(terminus.equalsIgnoreCase("n")) Globals.ntermMass = modMass;
-			if(terminus.equalsIgnoreCase("c")) Globals.ctermMass = modMass;
+			if(terminus.equalsIgnoreCase("n"))
+				LucXorConfiguration.setNTermMass(modMass);
+			if(terminus.equalsIgnoreCase("c"))
+				LucXorConfiguration.setCTermMass(modMass);
 		}
 		
 		if(qName.equalsIgnoreCase("spectrum_query")) {
@@ -114,25 +125,25 @@ class PepXML extends DefaultHandler {
 		
 		if(qName.equalsIgnoreCase("search_score")) {
 			
-			if(Globals.scoringMethod != Constants.PEPPROPHET) {
+			if(LucXorConfiguration.getScoringMethod() != Constants.PEPPROPHET) {
 				for(int i = 0; i < attr.getLength() - 1; i++) {
 					int j = i + 1;
 					String k = attr.getValue(i);
 					double score = Double.valueOf( attr.getValue(j) );
 					
-					if(Globals.scoringMethod == Constants.NEGLOGEXPECT) {
+					if(LucXorConfiguration.getScoringMethod() == Constants.NEGLOGEXPECT) {
 						if(k.equalsIgnoreCase("expect")) curPSM.setPSMscore(-1.0 * Math.log(score));
 					}
 					
-					if(Globals.scoringMethod == Constants.MASCOTIONSCORE) {
+					if(LucXorConfiguration.getScoringMethod() == Constants.MASCOTIONSCORE) {
 						if(k.equalsIgnoreCase("ionscore")) curPSM.setPSMscore(score);
 					}
 
-                    if(Globals.scoringMethod == Constants.XTDHYPERSCORE) {
+                    if(LucXorConfiguration.getScoringMethod() == Constants.XTDHYPERSCORE) {
                         if(k.equalsIgnoreCase("hyperscore")) curPSM.setPSMscore(score);
                     }
 
-                    if(Globals.scoringMethod == Constants.XCORR) {
+                    if(LucXorConfiguration.getScoringMethod() == Constants.XCORR) {
                         if (k.equalsIgnoreCase("xcorr")) curPSM.setPSMscore(score);
                     }
 				}
@@ -141,7 +152,7 @@ class PepXML extends DefaultHandler {
 		}
 		
 		if(qName.equalsIgnoreCase("peptideprophet_result")) {
-			if(Globals.scoringMethod == Constants.PEPPROPHET)
+			if(LucXorConfiguration.getScoringMethod() == Constants.PEPPROPHET)
 				curPSM.setPSMscore(Double.valueOf(attr.getValue("probability")));
 		}
 	}
@@ -156,7 +167,7 @@ class PepXML extends DefaultHandler {
 				// The pepXML has the modifications for the search results multiple times
 				// (once per spectral file searched). We only need to record these modifications once
 				if(recordMods) {
-					Globals.recordModsFromPepXML();
+					recordModsFromPepXML();
 					recordMods = false;
 				}
 		}
@@ -173,16 +184,55 @@ class PepXML extends DefaultHandler {
 			}
 			
 			// Skip PSMs that exceed the number of candidate permutations
-			if(curPSM.getOrigPep().getNumPerm() > Globals.max_num_permutations)
+			if(curPSM.getOrigPep().getNumPerm() > LucXorConfiguration.getMax_num_permutations())
 				numBadChars = 100;
 
 			if(numBadChars == 0) {
                 curPSM.process();
-				if(curPSM.isKeeper()) Globals.psmList.add(curPSM);
+				if(curPSM.isKeeper()) psmList.add(curPSM);
                 curPSM = null;
 			}
 		}
 
+	}
+
+
+	/**
+	 * This function is only called if we are getting our modifications from
+	 * a pepXML file.
+	 */
+	public static void recordModsFromPepXML() {
+
+		String alphabet = "ACDEFGHIKLMNPQRSTVWY";
+
+		for(Map.Entry<String, Double> stringDoubleEntry : LucXorConfiguration.getFixedModMap().entrySet()) {
+
+			if(!alphabet.contains(stringDoubleEntry.getKey())) continue; // skip non-amino acid characters
+
+			double mass = AA_MASS_MAP.get(stringDoubleEntry.getKey()) + stringDoubleEntry.getValue();
+			String symbol = stringDoubleEntry.getKey().toUpperCase();
+			AA_MASS_MAP.put(symbol, mass);
+		}
+
+		// First filter the data in VAR_MOD_MAP.
+		// We want to remove non-standard amino acid characters and remove
+		// the amino acids that are in our 'TARGET_MOD_MAP' variable.
+		HashMap<String, Double> tmp = new HashMap<>(LucXorConfiguration.getVarModMap());
+		LucXorConfiguration.clearVarMods();
+
+		for(Map.Entry<String, Double> stringDoubleEntry : tmp.entrySet()) {
+			String C = stringDoubleEntry.getKey().toUpperCase();
+			double mass = stringDoubleEntry.getValue();
+			if(!alphabet.contains(C)) continue; // skip non-amino acid characters
+			if(LucXorConfiguration.getTargetModMap().containsKey(C)) continue; // skip target residues
+			LucXorConfiguration.addVarMod(stringDoubleEntry.getKey(), mass);
+		}
+
+		for(Map.Entry<String, Double> stringDoubleEntry : LucXorConfiguration.getVarModMap().entrySet()) {
+			String C = stringDoubleEntry.getKey().toUpperCase();
+			double mass = AA_MASS_MAP.get(C) + stringDoubleEntry.getValue();
+			AA_MASS_MAP.put(stringDoubleEntry.getKey(), mass);
+		}
 	}
 	
 	

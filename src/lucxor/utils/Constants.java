@@ -2,7 +2,7 @@
  * To change this template, choose Tools | Templates
  * and open the template in the editor.
  */
-package lucxor;
+package lucxor.utils;
 
 import java.util.AbstractMap;
 import java.util.Map;

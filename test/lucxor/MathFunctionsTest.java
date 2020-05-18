@@ -1,7 +1,7 @@
 package lucxor;
 
+import lucxor.utils.MathFunctions;
 import org.junit.Assert;
-import org.junit.Before;
 import org.junit.Test;
 
 public class MathFunctionsTest {

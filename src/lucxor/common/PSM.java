@@ -2,13 +2,19 @@
  * To change this template, choose Tools | Templates
  * and open the template in the editor.
  */
-package lucxor;
+package lucxor.common;
 
 import gnu.trove.map.TMap;
 import gnu.trove.map.hash.TDoubleObjectHashMap;
 import gnu.trove.map.hash.THashMap;
 import gnu.trove.map.hash.TIntDoubleHashMap;
 import lombok.extern.slf4j.Slf4j;
+import lucxor.algorithm.ModelDataCID;
+import lucxor.algorithm.ModelDataHCD;
+import lucxor.utils.Constants;
+import lucxor.LucXorConfiguration;
+import lucxor.utils.MathFunctions;
+import lucxor.utils.Utils;
 
 import java.io.BufferedWriter;
 import java.io.File;
@@ -25,7 +31,7 @@ import java.util.regex.Pattern;
  * @author dfermin
  */
 @Slf4j
-class PSM {
+public class PSM {
 
 	private String specId; // TPP-based name
 	private String srcFile; // name of file from which spectrum is derived
@@ -59,9 +65,9 @@ class PSM {
 
 
 	/**
-	 * Default counstructor for {@link PSM}
+	 * Default constructor for {@link PSM}
 	 */
-	PSM() {
+	public PSM() {
 		origPep = new Peptide();
 		modCoordMap = new TIntDoubleHashMap();
 		isKeeper = false;
@@ -72,7 +78,7 @@ class PSM {
 	}
 
 	
-	void process() {
+	public void process() {
 		
 		origPep.initialize(modCoordMap);
 		origPep.setCharge(this.charge);
@@ -81,15 +87,15 @@ class PSM {
 		int keepingScore = 0;
 		if(origPep.getNumPPS() > 0) keepingScore++;
 		if(origPep.getNumRPS() > 0) keepingScore++;
-		if(PSMscore >= Globals.scoreTH) keepingScore++;
-        if(charge <= Globals.maxChargeState) keepingScore++;
-        if(origPep.getPepLen() <= Globals.maxPepLen) keepingScore++;
+		if(PSMscore >= LucXorConfiguration.getScoreTH()) keepingScore++;
+        if(charge <= LucXorConfiguration.getMaxChargeState()) keepingScore++;
+        if(origPep.getPepLen() <= LucXorConfiguration.getMaxPepLen()) keepingScore++;
 		
 		if(origPep.getNumPPS() == origPep.getNumRPS()) isUnambiguous = true;
 		
 		if(keepingScore == 5) isKeeper = true;
 		
-		if(isKeeper && (PSMscore >= Globals.modelTH))
+		if(isKeeper && (PSMscore >= LucXorConfiguration.getModelTH()))
 			useForModel = true;
 		
 		
@@ -97,12 +103,12 @@ class PSM {
 			// We will reconstruct the specId here to remove left-padded zeros
 			String suffix = "";
 
-			if(Globals.inputType == Constants.PEPXML) {
-				if(Globals.spectrumSuffix.equalsIgnoreCase(Constants.MZXML_TYPE))
+			if(LucXorConfiguration.getInputType() == Constants.PEPXML) {
+				if(LucXorConfiguration.getSpectrumPrefix().equalsIgnoreCase(Constants.MZXML_TYPE))
 					suffix = Constants.MZXML_TYPE;
-				if(Globals.spectrumSuffix.equalsIgnoreCase(Constants.MZML_TYPE))
+				if(LucXorConfiguration.getSpectrumPrefix().equalsIgnoreCase(Constants.MZML_TYPE))
 					suffix = Constants.MZML_TYPE;
-				if(Globals.spectrumSuffix.equalsIgnoreCase(Constants.MGF_TYPE))
+				if(LucXorConfiguration.getSpectrumPrefix().equalsIgnoreCase(Constants.MGF_TYPE))
 					suffix = Constants.MGF_TYPE;
 
                 /*
@@ -145,10 +151,10 @@ class PSM {
 		
 	}
 
-	void recordSpectra(Spectrum S) {
+	public void recordSpectra(Spectrum S) {
 		PeakList = S;
 		// reduce the impact of the neutral loss peak (if any)
-		if(Globals.reduceNL == 1) reduceNLpeak();
+		if(LucXorConfiguration.getReduceNL() == 1) reduceNLpeak();
 		// normalize the peak intensities to the median
 		PeakList.medianNormalizeSpectra();
 	}
@@ -158,12 +164,11 @@ class PSM {
 	 * If the user asked for it, reduce the intensity of the precursor neutral loss peak
  	 */
 	private void reduceNLpeak() {
-		double pepMHplus = Globals
-				.getFragmentIonMass(origPep.getModPeptide(), 1.0, Constants.WATER);
+		double pepMHplus = Utils.getFragmentIonMass(origPep.getModPeptide(), 1.0, Constants.WATER);
 
-		// the Globals.precursorNLmass is a negative number
+		// the LucXorConfiguration.precursorNLmass is a negative number
 		double NLmass = MathFunctions
-				.roundDouble( (pepMHplus + Globals.precursorNLmass), 3 );
+				.roundDouble( (pepMHplus + LucXorConfiguration.getPrecursorNLmass()), 3 );
 
 		double NLmz = MathFunctions
 				.roundDouble( (NLmass / (double) charge), 3 );
@@ -214,12 +219,12 @@ class PSM {
 		
 		// record n-terminal modification (if any)
 		if(modCoordMap.containsKey(Constants.NTERM_MOD)) {
-            ret.put(Constants.NTERM_MOD, Globals.ntermMass);
+            ret.put(Constants.NTERM_MOD, LucXorConfiguration.getNtermMass());
 		}
 
 		// record c-terminal modification (if any)
 		if(modCoordMap.containsKey(Constants.CTERM_MOD)) {
-			ret.put(Constants.CTERM_MOD, Globals.ntermMass);
+			ret.put(Constants.CTERM_MOD, LucXorConfiguration.getNtermMass());
 		}
 		
 		// record all variable modifications
@@ -230,7 +235,7 @@ class PSM {
 			char c = modPep.charAt(i);
 			
 			// record decoy-modified residues
-			if( Globals.isDecoyResidue(Character.toString(c)) ) {
+			if( Utils.isDecoyResidue(Character.toString(c)) ) {
 				mass = Constants.AA_MASS_MAP.get(Character.toString(c));
 				ret.put(i, mass);
 			}
@@ -260,7 +265,7 @@ class PSM {
 	
 	// This function identifies all of the peaks in PeakList that can be matched to any fragment ion of any permutation
 	// of the peptide sequence associated with this PSM
-	void matchAllPeaks() {
+	public void matchAllPeaks() {
 
         posPeaks = new ArrayList<>(PeakList.N);
 
@@ -385,11 +390,11 @@ class PSM {
         double a, b;
 
         // Compute the fragment error tolerance that will be used
-        if(Globals.ms2tol_units == Constants.PPM_UNITS) {
-            double ppmErr = Globals.ms2tol / Constants.PPM;
+        if(LucXorConfiguration.getMs2tolUnits() == Constants.PPM_UNITS) {
+            double ppmErr = LucXorConfiguration.getMs2tol() / Constants.PPM;
             matchErr = theo_mz * ppmErr;
         }
-        else matchErr = Globals.ms2tol;
+        else matchErr = LucXorConfiguration.getMs2tol();
 
         matchErr *= 0.5; // split in half
 
@@ -428,7 +433,7 @@ class PSM {
 	 * Function creates all of the permutations for the sequence assigned to this PSM
 	 * @param RN iterations
 	 */
-	void generatePermutations(int RN) {
+	public void generatePermutations(int RN) {
 		posPermutationScoreMap = new THashMap<>();
 		posPermutationScoreMap = origPep.getPermutations(0);
 		
@@ -454,8 +459,10 @@ class PSM {
 	/**
 	 * Function scores every candidate sequence associated with this PSM
 	 * @throws IOException
+	 * @param modelingMapHCD
+	 * @param modelingMapCID
 	 */
-	void scorePermutations() throws IOException {
+	public void scorePermutations(TMap<Integer, ModelDataHCD> modelingMapHCD, TMap<Integer, ModelDataCID> modelingMapCID) throws IOException {
 		TIntDoubleHashMap mcp;
 		
 		File debugF;
@@ -468,7 +475,7 @@ class PSM {
             return;
         }
 
-		if(Globals.debugMode == Constants.WRITE_PERM_SCORES) {
+		if(LucXorConfiguration.getDebugMode() == Constants.WRITE_PERM_SCORES) {
 				debugF = new File("all_scores.debug");
 				
 				if(!debugF.exists()) {
@@ -482,7 +489,7 @@ class PSM {
 				}
 		}
 
-        if(Globals.debugMode == Constants.WRITE_ALL_MATCHED_PK_SCORES) {
+        if(LucXorConfiguration.getDebugMode() == Constants.WRITE_ALL_MATCHED_PK_SCORES) {
             debugF = new File("all_matched_pks.debug");
 
             if(!debugF.exists()) {
@@ -510,18 +517,18 @@ class PSM {
 
             curPep.matchPeaks(PeakList); // match all the peaks you can for this peptide permutation
 
-			if(Globals.scoringAlgorithm == Constants.CID) curPep.calcScoreCID();
-			if(Globals.scoringAlgorithm == Constants.HCD) curPep.calcScoreHCD();
+			if(LucXorConfiguration.getScoringAlgorithm() == Constants.CID) curPep.calcScoreCID(modelingMapCID);
+			if(LucXorConfiguration.getScoringAlgorithm() == Constants.HCD) curPep.calcScoreHCD(modelingMapHCD);
 			
-			if(Globals.debugMode == Constants.WRITE_PERM_SCORES) {
+			if(LucXorConfiguration.getDebugMode() == Constants.WRITE_PERM_SCORES) {
 				line = specId + "\t" + origPep.getModPeptide() + "\t" +
 					   curPep.getModPeptide() + "\t0\t" + curPep.getScore() + "\n";
 				bw.write(line);
 			}
 
-            if(Globals.debugMode == Constants.WRITE_ALL_MATCHED_PK_SCORES) {
+            if(LucXorConfiguration.getDebugMode() == Constants.WRITE_ALL_MATCHED_PK_SCORES) {
                 for(Peak pk : curPep.getMatchedPeaks() ) {
-                    line = specId + "\t" + curSeq + "\t" + Globals.isDecoySeq(curSeq.getKey()) + "\t" +
+                    line = specId + "\t" + curSeq + "\t" + Utils.isDecoySeq(curSeq.getKey()) + "\t" +
                            pk.getMatchedIonStr() + "\t" + pk.getMz() + "\t" +
                            pk.getRelIntensity() + "\t" + pk.getDist() + "\t" +
                            pk.getIntensityScore() + "\t" + pk.getDistScore() + "\t" + pk.getScore() + "\n";
@@ -546,18 +553,20 @@ class PSM {
 
                 curPep.matchPeaks(PeakList);
 
-				if(Globals.scoringAlgorithm == Constants.CID) curPep.calcScoreCID();
-				if(Globals.scoringAlgorithm == Constants.HCD) curPep.calcScoreHCD();
+				if(LucXorConfiguration.getScoringAlgorithm() == Constants.CID)
+					curPep.calcScoreCID(modelingMapCID);
+				if(LucXorConfiguration.getScoringAlgorithm() == Constants.HCD)
+					curPep.calcScoreHCD(modelingMapHCD);
 
-				if(Globals.debugMode == Constants.WRITE_PERM_SCORES) {
+				if(LucXorConfiguration.getDebugMode() == Constants.WRITE_PERM_SCORES) {
 					line = specId + "\t" + origPep.getModPeptide() + "\t" +
 						curPep.getModPeptide() + "\t1\t" + curPep.getScore() + "\n";
 					bw.write(line);
 				}
 
-                if(Globals.debugMode == Constants.WRITE_ALL_MATCHED_PK_SCORES) {
+                if(LucXorConfiguration.getDebugMode() == Constants.WRITE_ALL_MATCHED_PK_SCORES) {
                     for(Peak pk : curPep.getMatchedPeaks() ) {
-                        line = specId + "\t" + curSeq + "\t" + Globals.isDecoySeq(curSeq.getKey()) + "\t" +
+                        line = specId + "\t" + curSeq + "\t" + Utils.isDecoySeq(curSeq.getKey()) + "\t" +
                                 pk.getMatchedIonStr() + "\t" + pk.getMz() + "\t" +
                                 pk.getRelIntensity() + "\t" + pk.getDist() + "\t" +
                                 pk.getIntensityScore() + "\t" + pk.getDistScore() + "\t" + pk.getScore() + "\n";
@@ -569,9 +578,9 @@ class PSM {
 			}
 		}
 		
-		if(Globals.debugMode == Constants.WRITE_PERM_SCORES)
+		if(LucXorConfiguration.getDebugMode() == Constants.WRITE_PERM_SCORES)
 			bw.close();
-        if(Globals.debugMode == Constants.WRITE_ALL_MATCHED_PK_SCORES)
+        if(LucXorConfiguration.getDebugMode() == Constants.WRITE_ALL_MATCHED_PK_SCORES)
         	bw.close();
 
 
@@ -683,13 +692,13 @@ class PSM {
 	 * Function returns results as a string
 	 * @return
 	 */
-	String getResults() {
+	public String getResults() {
 
 		DecimalFormat df = new DecimalFormat("#.####");
 		
 		String ret = specId + "\t";
 
-		if(Globals.peptideRepresentation == Constants.SINGLE_CHAR) {
+		if(LucXorConfiguration.getPeptideRepresentation() == Constants.SINGLE_CHAR) {
 			ret += origPep.getPeptide() + "\t";
 			ret += score1pep.getModPeptide() + "\t";
 			ret += score2pep.getModPeptide() + "\t";
@@ -705,7 +714,7 @@ class PSM {
 		
 		ret += df.format(PSMscore) + "\t";
 
-        if(Globals.runMode == Constants.REPORT_DECOYS)
+        if(LucXorConfiguration.getRunMode() == Constants.REPORT_DECOYS)
 		    ret += (score1pep.isDecoyPep() ? 1 : 0) + "\t" + (score2pep.isDecoyPep() ? 1 : 0) + "\t";
 		
 		ret += df.format(deltaScore) + "\t";
@@ -725,21 +734,21 @@ class PSM {
 	 * to this PSM. The data is written in a TAB-delimited format.
 	 * @throws IOException
 	 */
-	void debugWriteScoredPeaks() throws IOException {
+	public void debugWriteScoredPeaks(String dateStamp, TMap<Integer, ModelDataHCD> modelingMapHCD, TMap<Integer, ModelDataCID> modelingMapCID) throws IOException {
 
 		DecimalFormat df = new DecimalFormat("#.#####");
 		int numDecimals = 4;
 		
 		String tsvFileName;
-		if(Globals.inputType == Constants.PEPXML) tsvFileName = specId + ".tsv";
+		if(LucXorConfiguration.getInputType() == Constants.PEPXML) tsvFileName = specId + ".tsv";
 		else {
-			int i = srcFile.lastIndexOf(Globals.spectrumSuffix);
+			int i = srcFile.lastIndexOf(LucXorConfiguration.getSpectrumPrefix());
 			String k = String.format("%05d", scanNum) + charge;
 			tsvFileName = srcFile.substring(0, i) + k + ".tsv";
 		}
 		
 		// With the next 4 lines you create output directory if necessary
-		String outDirName = "debug_scored_peaks." + Globals.dateStamp;
+		String outDirName = "debug_scored_peaks." + dateStamp;
 		String outFileStr = outDirName + "/" + tsvFileName;
 		
 		File outF = new File(outFileStr);
@@ -754,8 +763,8 @@ class PSM {
 		score1pep.buildIonLadders();
         score1pep.matchPeaks(PeakList);
 
-		if(Globals.scoringAlgorithm == Constants.CID) score1pep.calcScoreCID();
-		if(Globals.scoringAlgorithm == Constants.HCD) score1pep.calcScoreHCD();
+		if(LucXorConfiguration.getScoringAlgorithm() == Constants.CID) score1pep.calcScoreCID(modelingMapCID);
+		if(LucXorConfiguration.getScoringAlgorithm() == Constants.HCD) score1pep.calcScoreHCD(modelingMapHCD);
 		
 		List<Peak> mPK = score1pep.getMatchedPeaks();
 		mPK.sort(Peak.comparator_mz);
@@ -778,8 +787,10 @@ class PSM {
 
 		score2pep.buildIonLadders();
 		score2pep.matchPeaks(PeakList);
-        if(Globals.scoringAlgorithm == Constants.CID) score2pep.calcScoreCID();
-		if(Globals.scoringAlgorithm == Constants.HCD) score2pep.calcScoreHCD();
+        if(LucXorConfiguration.getScoringAlgorithm() == Constants.CID)
+        	score2pep.calcScoreCID(modelingMapCID);
+		if(LucXorConfiguration.getScoringAlgorithm() == Constants.HCD)
+			score2pep.calcScoreHCD(modelingMapHCD);
 
 		
 		mPK.clear();
@@ -810,8 +821,10 @@ class PSM {
 	 * This function returns the matched peaks for the top 2 permutations assigned
 	 * to this PSM. The data is returned in a TAB-delimited format.
 	 * @return Line String
+	 * @param modelingMapCID CID model
+	 * @param modelingMapHCD HCD Moddel
 	 */
-	String writeMatchedPks() {
+	public String writeMatchedPks(TMap<Integer, ModelDataCID> modelingMapCID, TMap<Integer, ModelDataHCD> modelingMapHCD) {
 
 		DecimalFormat df = new DecimalFormat("#.####");
 		int numDecimals = 4;
@@ -821,8 +834,8 @@ class PSM {
         score1pep.buildIonLadders();
         score1pep.matchPeaks(PeakList);
 
-        if(Globals.scoringAlgorithm == Constants.CID) score1pep.calcScoreCID();
-        if(Globals.scoringAlgorithm == Constants.HCD) score1pep.calcScoreHCD();
+        if(LucXorConfiguration.getScoringAlgorithm() == Constants.CID) score1pep.calcScoreCID(modelingMapCID);
+        if(LucXorConfiguration.getScoringAlgorithm() == Constants.HCD) score1pep.calcScoreHCD(modelingMapHCD);
 
         List<Peak> mPK = score1pep.getMatchedPeaks();
         mPK.sort(Peak.comparator_mz);
@@ -844,10 +857,10 @@ class PSM {
 
         score2pep.buildIonLadders();
         score2pep.matchPeaks(PeakList);
-        if(Globals.scoringAlgorithm == Constants.CID)
-        	score2pep.calcScoreCID();
-        if(Globals.scoringAlgorithm == Constants.HCD)
-        	score2pep.calcScoreHCD();
+        if(LucXorConfiguration.getScoringAlgorithm() == Constants.CID)
+        	score2pep.calcScoreCID(modelingMapCID);
+        if(LucXorConfiguration.getScoringAlgorithm() == Constants.HCD)
+        	score2pep.calcScoreHCD(modelingMapHCD);
 
 
         mPK.clear();

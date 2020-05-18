@@ -2,7 +2,7 @@
  * To change this template, choose Tools | Templates
  * and open the template in the editor.
  */
-package lucxor;
+package lucxor.common;
 
 import java.util.*;
 import java.util.Map.Entry;
@@ -14,13 +14,19 @@ import gnu.trove.map.TMap;
 import gnu.trove.map.hash.TDoubleObjectHashMap;
 import gnu.trove.map.hash.THashMap;
 import gnu.trove.map.hash.TIntDoubleHashMap;
+import lucxor.*;
+import lucxor.algorithm.ModelDataCID;
+import lucxor.algorithm.ModelDataHCD;
+import lucxor.utils.Constants;
+import lucxor.utils.MathFunctions;
+import lucxor.utils.Utils;
 import org.apache.commons.math3.util.FastMath;
 
 /**
  *
  * @author dfermin
  */
-class Peptide {
+public class Peptide {
 
 	private String peptide;
 	private String modPeptide;
@@ -56,10 +62,10 @@ class Peptide {
 				String C = Character.toString(peptide.charAt(pos));
 				String c = C.toLowerCase();
 
-				if( Globals.fixedModMap.containsKey(C)) {
+				if( LucXorConfiguration.getFixedModMap().containsKey(C)) {
 				}
-				else if( Globals.TargetModMap.containsKey(C) ) modPosMap.put(pos, mass);
-				else if( Globals.varModMap.containsKey(c)) nonTargetMods.put(pos, c); // record position of mod.
+				else if( LucXorConfiguration.getTargetModMap().containsKey(C) ) modPosMap.put(pos, mass);
+				else if( LucXorConfiguration.getVarModMap().containsKey(c)) nonTargetMods.put(pos, c); // record position of mod.
 			}
 		}
 
@@ -76,7 +82,7 @@ class Peptide {
 			}
 			else if(modPosMap.containsKey(i)) { // this residue is a target site
 				String c = AA;
-				if( !Globals.isDecoyResidue(c) ) AA = c.toLowerCase();
+				if( !Utils.isDecoyResidue(c) ) AA = c.toLowerCase();
 			}
 
 			modPeptide += AA;
@@ -87,7 +93,7 @@ class Peptide {
 		numPPS = 0;
 		for(int i = 0; i < pepLen; i++) {
 			String AA = Character.toString(peptide.charAt(i));
-			if(Globals.TargetModMap.containsKey(AA)) numPPS++;
+			if(LucXorConfiguration.getTargetModMap().containsKey(AA)) numPPS++;
 		}
 
 		// Determine how many reported target-mod sites this peptide has
@@ -95,7 +101,7 @@ class Peptide {
 		for(int i = 0; i < pepLen; i++) {
 			String aa = Character.toString(modPeptide.charAt(i));
 			int score = 0;
-			if(Globals.TargetModMap.containsKey(aa.toUpperCase())) score++;
+			if(LucXorConfiguration.getTargetModMap().containsKey(aa.toUpperCase())) score++;
 			if(Character.isLowerCase(aa.charAt(0))) score++;
 
 			if(score == 2) numRPS++;
@@ -120,14 +126,14 @@ class Peptide {
 
 		// deal with the N-terminus and C-terminus values
 		if(curSeq.startsWith("[")) {
-			modPosMap.put(Constants.NTERM_MOD, Globals.ntermMass);
+			modPosMap.put(Constants.NTERM_MOD, LucXorConfiguration.getNtermMass());
 			modPeptide = curSeq;
 		}
 		else modPeptide = curSeq;
 
 
 		if(curSeq.endsWith("]")) {
-			modPosMap.put(Constants.CTERM_MOD, Globals.ctermMass);
+			modPosMap.put(Constants.CTERM_MOD, LucXorConfiguration.getCtermMass());
 		}
 	}
 
@@ -139,7 +145,7 @@ class Peptide {
 
 		// Append N-term modification (if any is present)
 		if(modPeptide.startsWith("[")) {
-			int d = (int) Math.round(Globals.ntermMass);
+			int d = (int) Math.round(LucXorConfiguration.getNtermMass());
 			ret = "n[" + d + "]";
 			pepLen_local += 1; // need this to capture last residue in this function
 		}
@@ -152,14 +158,14 @@ class Peptide {
 
 			// this is a modified amino acid
 			if(Character.isLowerCase(modPeptide.charAt(i))) {
-				ret += Globals.getTPPresidue(aa);
+				ret += Utils.getTPPresidue(aa, LucXorConfiguration.getNtermMass(), LucXorConfiguration.getCtermMass());
 			}
 			else ret += aa;
 		}
 
 		// Append C-term modification (if any is present)
 		if(modPeptide.endsWith("]")) {
-			int d = (int) Math.round(Globals.ctermMass);
+			int d = (int) Math.round(LucXorConfiguration.getCtermMass());
 			ret += "c[" + d + "]";
 		}
 
@@ -180,8 +186,8 @@ class Peptide {
 
 		final int minLen = 2; // minimum number of residues a fragment must contain
 
-		if(modPosMap.containsKey(Constants.NTERM_MOD)) ntermM = Globals.ntermMass;
-		if(modPosMap.containsKey(Constants.CTERM_MOD)) ctermM = Globals.ctermMass;
+		if(modPosMap.containsKey(Constants.NTERM_MOD)) ntermM = LucXorConfiguration.getNtermMass();
+		if(modPosMap.containsKey(Constants.CTERM_MOD)) ctermM = LucXorConfiguration.getCtermMass();
 
 		for(double Z = 1.0; Z < (double) charge; Z++) {
 			for(int i = 1; i < pepLen; i++) { // starting at 1 ensures our shortest fragment ion is 2 char long
@@ -196,12 +202,12 @@ class Peptide {
 				if(prefix.length() >= minLen) {
 					b = "b" + prefix_len + ":" + prefix;
 
-					bm = Globals.getFragmentIonMass(b, Z, 0.0) + ntermM;
+					bm = Utils.getFragmentIonMass(b, Z, 0.0) + ntermM;
 					bmz = bm / Z;
 
 					if(Z > 1.0) b += "/+" + (int) Z;
 
-					if(bmz > Globals.minMZ) {
+					if(bmz > LucXorConfiguration.getMinMZ()) {
 						bIons.put(b, bmz);
 
 						// Determine if this ion sequence can under go a neutral loss
@@ -213,12 +219,12 @@ class Peptide {
 
 				if( (suffix.length() >= minLen) && !suffix.equalsIgnoreCase(modPeptide)) {
 					y = "y" + suffix_len + ":" + suffix;
-					ym = Globals.getFragmentIonMass(y, Z, Constants.WATER) + ctermM;
+					ym = Utils.getFragmentIonMass(y, Z, Constants.WATER) + ctermM;
 					ymz = ym / Z;
 
 					if(Z > 1.0) y += "/+" + (int) Z;
 
-					if(ymz > Globals.minMZ) {
+					if(ymz > LucXorConfiguration.getMinMZ()) {
 						yIons.put(y, ymz);
 
 						// Determine if this ion sequence can under go a neutral loss
@@ -242,8 +248,8 @@ class Peptide {
 
 		String x = ion.substring(start, end);
 
-		if( !Globals.isDecoySeq(x) ) {
-			for(Entry<String, Double> stringDoubleEntry : Globals.nlMap.entrySet()) {
+		if( !Utils.isDecoySeq(x) ) {
+			for(Entry<String, Double> stringDoubleEntry : LucXorConfiguration.getNeutralLossMap().entrySet()) {
 
 				String candResidues = stringDoubleEntry.getKey().substring( 0, stringDoubleEntry.getKey().indexOf('-') );
 				int numCandRes = 0;
@@ -261,17 +267,17 @@ class Peptide {
 					double mass = orig_ion_mass + nl_mass;
 					double mz = MathFunctions.roundDouble((mass / z), 4);
 
-					if(mz > Globals.minMZ) {
+					if(mz > LucXorConfiguration.getMinMZ()) {
 						if(ion.startsWith("b")) bIons.put(nl_str, mz);
 						if(ion.startsWith("y")) yIons.put(nl_str, mz);
 					}
 				}
-			} // end loop Globals.nlMap
+			} // end loop LucXorConfiguration.nlMap
 		}
 		else {
 			// The 'ion' string variable must contain at least 1 decoy residue modification
 			// if you got to this point of the code.
-			for(Entry<String, Double> e : Globals.decoyNLmap.entrySet()) {
+			for(Entry<String, Double> e : LucXorConfiguration.getDecoyNeutralLossMap().entrySet()) {
 				String NL_tag = e.getKey();
 				double nl_mass = e.getValue();
 
@@ -279,7 +285,7 @@ class Peptide {
 				double mass = orig_ion_mass + nl_mass;
 				double mz = MathFunctions.roundDouble((mass / z), 4);
 
-				if(mz > Globals.minMZ) {
+				if(mz > LucXorConfiguration.getMinMZ()) {
 					if(ion.startsWith("b")) bIons.put(nl_str, mz);
 					if(ion.startsWith("y")) yIons.put(nl_str, mz);
 				}
@@ -295,7 +301,7 @@ class Peptide {
 
 		for(int i = 0; i < pepLen; i++) {
 			String aa = Character.toString( peptide.charAt(i) );
-			if( !Globals.TargetModMap.containsKey(aa) ) ctr++;
+			if( !LucXorConfiguration.getTargetModMap().containsKey(aa) ) ctr++;
 		}
 
 		if(ctr >= p) { // you have enough non-target reidues to make a decoy peptide
@@ -305,7 +311,7 @@ class Peptide {
 	}
 
 
-	double getNumPerm() {
+	public double getNumPerm() {
 		return (numPermutations + numDecoyPermutations);
 	}
 
@@ -323,7 +329,7 @@ class Peptide {
 			// Get candidate "true" sites to modify
 			for(i = 0; i < pepLen; i++) {
 				String aa = Character.toString( peptide.charAt(i) );
-				if( Globals.TargetModMap.containsKey(aa) ) candModSites.add(i);
+				if( LucXorConfiguration.getTargetModMap().containsKey(aa) ) candModSites.add(i);
 			}
 
 			// For the given candidate sites that can undergo modifications,
@@ -357,7 +363,7 @@ class Peptide {
 				String AA = Character.toString( peptide.charAt(i) );
 				String aa = AA.toLowerCase();
 				int score = 0;
-				if( !Globals.TargetModMap.containsKey(AA))
+				if( !LucXorConfiguration.getTargetModMap().containsKey(AA))
 					score++;
 
 				if( !this.nonTargetMods.containsKey(aa) )
@@ -378,7 +384,7 @@ class Peptide {
 					String aa = Character.toString( peptide.charAt(i) ).toLowerCase();
 
 					if(a.contains(i)) { // site to be modified
-						String decoyChar = Globals.getDecoySymbol( peptide.charAt(i) );
+						String decoyChar = Utils.getDecoySymbol( peptide.charAt(i) );
 						modPep += decoyChar;
 					}
 					else if( nonTargetMods.containsKey(i) ) {
@@ -408,13 +414,13 @@ class Peptide {
 
 
 	// Function scores the current peptide
-	void calcScoreCID() {
+	void calcScoreCID(TMap<Integer, ModelDataCID> modelingMapCID) {
 
 		if(matchedPeaks.isEmpty()) {
 			score = 0;
 		}
 		else {
-			ModelDataCID MD = Globals.modelingMapCID.get(this.charge);
+			ModelDataCID MD = modelingMapCID.get(this.charge);
 
 			// Now compute the scores for these peaks
 			double intensityM = 0;
@@ -428,22 +434,22 @@ class Peptide {
 			for(Peak pk : matchedPeaks) {
 
 				intensityU = MathFunctions
-						.logGaussianProb(MD.mu_int_U, MD.var_int_U, pk.getNormIntensity());
+						.logGaussianProb(MD.getMu_int_U(), MD.getVar_int_U(), pk.getNormIntensity());
 				distU = MathFunctions
-						.logGaussianProb(MD.mu_dist_U, MD.var_dist_U, pk.getDist());
+						.logGaussianProb(MD.getMu_dist_U(), MD.getVar_dist_U(), pk.getDist());
 
 				if(pk.getMatchedIonStr().startsWith("b")) {
 					intensityM = MathFunctions
-							.logGaussianProb(MD.mu_int_B, MD.var_int_B, pk.getNormIntensity());
+							.logGaussianProb(MD.getMu_int_B(), MD.getVar_int_B(), pk.getNormIntensity());
 					distM = MathFunctions
-							.logGaussianProb(MD.mu_dist_B, MD.var_dist_B, pk.getDist());
+							.logGaussianProb(MD.getMu_dist_B(), MD.getVar_dist_B(), pk.getDist());
 				}
 
 				if(pk.getMatchedIonStr().startsWith("y")) {
 					intensityM = MathFunctions
-							.logGaussianProb(MD.mu_int_Y, MD.var_int_Y, pk.getNormIntensity());
+							.logGaussianProb(MD.getMu_int_Y(), MD.getVar_int_Y(), pk.getNormIntensity());
 					distM = MathFunctions
-							.logGaussianProb(MD.mu_dist_Y, MD.var_dist_Y, pk.getDist());
+							.logGaussianProb(MD.getMu_dist_Y(), MD.getVar_dist_Y(), pk.getDist());
 				}
 
 				Iscore = intensityM - intensityU;
@@ -475,7 +481,7 @@ class Peptide {
 		int score = 0;
 		for(int i = 0; i < pepLen; i++) {
 			String aa = Character.toString( modPeptide.charAt(i) );
-			if(Globals.isDecoyResidue(aa))
+			if(Utils.isDecoyResidue(aa))
 				score++;
 		}
 
@@ -488,13 +494,13 @@ class Peptide {
 	/****************
 	 * Function computes the score for the HCD algorithm
 	 */
-	void calcScoreHCD() {
+	void calcScoreHCD(TMap<Integer, ModelDataHCD> modelingMapHCD) {
 
 		if(matchedPeaks.isEmpty()) {
 			score = 0;
 		}
 		else {
-			ModelDataHCD MD = Globals.modelingMapHCD.get(this.charge);
+			ModelDataHCD MD = modelingMapHCD.get(this.charge);
 
 			// we double the error window size for decoys. Otherwise they may not get matched peaks
 			isDecoyPep();
@@ -541,7 +547,7 @@ class Peptide {
 	 * @param obsPeakList
 	 */
 	public void matchPeaks(Spectrum obsPeakList) {
-//        if( !Globals.modelingMapCID.containsKey(this.charge) ) {
+//        if( !LucXorConfiguration.modelingMapCID.containsKey(this.charge) ) {
 //            log.info("\nError! " + peptide + "/+" + this.charge +
 //                    ": a CID Model does not exist for this charge state!\nExiting now.\n");
 //            System.exit(0);
@@ -566,11 +572,11 @@ class Peptide {
 		for(Entry<String, Double> stringDoubleEntry : yIons.entrySet()) {
 			double theo_mz  = stringDoubleEntry.getValue();
 
-			if(Globals.ms2tol_units == Constants.PPM_UNITS) {
-				double ppmErr = Globals.ms2tol / Constants.PPM;
+			if(LucXorConfiguration.getMs2tolUnits() == Constants.PPM_UNITS) {
+				double ppmErr = LucXorConfiguration.getMs2tol() / Constants.PPM;
 				matchErr = theo_mz * ppmErr;
 			}
-			else matchErr = Globals.ms2tol;
+			else matchErr = LucXorConfiguration.getMs2tol();
 
 			matchErr *= 0.5; // split in half
 			a = MathFunctions.roundDouble((theo_mz - matchErr), 4);
@@ -610,11 +616,11 @@ class Peptide {
 		for(Entry<String, Double> stringDoubleEntry : bIons.entrySet()) {
 			double theo_mz  = stringDoubleEntry.getValue();
 
-			if(Globals.ms2tol_units == Constants.PPM_UNITS) {
-				double ppmErr = Globals.ms2tol / Constants.PPM;
+			if(LucXorConfiguration.getMs2tolUnits() == Constants.PPM_UNITS) {
+				double ppmErr = LucXorConfiguration.getMs2tol() / Constants.PPM;
 				matchErr = theo_mz * ppmErr;
 			}
-			else matchErr = Globals.ms2tol;
+			else matchErr = LucXorConfiguration.getMs2tol();
 
 			matchErr *= 0.5; // split in half
 			a = MathFunctions.roundDouble((theo_mz - matchErr), 4);
@@ -706,4 +712,27 @@ class Peptide {
 		return matchedPeaks;
 	}
 
+	public int getCharge() {
+		return charge;
+	}
+
+	public TIntDoubleMap getModPosMap() {
+		return modPosMap;
+	}
+
+	public TMap<String, Double> getbIons() {
+		return bIons;
+	}
+
+	public TMap<String, Double> getyIons() {
+		return yIons;
+	}
+
+	public double getNumPermutations() {
+		return numPermutations;
+	}
+
+	public double getNumDecoyPermutations() {
+		return numDecoyPermutations;
+	}
 }

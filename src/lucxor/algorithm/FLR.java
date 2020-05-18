@@ -2,10 +2,15 @@
  * To change this template, choose Tools | Templates
  * and open the template in the editor.
  */
-package lucxor;
+package lucxor.algorithm;
 
 import gnu.trove.map.TMap;
 import gnu.trove.map.hash.THashMap;
+import lucxor.common.PSMList;
+import lucxor.utils.Constants;
+import lucxor.LucXorConfiguration;
+import lucxor.utils.MathFunctions;
+import lucxor.common.PSM;
 
 import java.util.ArrayList;
 import java.util.Arrays;
@@ -18,9 +23,9 @@ import java.util.concurrent.*;
  *
  * @author dfermin
  */
-class FLR {
+public class FLR {
 
-	final List<PSM> realPSMs;
+	final List<PSM> targetPSMs;
 	final List<PSM> decoyPSMs;
     private TMap<Integer, double[]> minorMapG;
 	private TMap<Integer, double[]> minorMapL;
@@ -54,8 +59,8 @@ class FLR {
 	private static final int NMARKS = 10001; // we want N+1 bins for the FLR
 
 
-	FLR() {
-		realPSMs = new ArrayList<>();
+	public FLR() {
+		targetPSMs = new ArrayList<>();
 		decoyPSMs = new ArrayList<>();
 		maxDeltaScore = 0d;
 		Nreal = 0;
@@ -66,11 +71,11 @@ class FLR {
 	
 	// Using primitive arrays is a lot faster
 	public void prepArrays() {
-		pos = new double[ realPSMs.size() ];
+		pos = new double[ targetPSMs.size() ];
 		neg = new double[ decoyPSMs.size() ];
 		
-		for(int i = 0; i < realPSMs.size(); i++) {
-			pos[i] = realPSMs.get(i).getDeltaScore();
+		for(int i = 0; i < targetPSMs.size(); i++) {
+			pos[i] = targetPSMs.get(i).getDeltaScore();
 		}
 		
 		for(int i = 0; i < decoyPSMs.size(); i++) {
@@ -119,7 +124,7 @@ class FLR {
 		
 		if(dataType == Constants.REAL) { // real
 			sigma = Math.sqrt(deltaScoreVar_pos);
-			N = (double) realPSMs.size();
+			N = (double) targetPSMs.size();
 			x = Math.pow(N, 0.2);
 			
 			result = 1.06 * (sigma / x);
@@ -191,7 +196,7 @@ class FLR {
 	 * @throws InterruptedException
 	 * @throws ExecutionException
 	 */
-	void evalTickMarks(int dataType) throws InterruptedException, ExecutionException {
+	public void evalTickMarks(int dataType) throws InterruptedException, ExecutionException {
 		
 		double kernelResult;
 		double[] dataAry = null;
@@ -216,23 +221,23 @@ class FLR {
 		}
 		
 		// how big a chunk of the forward deltaScores to process per cpu
-		int block = dataAry.length / Globals.numThreads;
+		int block = dataAry.length / LucXorConfiguration.getNumThreads();
 		
 		for(int i = 0; i < NMARKS; i++) {
 			double tic = tickMarks[i];
 			
 			// Threadpool of executor objects
-			ExecutorService pool = Executors.newFixedThreadPool(Globals.numThreads);
+			ExecutorService pool = Executors.newFixedThreadPool(LucXorConfiguration.getNumThreads());
 
 			// Create a list to hold the tasks to be performed
-			List< Future<Double> > taskList = new ArrayList<>(Globals.numThreads);
+			List< Future<Double> > taskList = new ArrayList<>(LucXorConfiguration.getNumThreads());
 
 			
 			// break up the data in pos into thread chunks
-			for(int cpu = 0; cpu < Globals.numThreads; cpu++) {
+			for(int cpu = 0; cpu < LucXorConfiguration.getNumThreads(); cpu++) {
 				int start = cpu * block;
 				int end   = start + block;
-				if(cpu == (Globals.numThreads-1)) end = dataAry.length;
+				if(cpu == (LucXorConfiguration.getNumThreads()-1)) end = dataAry.length;
 				
 				double[] subAry = Arrays.copyOfRange(dataAry, start, end);
 				
@@ -263,7 +268,7 @@ class FLR {
 
 	
 	// Function computes the local and global FDRs (FLR here)
-	void calcBothFDRs() {
+	public void calcBothFDRs() {
 		double AUC_rev_0; // Area-Under Curve from end of tick marks working backwards (f0 data)
 		double AUC_rev_1; // Area-Under Curve from end of tick marks working backwards (f1 data)
 		double ratio;
@@ -644,20 +649,20 @@ class FLR {
 	
 	
 	// Function assigns FDR values to the PSMs
-	public void assignFDRs() {
+	public void assignFDRs(PSMList psmList) {
 		
-		int N = realPSMs.size();
+		int N = targetPSMs.size();
 		
 		for(int i = 0; i < N; i++) {
             double g_FDR = (globalFDR[i] > 1.0 ? 1.0 : globalFDR[i]);
             double l_FDR = (localFDR[i] > 1.0 ? 1.0 : localFDR[i]);
 
-			realPSMs.get(i).setGlobalFDR(g_FDR);
-			realPSMs.get(i).setLocalFDR(l_FDR);
+			targetPSMs.get(i).setGlobalFDR(g_FDR);
+			targetPSMs.get(i).setLocalFDR(l_FDR);
 		}
 
-		for (PSM realPSM : realPSMs) {
-			for (PSM p : Globals.psmList) {
+		for (PSM realPSM : targetPSMs) {
+			for (PSM p : psmList) {
 				if (p.getSpecId().equalsIgnoreCase(realPSM.getSpecId())) {
 					p.setGlobalFDR(realPSM.getGlobalFDR());
 					p.setLocalFDR(realPSM.getLocalFDR());
@@ -667,7 +672,7 @@ class FLR {
 		}
 		
 		// fill in remaining PSMs
-		for(PSM p : Globals.psmList) {
+		for(PSM p : psmList) {
 			if(p.isDecoy()) {
 				p.setGlobalFDR(Double.NaN);
 				p.setLocalFDR(Double.NaN);
@@ -679,5 +684,15 @@ class FLR {
 		}
 	}
 
+	public void addDecoy(PSM psm){
+		this.decoyPSMs.add(psm);
+	}
 
+	public void addTarget(PSM psm){
+		this.targetPSMs.add(psm);
+	}
+
+	public void setMaxDeltaScore(double maxDeltaScore) {
+		this.maxDeltaScore = maxDeltaScore;
+	}
 }
