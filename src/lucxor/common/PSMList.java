@@ -191,6 +191,6 @@ public class PSMList implements List<PSM>{
 
   public void clearScores(){
     for(PSM psm: psmList)
-      psm.clearScores();;
+      psm.clearScores();
   }
 }

@@ -28,7 +28,7 @@ public class ModelDataHCD {
 	// --Commented out by Inspection (2020-05-18 00:58):private final static double NORMAL_CONSTANT = 1.0 / Math.sqrt(2.0 * Math.PI);
 
 	private final int chargeState;
-	int numPSM;
+	private int numPSM;
 	private static final int ntick = 2000;
 
     private double bIntMean;

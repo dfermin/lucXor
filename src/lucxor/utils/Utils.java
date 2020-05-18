@@ -1,7 +1,5 @@
 package lucxor.utils;
 
-import lucxor.LucXorConfiguration;
-
 import static lucxor.utils.Constants.AA_MASS_MAP;
 import static lucxor.utils.Constants.DECOY_AA_MAP;
 

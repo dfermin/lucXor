@@ -712,27 +712,4 @@ public class Peptide {
 		return matchedPeaks;
 	}
 
-	public int getCharge() {
-		return charge;
-	}
-
-	public TIntDoubleMap getModPosMap() {
-		return modPosMap;
-	}
-
-	public TMap<String, Double> getbIons() {
-		return bIons;
-	}
-
-	public TMap<String, Double> getyIons() {
-		return yIons;
-	}
-
-	public double getNumPermutations() {
-		return numPermutations;
-	}
-
-	public double getNumDecoyPermutations() {
-		return numDecoyPermutations;
-	}
 }

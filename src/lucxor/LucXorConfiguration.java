@@ -6,29 +6,12 @@ package lucxor;
 
 import gnu.trove.map.TMap;
 import gnu.trove.map.hash.THashMap;
-import gnu.trove.map.hash.TIntObjectHashMap;
 import lombok.extern.slf4j.Slf4j;
-import lucxor.algorithm.FLR;
-import lucxor.common.PSM;
-import lucxor.common.Spectrum;
 import lucxor.utils.Constants;
-import lucxor.utils.MathFunctions;
 import lucxor.utils.Utils;
-import umich.ms.datatypes.LCMSData;
-import umich.ms.datatypes.LCMSDataSubset;
-import umich.ms.datatypes.scan.IScan;
-import umich.ms.datatypes.scancollection.IScanCollection;
-import umich.ms.datatypes.scancollection.ScanIndex;
-import umich.ms.datatypes.spectrum.ISpectrum;
-import umich.ms.fileio.exceptions.FileParsingException;
-import umich.ms.fileio.filetypes.mzml.MZMLFile;
-import umich.ms.fileio.filetypes.mzxml.MZXMLFile;
 
 import java.io.*;
-import java.text.SimpleDateFormat;
 import java.util.*;
-import java.util.concurrent.ExecutionException;
-import java.util.stream.Collectors;
 
 import static lucxor.utils.Constants.*;
 
@@ -69,14 +52,14 @@ public class LucXorConfiguration {
     private static boolean writeMatchedPeaks;
 
 	// mods user wants to search for
-	static final TMap<String, Double> TARGET_MOD_MAP = new THashMap<>();
+	private static final TMap<String, Double> TARGET_MOD_MAP = new THashMap<>();
 	// fixed mods observed in data
-	static final TMap<String, Double> FIXED_MOD_MAP = new THashMap<>();
+	private static final TMap<String, Double> FIXED_MOD_MAP = new THashMap<>();
 	// variable mods observed in data
-	static final TMap<String, Double> VAR_MOD_MAP = new THashMap<>();
+	private static final TMap<String, Double> VAR_MOD_MAP = new THashMap<>();
 	// holds all neutral loss masses, k= list of amino acids v= NL mass
-	static final TMap<String, Double> NEUTRAL_LOSS_MAP = new THashMap<>();
-	static final TMap<String, Double> DECOY_NEUTRAL_LOSS_MAP = new THashMap<>();
+	private static final TMap<String, Double> NEUTRAL_LOSS_MAP = new THashMap<>();
+	private static final TMap<String, Double> DECOY_NEUTRAL_LOSS_MAP = new THashMap<>();
 
 	public static void parseConfigurationFile(String str) throws IOException {
 		
@@ -766,10 +749,6 @@ public class LucXorConfiguration {
 
 	public static double getScoreTH() {
 		return scoreTH;
-	}
-
-	public static double getDecoyMass() {
-		return DECOY_MASS;
 	}
 
 	public static double getMinMZ() {

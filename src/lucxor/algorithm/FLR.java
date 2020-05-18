@@ -25,8 +25,8 @@ import java.util.concurrent.*;
  */
 public class FLR {
 
-	final List<PSM> targetPSMs;
-	final List<PSM> decoyPSMs;
+	private final List<PSM> targetPSMs;
+	private final List<PSM> decoyPSMs;
     private TMap<Integer, double[]> minorMapG;
 	private TMap<Integer, double[]> minorMapL;
 
@@ -40,7 +40,7 @@ public class FLR {
 	private double[] f1;
 	private double[] globalFDR;
 	private double[] localFDR;
-	double maxDeltaScore;
+	private double maxDeltaScore;
 	
 	// variance of delta score for both distributions
 	private double deltaScoreVar_pos;

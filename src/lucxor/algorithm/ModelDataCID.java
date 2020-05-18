@@ -25,10 +25,18 @@ public class ModelDataCID {
 
 	private final int chargeState;
 	private int numPSM; // holds number of PSMs used for this charge state
-	double mu_int_B, mu_int_Y, mu_int_U;
-	double var_int_B, var_int_Y, var_int_U;
-	double mu_dist_B, mu_dist_Y, mu_dist_U;
-	double var_dist_B, var_dist_Y, var_dist_U;
+	private double mu_int_B;
+    private double mu_int_Y;
+    private double mu_int_U;
+	private double var_int_B;
+    private double var_int_Y;
+    private double var_int_U;
+	private double mu_dist_B;
+    private double mu_dist_Y;
+    private double mu_dist_U;
+	private double var_dist_B;
+    private double var_dist_Y;
+    private double var_dist_U;
 
 	private double[] b_intensity;
 	private double[] b_distance;

@@ -12,7 +12,7 @@ import org.apache.commons.math3.util.FastMath;
  *
  * @author dfermin
  */
-public class NormalDensityWorkerThread implements Callable<Double>{
+class NormalDensityWorkerThread implements Callable<Double>{
 	
 	private final double[] ary;
 	private final double tic;

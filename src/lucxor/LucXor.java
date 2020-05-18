@@ -55,8 +55,8 @@ public class LucXor {
     private static PSMList psmList;
     private static TMap<Double, double[]> FLRestimateMap = new THashMap<>(); // ary[0] = globalFLR, ary[1] = localFLR
 
-    static TMap<Integer, ModelDataCID> modelingMapCID = null;
-    static TMap<Integer, ModelDataHCD> modelingMapHCD = null;
+    private static TMap<Integer, ModelDataCID> modelingMapCID = null;
+    private static TMap<Integer, ModelDataHCD> modelingMapHCD = null;
 
 
     public static void main(String[] args) throws ParserConfigurationException,
@@ -315,7 +315,6 @@ public class LucXor {
                 // A pool of 'N' worker threads
                 final int NTHREADS = LucXorConfiguration.getNumThreads();
                 ExecutorService executor = Executors.newFixedThreadPool(NTHREADS);
-                int ctr = 1;
                 for (PSM p : psmList) {
                     if ((p.getCharge() == z) && p.isUseForModel()) {
                         Runnable worker = new ModelParameterWorkerThread(p);
@@ -756,7 +755,7 @@ public class LucXor {
 
 
     // Function to compute the False Localization Rate of the PSMs
-    public static void calcFLR() throws InterruptedException, ExecutionException {
+    private static void calcFLR() throws InterruptedException, ExecutionException {
         double maxDeltaScore = -1.0;
         FLR flr = new FLR();
 
@@ -787,7 +786,7 @@ public class LucXor {
     }
 
 
-    static void readInSpectra() throws IOException, IllegalStateException,
+    private static void readInSpectra() throws IOException, IllegalStateException,
             FileParsingException {
 
         log.info("\nReading spectra from " + LucXorConfiguration.getSpectrumPath()
@@ -1030,7 +1029,7 @@ public class LucXor {
 
 
     // Function assigns the global and local FLR for the current PSM from the FLRestimateMap
-    public static void assignFLR() {
+    private static void assignFLR() {
 
         ArrayList<Double> obsDeltaScores = new ArrayList<>(FLRestimateMap.keySet());
         Collections.sort(obsDeltaScores);  // sort them from low to high
@@ -1062,7 +1061,7 @@ public class LucXor {
     }
 
     // Record the global and local FLR values estimated for all of the delta scores
-    public static void recordFLRestimates() {
+    private static void recordFLRestimates() {
         FLRestimateMap = new THashMap<>();
 
         for(PSM p : psmList) {

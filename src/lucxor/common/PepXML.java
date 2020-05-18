@@ -201,7 +201,7 @@ public class PepXML extends DefaultHandler {
 	 * This function is only called if we are getting our modifications from
 	 * a pepXML file.
 	 */
-	public static void recordModsFromPepXML() {
+	private static void recordModsFromPepXML() {
 
 		String alphabet = "ACDEFGHIKLMNPQRSTVWY";
 
