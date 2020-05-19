@@ -4,12 +4,10 @@
  */
 package lucxor.algorithm;
 
-import lucxor.LucXor;
 import lucxor.utils.Constants;
 import lucxor.LucXorConfiguration;
 import lucxor.utils.MathFunctions;
 import lucxor.common.Peak;
-import org.slf4j.Logger;
 import org.slf4j.LoggerFactory;
 
 import java.io.BufferedWriter;
@@ -778,99 +776,4 @@ public class ModelDataHCD {
 		this.numPSM = numPSM;
 	}
 
-	public int getChargeState() {
-		return chargeState;
-	}
-
-	public int getNumPSM() {
-		return numPSM;
-	}
-
-	public static int getNtick() {
-		return ntick;
-	}
-
-	public double getbIntMean() {
-		return bIntMean;
-	}
-
-	public double getbIntVar() {
-		return bIntVar;
-	}
-
-	public double getyIntMean() {
-		return yIntMean;
-	}
-
-	public double getyIntVar() {
-		return yIntVar;
-	}
-
-	public double getNegIntMean() {
-		return negIntMean;
-	}
-
-	public double getNegIntVar() {
-		return negIntVar;
-	}
-
-	public double getPosDistMean() {
-		return posDistMean;
-	}
-
-	public double getPosDistVar() {
-		return posDistVar;
-	}
-
-	public double[] getbTickMarksInt() {
-		return bTickMarksInt;
-	}
-
-	public double[] getyTickMarksInt() {
-		return yTickMarksInt;
-	}
-
-	public double[] getNegTickMarksInt() {
-		return negTickMarksInt;
-	}
-
-	public double[] getPosTickMarksDist() {
-		return posTickMarksDist;
-	}
-
-	public double[] getF_int_b() {
-		return f_int_b;
-	}
-
-	public double[] getF_int_y() {
-		return f_int_y;
-	}
-
-	public double[] getF_int_neg() {
-		return f_int_neg;
-	}
-
-	public double[] getF_dist() {
-		return f_dist;
-	}
-
-	public double[] getB_int() {
-		return b_int;
-	}
-
-	public double[] getY_int() {
-		return y_int;
-	}
-
-	public double[] getN_int() {
-		return n_int;
-	}
-
-	public double[] getPos_dist() {
-		return pos_dist;
-	}
-
-	public static Logger getLog() {
-		return log;
-	}
 }

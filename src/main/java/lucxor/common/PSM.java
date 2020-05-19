@@ -464,7 +464,8 @@ public class PSM {
 	 * @param modelingMapHCD
 	 * @param modelingMapCID
 	 */
-	public void scorePermutations(TMap<Integer, ModelDataHCD> modelingMapHCD, TMap<Integer, ModelDataCID> modelingMapCID) throws IOException {
+	public void scorePermutations(TMap<Integer, ModelDataHCD> modelingMapHCD,
+								  TMap<Integer, ModelDataCID> modelingMapCID) throws IOException {
 		TIntDoubleHashMap mcp;
 		
 		File debugF;
@@ -519,8 +520,10 @@ public class PSM {
 
             curPep.matchPeaks(PeakList); // match all the peaks you can for this peptide permutation
 
-			if(LucXorConfiguration.getScoringAlgorithm() == Constants.CID) curPep.calcScoreCID(modelingMapCID);
-			if(LucXorConfiguration.getScoringAlgorithm() == Constants.HCD) curPep.calcScoreHCD(modelingMapHCD);
+			if(LucXorConfiguration.getScoringAlgorithm() == Constants.CID)
+				curPep.calcScoreCID(modelingMapCID);
+			if(LucXorConfiguration.getScoringAlgorithm() == Constants.HCD)
+				curPep.calcScoreHCD(modelingMapHCD);
 			
 			if(LucXorConfiguration.getDebugMode() == Constants.WRITE_PERM_SCORES) {
 				line = specId + "\t" + origPep.getModPeptide() + "\t" +
@@ -603,7 +606,7 @@ public class PSM {
 		
 		Collections.sort(allScores); // low to high
 		Collections.reverse(allScores);// high to low
-		
+
 		double score1 = MathFunctions.roundDouble(allScores.get(0), 6);
 		double score2 = 0;
 		if(!isUnambiguous)

@@ -466,10 +466,14 @@ public class LucXor {
         THashSet<Integer> badZ = new THashSet<>();
         log.info("PSMs for modeling:\n------------------\n");
         for(int z = 2; z <= LucXorConfiguration.getMaxChargeState(); z++) {
-			int n = chargeMap.get(z);
-            log.info("+" + z + ": " + n + " PSMs");
-            if(n < LucXorConfiguration.getMinNumPsmModeling())
+            if(!chargeMap.containsKey(z))
                 badZ.add(z);
+            else {
+                int n = chargeMap.get(z);
+                log.info("+" + z + ": " + n + " PSMs");
+                if(n < LucXorConfiguration.getMinNumPsmModeling())
+                    badZ.add(z);
+            }
 		}
         log.info("\n");
 
@@ -660,7 +664,8 @@ public class LucXor {
                     p.generatePermutations(RN);
                     try {
                         p.scorePermutations(modelingMapHCD, modelingMapCID);
-                        if(LucXorConfiguration.getDebugMode() == Constants.WRITE_SCORED_PKS) p.debugWriteScoredPeaks(timeStamp, modelingMapHCD, modelingMapCID);
+                        if(LucXorConfiguration.getDebugMode() == Constants.WRITE_SCORED_PKS)
+                            p.debugWriteScoredPeaks(timeStamp, modelingMapHCD, modelingMapCID);
                         ctr.getAndIncrement();
 
                         if( (ctr.get() % 100) == 0 ){
@@ -678,7 +683,8 @@ public class LucXor {
                     p.generatePermutations(RN);
                     try {
                         p.scorePermutations(modelingMapHCD, modelingMapCID);
-                        if(LucXorConfiguration.getDebugMode() == Constants.WRITE_SCORED_PKS) p.debugWriteScoredPeaks(timeStamp, modelingMapHCD, modelingMapCID);
+                        if(LucXorConfiguration.getDebugMode() == Constants.WRITE_SCORED_PKS)
+                            p.debugWriteScoredPeaks(timeStamp, modelingMapHCD, modelingMapCID);
                         ctr.getAndIncrement();
 
                         if( (ctr.get() % 100) == 0 ) {
