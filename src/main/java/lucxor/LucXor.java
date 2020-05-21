@@ -5,11 +5,16 @@
 package lucxor;
 
 import java.io.*;
+import java.nio.file.Files;
+import java.nio.file.Path;
+import java.nio.file.Paths;
 import java.text.SimpleDateFormat;
 import java.util.*;
 import java.util.concurrent.*;
 import java.util.concurrent.atomic.AtomicInteger;
 import java.util.stream.Collectors;
+import java.util.stream.Stream;
+import javax.security.sasl.SaslException;
 import javax.xml.parsers.ParserConfigurationException;
 
 import gnu.trove.list.array.TIntArrayList;
@@ -159,7 +164,27 @@ public class LucXor {
 
 	    log.info("\nReading PSMs from pepXML file: " +
                 LucXorConfiguration.getInputFile().getAbsolutePath());
-		PepXML.readPepXMLFile(LucXorConfiguration.getInputFile(), psmList);
+
+	    if(LucXorConfiguration.getIdentificationSuffix() != null && LucXorConfiguration.getInputFile().isDirectory()){
+             Stream<Path> walk = Files.walk(Paths.get(LucXorConfiguration.getInputFile().getAbsolutePath()));
+             List<String> result = walk.map(Path::toString)
+                        .filter(f -> f.toLowerCase().endsWith(LucXorConfiguration.getIdentificationSuffix().toLowerCase()))
+                     .collect(Collectors.toList());
+
+             result.parallelStream().forEach( fileName -> {
+                 try {
+                     PepXML.readPepXMLFile(new File(fileName), psmList);
+                     log.info("The following file has been read it -- " + fileName);
+                 } catch (ParserConfigurationException | SAXException | IOException e) {
+                     log.error("Error reading input file -- " + fileName + " " + e.getMessage());
+                 }
+             });
+
+        }else if(!LucXorConfiguration.getInputFile().isDirectory()){
+            PepXML.readPepXMLFile(LucXorConfiguration.getInputFile(), psmList);
+        }else{
+	        throw new IOException("The provided identification file path or file is not valid");
+        }
 		log.info(psmList + " Candidate PSMs read in.");
 	}
 

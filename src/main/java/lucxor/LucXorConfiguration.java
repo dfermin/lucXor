@@ -27,6 +27,7 @@ public class LucXorConfiguration {
 
 	private static File SPECTRUM_PATH = null;
 	private static String SPECTRUM_PREFIX = null;
+	private static String IDENTIFICATION_SUFFIX = null;
     private static String MATCHED_PKFILE = null;
 	private static File INPUT_FILE = null;
 	private static String OUTPUT_FILE = null;
@@ -84,6 +85,7 @@ public class LucXorConfiguration {
 		BufferedReader br = new BufferedReader(new FileReader(inF));
 		String line;
 		while( (line = br.readLine()) != null) {
+
 			if(line.startsWith("#")) continue;
 			if(line.length() < 2) continue;
 			
@@ -100,6 +102,11 @@ public class LucXorConfiguration {
 			if(line.startsWith("INPUT_DATA")) {
 				String s = Utils.parseInputLine(line);
 				INPUT_FILE = new File(s);
+			}
+
+			if(line.startsWith("IDENTIFICATION_SUFFIX")){
+				String s = Utils.parseInputLine(line);
+				IDENTIFICATION_SUFFIX = s.toLowerCase();
 			}
 			
 			if(line.startsWith("OUTPUT_FILE")) {
@@ -713,5 +720,9 @@ public class LucXorConfiguration {
 
 	public static void addVarMod(String key, double mass) {
 		VAR_MOD_MAP.put(key, mass);
+	}
+
+	public static String getIdentificationSuffix() {
+		return IDENTIFICATION_SUFFIX;
 	}
 }
