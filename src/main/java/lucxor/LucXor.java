@@ -14,7 +14,6 @@ import java.util.concurrent.*;
 import java.util.concurrent.atomic.AtomicInteger;
 import java.util.stream.Collectors;
 import java.util.stream.Stream;
-import javax.security.sasl.SaslException;
 import javax.xml.parsers.ParserConfigurationException;
 
 import gnu.trove.list.array.TIntArrayList;
@@ -65,8 +64,8 @@ public class LucXor {
     private static TMap<Integer, ModelDataHCD> modelingMapHCD = null;
 
 
-    public static void main(String[] args) throws ParserConfigurationException,
-            SAXException, IOException, IllegalStateException,
+    public static void main(String[] args) throws
+            IOException, IllegalStateException,
             InterruptedException, ExecutionException, FileParsingException {
 		
 		String releaseVersion = "1.2014Oct10";
@@ -159,8 +158,7 @@ public class LucXor {
      * @throws SAXException
      * @throws IOException
      */
-	private static void parsePepXML() throws ParserConfigurationException,
-            SAXException, IOException {
+	private static void parsePepXML() throws IOException, FileParsingException {
 
 	    log.info("\nReading PSMs from pepXML file: " +
                 LucXorConfiguration.getInputFile().getAbsolutePath());
@@ -173,15 +171,15 @@ public class LucXor {
 
              result.parallelStream().forEach( fileName -> {
                  try {
-                     PepXML.readPepXMLFile(new File(fileName), psmList);
+                     PepXML.readStreamFile(new File(fileName), psmList);
                      log.info("The following file has been read it -- " + fileName);
-                 } catch (ParserConfigurationException | SAXException | IOException e) {
+                 } catch ( Exception e) {
                      log.error("Error reading input file -- " + fileName + " " + e.getMessage());
                  }
              });
 
         }else if(!LucXorConfiguration.getInputFile().isDirectory()){
-            PepXML.readPepXMLFile(LucXorConfiguration.getInputFile(), psmList);
+            PepXML.readStreamFile(LucXorConfiguration.getInputFile(), psmList);
         }else{
 	        throw new IOException("The provided identification file path or file is not valid");
         }

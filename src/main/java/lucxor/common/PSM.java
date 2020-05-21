@@ -81,7 +81,7 @@ public class PSM {
 
 	
 	public void process() {
-		
+
 		origPep.initialize(modCoordMap);
 		origPep.setCharge(this.charge);
 		
@@ -994,4 +994,14 @@ public class PSM {
 		this.origPep.setPeptide(sequence);
 	}
 
+	@Override
+	public String toString() {
+		return "PSM{" +
+				"specId='" + specId + '\'' +
+				", srcFile='" + srcFile + '\'' +
+				", scanNum=" + scanNum +
+				", charge=" + charge +
+				", origPep=" + origPep +
+				'}';
+	}
 }

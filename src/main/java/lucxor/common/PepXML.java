@@ -5,197 +5,120 @@
 package lucxor.common;
 
 import java.io.File;
+import java.io.FileInputStream;
 import java.io.IOException;
-import java.util.HashMap;
-import java.util.Map;
-import javax.xml.parsers.ParserConfigurationException;
-import javax.xml.parsers.SAXParser;
-import javax.xml.parsers.SAXParserFactory;
+import java.nio.file.Path;
+import java.nio.file.Paths;
+import java.util.*;
+import java.util.stream.Collectors;
 
 import lucxor.utils.Constants;
 import lucxor.LucXorConfiguration;
-import org.xml.sax.Attributes;
-import org.xml.sax.SAXException;
-import org.xml.sax.helpers.DefaultHandler;
+import org.slf4j.LoggerFactory;
+import umich.ms.fileio.exceptions.FileParsingException;
+import umich.ms.fileio.filetypes.pepxml.PepXmlParser;
+import umich.ms.fileio.filetypes.pepxml.jaxb.standard.*;
 
 import static lucxor.utils.Constants.AA_MASS_MAP;
+import static lucxor.utils.Constants.PEPPROPHET;
 
 
 /**
+ * This class allows to read a {@link PepXmlParser} file and retrieve the corresponding peptides
+ * It contains some extra logic to validate if the input pepXML is valid.
  *
  * @author dfermin
+ * @author ypriverol
  */
-public class PepXML extends DefaultHandler {
+public class PepXML {
 
-	private final PSMList psmList;
-	private String temp;
-	private PSM curPSM = null;
-	private boolean recordMods = true; // changes to false after the end of first search_summary section
+	private static final org.slf4j.Logger log = LoggerFactory.getLogger(PepXML.class);
 
-	public static void readPepXMLFile(File inputXML, PSMList psmList) throws ParserConfigurationException, SAXException, IOException {
-		new PepXML(inputXML, psmList);
-	}
-	
-	private PepXML(File inputXML, PSMList psmList) throws ParserConfigurationException, SAXException, IOException {
+	/**
+	 * Read the {@link PepXML} using Stream
+	 * @param inputXML input file
+	 * @param psmList {@link PSMList} list
+	 * @throws IOException IO exception
+	 * @throws FileParsingException Parsing exception
+	 */
+	public static void readStreamFile(File inputXML, PSMList psmList) throws IOException, FileParsingException {
+		Path path = Paths.get(inputXML.getAbsolutePath());
 
-		SAXParserFactory factory = SAXParserFactory.newInstance();
-		factory.setValidating(false);
-		SAXParser parser = factory.newSAXParser();
-		this.psmList = psmList;
-		parser.parse(inputXML, this); // this class itself is the default handler, hence the use of 'this'
-	}
-	
-	public void startElement(String uri, String localName, String qName, Attributes attr) {
-		temp = "";
-		
-		
-		if(qName.equalsIgnoreCase("search_summary")) {
-			String se = attr.getValue("search_engine");
-			String searchEngine;
-			if(se.startsWith("Hydra")) searchEngine = "hydra";
-			else if(se.equalsIgnoreCase("MASCOT")) searchEngine = "mascot";
-			else if(se.contains("Tandem")) searchEngine = "tandem";
-			else if(se.equalsIgnoreCase("Comet")) searchEngine = "comet";
-			else if(se.equalsIgnoreCase("Sequest")) searchEngine = "sequest";
-		}
+		try (final FileInputStream fis = new FileInputStream(path.toString())) {
 
-        // This is for handling the modification description lines at the beginning of a pepXML file
-		if(qName.equalsIgnoreCase("aminoacid_modification")) {
-			String aa = attr.getValue("aminoacid");
-			double modMass = Double.valueOf( attr.getValue("massdiff") );
-			String varStatus = attr.getValue("variable");
+			Iterator<MsmsRunSummary> it = PepXmlParser.parse(fis);
+			boolean readMods = true;
+			while (it.hasNext()) {
 
-			String AA_alphabet = "ACDEFGHIKLMNPQRSTVWY";
-			if( AA_alphabet.contains(aa) ) {
-				// if this is a valid AA character that is a variable modification, record it
-				// as a lower case character in the varModMap
-				if(varStatus.equalsIgnoreCase("y")) {
-					if(!LucXorConfiguration.getVarModMap().containsKey(aa.toLowerCase())) {
-						LucXorConfiguration.getVarModMap().put(aa.toLowerCase(), modMass);
-					}
+				MsmsRunSummary runSummary = it.next();
+
+				// PArse PTMs information from Summary
+				if(runSummary.getSearchSummary() != null && !runSummary.getSearchSummary().isEmpty()){
+					List<SearchSummary> searchSummaryList = runSummary.getSearchSummary();
+					PepXML.parseSummaryPTMs(searchSummaryList);
 				}
-				else {
-					if(!LucXorConfiguration.getFixedModMap().containsKey(aa.toUpperCase())) {
-						LucXorConfiguration.getFixedModMap().put(aa.toUpperCase(), modMass);
-					}
-				}
-			}
-		}
-		
-		// for handling terminal modifications (this is found in the top portion of the pepXML file)
-		if(qName.equalsIgnoreCase("terminal_modification")) {
-			String terminus = attr.getValue("terminus");
-			double modMass = Double.valueOf( attr.getValue("massdiff") );
-			
-			if(terminus.equalsIgnoreCase("n"))
-				LucXorConfiguration.setNTermMass(modMass);
-			if(terminus.equalsIgnoreCase("c"))
-				LucXorConfiguration.setCTermMass(modMass);
-		}
-		
-		if(qName.equalsIgnoreCase("spectrum_query")) {
-			curPSM = new PSM();
-			
-			curPSM.setSpecId(attr.getValue("spectrum"));
-			curPSM.setScanNum(Integer.valueOf( attr.getValue("start_scan") ));
-			curPSM.setCharge(Integer.valueOf( attr.getValue("assumed_charge") ));
-		}
-		
-		if(qName.equalsIgnoreCase("search_hit")) {
-			curPSM.setPeptideSequence(attr.getValue("peptide"));
-		}
-		
-		if(qName.equalsIgnoreCase("modification_info")) {
-			if(attr.getLocalName(0).equalsIgnoreCase("mod_nterm_mass")) {
-				double nterm = Double.valueOf(attr.getValue("mod_nterm_mass"));
-				curPSM.getModCoordMap().put(Constants.NTERM_MOD, nterm);
-			}
-			else if(attr.getLocalName(0).equalsIgnoreCase("mod_cterm_mass")) {
-				double cterm = Double.valueOf(attr.getValue("mod_cterm_mass"));
-				curPSM.getModCoordMap().put(Constants.CTERM_MOD, cterm);
-			}
-		}
-		
-		// record the mass of a modified amino acid residue
-		if(qName.equalsIgnoreCase("mod_aminoacid_mass")) {
-			int pos = Integer.valueOf( attr.getValue("position") ) - 1; // ensures zero-based coordiantes
-			double mass = Double.valueOf( attr.getValue("mass") );
-			curPSM.getModCoordMap().put(pos, mass);
-		}
-		
-		if(qName.equalsIgnoreCase("search_score")) {
-			
-			if(LucXorConfiguration.getScoringMethod() != Constants.PEPPROPHET) {
-				for(int i = 0; i < attr.getLength() - 1; i++) {
-					int j = i + 1;
-					String k = attr.getValue(i);
-					double score = Double.valueOf( attr.getValue(j) );
-					
-					if(LucXorConfiguration.getScoringMethod() == Constants.NEGLOGEXPECT) {
-						if(k.equalsIgnoreCase("expect")) curPSM.setPSMscore(-1.0 * Math.log(score));
-					}
-					
-					if(LucXorConfiguration.getScoringMethod() == Constants.MASCOTIONSCORE) {
-						if(k.equalsIgnoreCase("ionscore")) curPSM.setPSMscore(score);
-					}
 
-                    if(LucXorConfiguration.getScoringMethod() == Constants.XTDHYPERSCORE) {
-                        if(k.equalsIgnoreCase("hyperscore")) curPSM.setPSMscore(score);
-                    }
+				runSummary.getSpectrumQuery().forEach(query ->{
+					long startScan = query.getStartScan();
+					String spectrumId = query.getSpectrum();
+					int charge = query.getAssumedCharge();
+					query.getSearchResult().forEach(results->{
 
-                    if(LucXorConfiguration.getScoringMethod() == Constants.XCORR) {
-                        if (k.equalsIgnoreCase("xcorr")) curPSM.setPSMscore(score);
-                    }
-				}
-				
-			}
-		}
-		
-		if(qName.equalsIgnoreCase("peptideprophet_result")) {
-			if(LucXorConfiguration.getScoringMethod() == Constants.PEPPROPHET)
-				curPSM.setPSMscore(Double.valueOf(attr.getValue("probability")));
-		}
-	}
+						List<SearchHit> hits = results.getSearchHit()
+								.stream()
+								.filter(hit -> hit.getHitRank() == 1)
+								.collect(Collectors.toList());
 
+						// If the number of rank=1 hits is higher than one, will be supported only for
+						// peptidephrophet probability and
+						if(hits.size() > 1 && LucXorConfiguration.getScoringMethod() != 0){
+							log.info("Multiple peptides reported for the same spectrum, LucXor hasn't been tested for that");
+							System.err.println("The current spectrum scan will be skip -- " + startScan);
+						}else if(hits.size() > 1){
+							// Returns only the hits from peptidephrophet
+							hits = hits.stream().filter(hit -> {
+								for(AnalysisResult analysisResult: hit.getAnalysisResult()){
+									String analysisString = analysisResult.getAnalysis();
+									if(analysisString.equalsIgnoreCase(Constants.PEPTIDE_PROPHET_HEADER))
+										return true;
+								}
+								return false;
+							}).collect(Collectors.toList());
+						}
+						if(hits.size() > 1){
+							log.info("Multiple peptides reported for the same spectrum, LucXor hasn't been tested" +
+									" for that");
+							hits.forEach(hit -> System.err
+									.println("Warning, more than one peptideprophet candidate -- "
+											+ hit.getPeptide()));
+						}
 
-	public void endElement(String uri, String localName, String qName) {
-		
-		temp = null; // shouldn't need this anymore
-		
-		if(qName.equalsIgnoreCase("search_summary")) { // record the AA modifications
-			
+						hits.forEach(hit-> {
+							PSM curPSM = new PSM();
+							curPSM.setSpecId(spectrumId);
+							curPSM.setScanNum(new Long(startScan).intValue());
+							curPSM.setCharge(charge);
+							curPSM.setPeptideSequence(hit.getPeptide());
+							List<NameValueType> scores = hit.getSearchScore();
+							PepXML.parseScores(curPSM, LucXorConfiguration.getScoringMethod(), scores, hit.getAnalysisResult());
+							if (hit.getModificationInfo() != null)
+								PepXML.addPTMs(curPSM, hit.getModificationInfo());
+							if(PepXML.isValidPSM(curPSM))
+								psmList.add(curPSM);
+						});
+
+					});
+				});
+
 				// The pepXML has the modifications for the search results multiple times
 				// (once per spectral file searched). We only need to record these modifications once
-				if(recordMods) {
+				if(readMods) {
 					recordModsFromPepXML();
-					recordMods = false;
+					readMods = false;
 				}
-		}
-		
-		
-		if(qName.equalsIgnoreCase("search_hit")) { // end of record
-			
-			// skip PSMs with non-standard amino acid characters
-			String x = curPSM.getPeptideSequence();
-			int numBadChars = 0;
-			for(int i = 0; i < x.length(); i++) {
-				String c = Character.toString(x.charAt(i));
-				if( !"ACDEFGHIKLMNPQRSTVWY".contains(c) ) numBadChars++;
-			}
-			
-			// Skip PSMs that exceed the number of candidate permutations
-			if(curPSM.getOrigPep().getNumPerm() > LucXorConfiguration.getMaxNumPermutations())
-				numBadChars = 100;
-
-			if(numBadChars == 0) {
-                curPSM.process();
-				if(curPSM.isKeeper()) psmList.add(curPSM);
-                curPSM = null;
 			}
 		}
-
 	}
-
 
 	/**
 	 * This function is only called if we are getting our modifications from
@@ -234,14 +157,136 @@ public class PepXML extends DefaultHandler {
 			AA_MASS_MAP.put(stringDoubleEntry.getKey(), mass);
 		}
 	}
-	
-	
-	/**************************************************************************
-	// This is a critical function to the SAX parser.
-	// It handles non-XML tag text when it's encountered
-	*/
-	public void characters(char[] buffer, int start, int length) {
-		temp = new String(buffer, start, length);
+
+	/**
+	 * This function parse the score of the search_hit in pepXML
+	 * @param psm {@link PSM}
+	 * @param scores List of {@link NameValueType}
+	 */
+	public static PSM parseScores(PSM psm, int scoringMethod, List<NameValueType> scores,
+								  List<AnalysisResult> results){
+
+		if(scoringMethod != PEPPROPHET){
+			scores.forEach( score-> {
+				if(LucXorConfiguration.getScoringMethod() ==  Constants.NEGLOGEXPECT && (score.getName()
+						.equalsIgnoreCase("expect")))
+					psm.setPSMscore(-1.0 * Math.log(Double.parseDouble(score.getValueStr())));
+				if(LucXorConfiguration.getScoringMethod() ==  Constants.MASCOTIONSCORE && (score.getName()
+						.equalsIgnoreCase("ionscore")))
+					psm.setPSMscore(Double.parseDouble(score.getValueStr()));
+				if(LucXorConfiguration.getScoringMethod() ==  Constants.XTDHYPERSCORE && (score.getName()
+						.equalsIgnoreCase("hyperscore")))
+					psm.setPSMscore(Double.parseDouble(score.getValueStr()));
+				if(LucXorConfiguration.getScoringMethod() ==  Constants.XCORR && (score.getName()
+						.equalsIgnoreCase("xcorr")))
+					psm.setPSMscore(Double.parseDouble(score.getValueStr()));
+			});
+		}else{
+			for(AnalysisResult analysisResult: results){
+				String analysisString = analysisResult.getAnalysis();
+				if(analysisString.equalsIgnoreCase(Constants.PEPTIDE_PROPHET_HEADER)){
+					List<Object> probabilities = analysisResult.getAny();
+					probabilities.forEach( x -> {
+						if (x instanceof PeptideprophetResult)
+							psm.setPSMscore(((PeptideprophetResult)x).getProbability());
+					});
+				}
+			}
+		}
+		return psm;
 	}
-	
+
+	/**
+	 * Check if one PSM is valid (do not contains aminoacid variants)
+	 * @param psm {@link PSM}
+	 * @return True if not variants are present
+	 */
+	public static boolean isValidPSM(PSM psm) {
+
+		// skip PSMs with non-standard amino acid characters
+		String x = psm.getPeptideSequence();
+		int numBadChars = 0;
+		for(int i = 0; i < x.length(); i++) {
+			String c = Character.toString(x.charAt(i));
+			if( !"ACDEFGHIKLMNPQRSTVWY".contains(c) ) numBadChars++;
+		}
+
+		// Skip PSMs that exceed the number of candidate permutations
+		if(psm.getOrigPep().getNumPerm() > LucXorConfiguration.getMaxNumPermutations())
+			numBadChars = 100;
+
+		if(numBadChars == 0)
+			psm.process();
+
+		return psm.isKeeper();
+	}
+
+	/**
+	 * Parse general summary modifications
+	 * @param searchSumaryList
+	 */
+	public static void parseSummaryPTMs(List<SearchSummary> searchSumaryList){
+
+		// for handling terminal modifications (this is found in the top portion of the pepXML file)
+		searchSumaryList.forEach( x-> {
+			List<TerminalModification> terminalMods = x.getTerminalModification();
+			if(terminalMods != null && !terminalMods.isEmpty()){
+				terminalMods.forEach( termMod -> {
+					String terminus = termMod.getTerminus();
+					double modMass = termMod.getMassdiff();
+					if(terminus.equalsIgnoreCase("n"))
+						LucXorConfiguration.setNTermMass(modMass);
+					if(terminus.equalsIgnoreCase("c"))
+						LucXorConfiguration.setCTermMass(modMass);
+				});
+			}
+			List<AminoacidModification> aminoMods = x.getAminoacidModification();
+			if(aminoMods != null && !aminoMods.isEmpty()){
+				aminoMods.forEach( aminoMod -> {
+					String aa = aminoMod.getAminoacid();
+					double modMass = aminoMod.getMassdiff();
+					String varStatus = aminoMod.getVariable();
+
+					String AA_alphabet = "ACDEFGHIKLMNPQRSTVWY";
+					if( AA_alphabet.contains(aa) ) {
+
+						// if this is a valid AA character that is a variable modification, record it
+						// as a lower case character in the varModMap
+						if(varStatus.equalsIgnoreCase("y")) {
+							if(!LucXorConfiguration.getVarModMap().containsKey(aa.toLowerCase())) {
+								LucXorConfiguration.getVarModMap().put(aa.toLowerCase(), modMass);
+							}
+						}else {
+							if(!LucXorConfiguration.getFixedModMap().containsKey(aa.toUpperCase())) {
+								LucXorConfiguration.getFixedModMap().put(aa.toUpperCase(), modMass);
+							}
+						}
+					}
+				});
+			}
+		});
+
+
+	}
+
+	public static PSM addPTMs(PSM psm, ModificationInfo mods){
+
+		// for handling terminal modifications (this is found in the top portion of the pepXML file)
+		if(mods.getModCtermMass() != null){
+			double cterm = mods.getModCtermMass();
+            psm.getModCoordMap().put(Constants.CTERM_MOD, cterm);
+		}
+		if(mods.getModNtermMass() != null){
+			double nterm = mods.getModNtermMass();
+			psm.getModCoordMap().put(Constants.NTERM_MOD, nterm);
+		}
+
+		mods.getModAminoacidMass().forEach( massMod -> {
+			int pos = massMod.getPosition() - 1; // ensures zero-based coordiantes
+			double mass = massMod.getMass();
+			psm.getModCoordMap().put(pos, mass);
+		});
+
+		return psm;
+	}
 }

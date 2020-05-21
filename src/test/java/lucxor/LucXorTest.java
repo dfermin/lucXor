@@ -1,58 +1,68 @@
 package lucxor;
 
+import lucxor.common.PSM;
+import lucxor.common.PSMList;
+import lucxor.common.PepXML;
+import lucxor.utils.Constants;
 import org.junit.Before;
-import org.junit.Ignore;
 import org.junit.Test;
-import umich.ms.datatypes.LCMSDataSubset;
+import org.slf4j.LoggerFactory;
 import umich.ms.datatypes.index.Index;
-import umich.ms.datatypes.index.IndexElement;
 import umich.ms.datatypes.scan.IScan;
-import umich.ms.datatypes.scan.StorageStrategy;
-import umich.ms.datatypes.scancollection.IScanCollection;
-import umich.ms.datatypes.scancollection.ScanIndex;
 import umich.ms.datatypes.scancollection.impl.ScanCollectionDefault;
-import umich.ms.datatypes.spectrum.ISpectrum;
 import umich.ms.fileio.exceptions.FileParsingException;
 import umich.ms.fileio.filetypes.LCMSDataSource;
 import umich.ms.fileio.filetypes.mzml.MZMLFile;
-import umich.ms.fileio.filetypes.mzml.MZMLIndex;
 import umich.ms.fileio.filetypes.mzxml.MZXMLFile;
+import umich.ms.fileio.filetypes.pepxml.PepXmlParser;
+import umich.ms.fileio.filetypes.pepxml.jaxb.standard.*;
 
-import java.io.File;
+import javax.xml.stream.XMLStreamConstants;
+import javax.xml.stream.XMLStreamException;
+import javax.xml.stream.XMLStreamReader;
+import java.io.*;
 import java.net.URL;
+import java.nio.file.Path;
+import java.nio.file.Paths;
 import java.text.SimpleDateFormat;
 import java.util.*;
 import java.util.concurrent.ExecutorService;
 import java.util.concurrent.Executors;
-import java.util.stream.Collectors;
-
-import static org.junit.Assert.*;
+import java.util.concurrent.atomic.AtomicReference;
 
 public class LucXorTest {
 
-  private File file;
+  private File fileMzML;
+  private File filePepXML;
+  private PSMList psmList = new PSMList();
+
+  private static final org.slf4j.Logger log = LoggerFactory.getLogger(LucXorTest.class);
+
 
   @Before
   public void setUp() throws Exception {
     URL url = LucXorTest.class.getClassLoader().getResource("tiny.pwiz.1.1.mzML");
-    file = new File(url.toURI());
+    fileMzML = new File(url.toURI());
+
+    url = LucXorTest.class.getClassLoader().getResource("interact-ipro.pep.xml");
+    filePepXML = new File(url.toURI());
   }
 
   @Test
   public void readMZML() throws FileParsingException {
 
     SimpleDateFormat fmt= new SimpleDateFormat("HH:mm:ss");
-    String ext = afterLastDot(file.getAbsolutePath()).toLowerCase();
+    String ext = afterLastDot(fileMzML.getAbsolutePath()).toLowerCase();
     LCMSDataSource<?> source;
     switch (ext) {
       case "mzml":
-        source = new MZMLFile(file.getAbsolutePath());
+        source = new MZMLFile(fileMzML.getAbsolutePath());
         break;
       case "mzxml":
-        source = new MZXMLFile(file.getAbsolutePath());
+        source = new MZXMLFile(fileMzML.getAbsolutePath());
         break;
       default:
-        throw new UnsupportedOperationException("file not supported");
+        throw new UnsupportedOperationException("fileMzML not supported");
     }
     // create data structure to hold scans and load all scans
     ScanCollectionDefault scans = new ScanCollectionDefault();
@@ -62,7 +72,7 @@ public class LucXorTest {
     NavigableMap<Integer, ?> map = index.getMapByNum();
     final int batchSize = 100;
 
-    System.out.printf("Start loading whole file @ [%s]\n", fmt.format(new Date()));
+    System.out.printf("Start loading whole fileMzML @ [%s]\n", fmt.format(new Date()));
     long timeLo = System.nanoTime();
 
     Iterator<? extends Map.Entry<Integer, ?>> it = map.entrySet().iterator();
@@ -77,7 +87,7 @@ public class LucXorTest {
     }
 
     long timeHi = System.nanoTime();
-    System.out.printf("Done loading whole file @ [%s]\n", fmt.format(new Date()));
+    System.out.printf("Done loading whole fileMzML @ [%s]\n", fmt.format(new Date()));
     System.out.printf("Loading took %.1fs", (timeHi - timeLo)/1e9f);
     // data index, can be used to locate scans by numbers or retention times at different ms levels
 
@@ -99,5 +109,65 @@ public class LucXorTest {
   private String afterLastDot(String s) {
       int last = s.lastIndexOf('.');
       return last < 0 ? "" : s.substring(last+1);
+  }
+
+  @Test
+  public void readPepXML() throws FileParsingException, IOException {
+
+    Path path = Paths.get(filePepXML.getAbsolutePath());
+
+    try (final FileInputStream fis = new FileInputStream(path.toString())) {
+
+      //Parse metadata
+
+      Iterator<MsmsRunSummary> it = PepXmlParser.parse(fis);
+      while (it.hasNext()) {
+        MsmsRunSummary runSummary = it.next();
+        if(runSummary.getSearchSummary() != null && !runSummary.getSearchSummary().isEmpty()){
+          List<SearchSummary> searchSummaryList = runSummary.getSearchSummary();
+          PepXML.parseSummaryPTMs(searchSummaryList);
+        }
+
+        runSummary.getSpectrumQuery().forEach(query ->{
+          long startScan = query.getStartScan();
+          String spectrumId = query.getSpectrum();
+          int charge = query.getAssumedCharge();
+          query.getSearchResult().forEach(results->{
+            if(results.getSearchHit().size() > 0)
+              log.info("Multiple peptides reported for the same spectrum, LucXor has been tested for that");
+
+            results.getSearchHit().forEach(hit->{
+              PSM curPSM = new PSM();
+              curPSM.setSpecId(spectrumId);
+              curPSM.setScanNum(new Long(startScan).intValue());
+              curPSM.setCharge(charge);
+              curPSM.setPeptideSequence(hit.getPeptide());
+              List<NameValueType> scores = hit.getSearchScore();
+              PepXML.parseScores(curPSM, Constants.PEPPROPHET, scores, hit.getAnalysisResult());
+              if(hit.getModificationInfo() != null)
+                PepXML.addPTMs(curPSM, hit.getModificationInfo());
+              if(PepXML.isValidPSM(curPSM))
+                psmList.add(curPSM);
+            });
+          });
+        });
+      }
+    }
+  }
+
+
+
+
+
+
+
+  private static boolean advanceReaderToNextRunSummary(XMLStreamReader xsr)
+          throws XMLStreamException {
+    do {
+      if (xsr.next() == XMLStreamConstants.END_DOCUMENT)
+        return false;
+    } while (!(xsr.isStartElement() && xsr.getLocalName().equals("msms_run_summary")));
+
+    return true;
   }
 }

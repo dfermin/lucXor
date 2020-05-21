@@ -34,7 +34,7 @@ public class Utils {
    * @param scanNum Scan number
    * @return  Filename:Scan
    */
-  public static String generateIndex(String srcFile, Integer scanNum){
+  public static String generateIndex(String srcFile, long scanNum){
     return srcFile + ":" + scanNum;
   }
 
