@@ -23,15 +23,21 @@ import gnu.trove.map.hash.TIntIntHashMap;
 import gnu.trove.map.hash.TIntObjectHashMap;
 import gnu.trove.set.hash.THashSet;
 import gnu.trove.set.hash.TIntHashSet;
+import lombok.extern.slf4j.Slf4j;
 import lucxor.algorithm.FLR;
 import lucxor.algorithm.ModelDataCID;
 import lucxor.algorithm.ModelDataHCD;
 import lucxor.algorithm.ModelParameterWorkerThread;
 import lucxor.common.*;
+import lucxor.pride.PrideJsonRandomAccess;
 import lucxor.utils.Constants;
 import lucxor.utils.MathFunctions;
-import org.slf4j.LoggerFactory;
+import org.apache.commons.cli.*;
 import org.xml.sax.SAXException;
+import uk.ac.ebi.pride.archive.dataprovider.common.Tuple;
+import uk.ac.ebi.pride.archive.dataprovider.data.ptm.IdentifiedModification;
+import uk.ac.ebi.pride.archive.dataprovider.data.spectra.ArchiveSpectrum;
+import uk.ac.ebi.pride.archive.dataprovider.param.CvParamProvider;
 import umich.ms.datatypes.index.Index;
 import umich.ms.datatypes.scan.IScan;
 import umich.ms.datatypes.scancollection.impl.ScanCollectionDefault;
@@ -49,9 +55,8 @@ import static lucxor.utils.Constants.*;
  * @author ypriverol
  */
 
+@Slf4j
 public class LucXor {
-
-    private static final org.slf4j.Logger log = LoggerFactory.getLogger(LucXor.class);
 
     private static long startTime;
     private static long endTime;
@@ -63,29 +68,73 @@ public class LucXor {
     private static TMap<Integer, ModelDataCID> modelingMapCID = null;
     private static TMap<Integer, ModelDataHCD> modelingMapHCD = null;
 
+    private static PrideJsonRandomAccess prideJsonReader;
 
     public static void main(String[] args) throws
             IOException, IllegalStateException,
             InterruptedException, ExecutionException, FileParsingException {
-		
-		String releaseVersion = "1.2014Oct10";
-		log.info("\nluciphor2 (JAVA-based version of Luciphor)\n" +
-						 "Version: " + releaseVersion + "\n" +
-						 "Original C++ version available at: http://luciphor.sf.net\n\n");
-				
-		
-		if(args.length < 1) {
-			log.info("USAGE: java -jar luciphor2.jar <input_file>\n\n");
-			log.info("\tGenerate a luciphor2 input file with: java -jar luciphor2.jar -t\n");
+
+        String prideInput = null;
+        String prideOutput = null;
+
+        String releaseVersion = "1.2014Oct10";
+        log.info("\nluciphor2 (JAVA-based version of Luciphor)\n" +
+                "Version: " + releaseVersion + "\n" +
+                "Original C++ version available at: http://luciphor.sf.net\n\n");
+
+        if(args.length < 1) {
+            log.info("USAGE: java -jar luciphor2.jar <input_file>\n\n");
+            log.info("\tGenerate a luciphor2 input file with: java -jar luciphor2.jar -t\n");
             log.info("\tModify the input file to suit your needs and submit it to the program.\n");
             log.info("\tExample: java -jar luciphor2.jar input_file_you_edited\n\n");
-			System.exit(0);
-		}
-		
-		if(args[0].equalsIgnoreCase("-t")) {
-		    File outF = LucXorConfiguration.writeTemplateInputFile();
-            log.info("\nPlease edit the input file: " + outF.getPath() +
-                    " with your favorite text editor\n\n");
+            System.exit(0);
+        }
+
+
+        CommandLine cmd;
+        CommandLineParser parser = new BasicParser();
+        HelpFormatter helper = new HelpFormatter();
+
+        Options options = generateToolOptions();
+
+        try {
+            cmd = parser.parse(options, args);
+            if(cmd.hasOption("-t")) {
+                File outF = LucXorConfiguration.writeTemplateInputFile();
+                log.info("\nPlease edit the input file: " + outF.getPath() +
+                        " with your favorite text editor\n\n");
+                System.exit(0);
+            }
+
+            if (cmd.hasOption("c")) {
+                String opt_config = cmd.getOptionValue("config");
+                // Read Configuration file
+                LucXorConfiguration.parseConfigurationFile(opt_config);
+                // Load User Modifications
+                LucXorConfiguration.loadUserMods();
+            }
+
+            if (cmd.hasOption("a")){
+                String opt_algorithm = cmd.getOptionValue("algorithm");
+                LucXorConfiguration.setAlgorithm(Integer.parseInt(opt_algorithm));
+            }
+
+            if (cmd.hasOption("p")){
+                prideInput = cmd.getOptionValue("prideFile");
+                LucXorConfiguration.setSpectraFileType(PRIDE_TYPE);
+                LucXorConfiguration.setScoringMethod(Constants.NEGLOGEXPECT);
+            }
+
+            if(cmd.hasOption("o")){
+                prideOutput = cmd.getOptionValue("prideOutputFile");
+            }
+
+            if(prideInput != null && prideOutput == null)
+                throw new ParseException("If pride json file is provided and output json file should be also provided");
+
+        } catch (ParseException e) {
+            System.out.println(e.getMessage());
+            helper.printHelp("Usage:", options);
             System.exit(0);
         }
 
@@ -96,22 +145,20 @@ public class LucXor {
         SimpleDateFormat sdf = new SimpleDateFormat("yyyyMMMdd-hh_mm_ss");
         timeStamp = sdf.format(new java.util.Date());
 
-		// Read Configuration file
-        LucXorConfiguration.parseConfigurationFile(args[0]);
-
-        // Load User Modifications
-		LucXorConfiguration.loadUserMods();
-		
-		
 		// read in the score results
         psmList = new PSMList();
-		if(LucXorConfiguration.getInputType() == Constants.PEPXML)
+		if (prideInput != null)
+            parsePrideJsonFile(prideInput);
+        else if (LucXorConfiguration.getInputType() == Constants.PEPXML)
 			parsePepXML();
 		else
 			parseTSVSrc();
 
         // Read in spectra for these PSMs
-		readInSpectra();
+		if(prideInput != null)
+            readInPrideSpectra();
+        else
+            readInSpectra();
 
 		// Run CID Algorithm
         if(LucXorConfiguration.getScoringAlgorithm() == Constants.CID)
@@ -127,6 +174,86 @@ public class LucXor {
         endTime = System.nanoTime();
         reportElapsedTime();
 	}
+
+    private static void readInPrideSpectra() throws IOException {
+
+        log.info("\nReading PRIDE spectra ...");
+
+        int assignedSpectraCtr = 0;
+
+        // Assign the spectra to their respective PSMs
+        for(PSM p : psmList) {
+            ArchiveSpectrum spectrum = prideJsonReader.readArchiveSpectrum(p.getSpecId());
+            Spectrum spec = new Spectrum(Stream.of(spectrum.getMasses()).mapToDouble(Double::doubleValue).toArray(), Stream.of(spectrum.getIntensities()).mapToDouble(Double::doubleValue).toArray());
+            p.recordSpectra(spec);
+            assignedSpectraCtr++;
+        }
+        log.info("Spectra readed in total: " + assignedSpectraCtr );
+
+    }
+
+    private static void parsePrideJsonFile(String prideInput) throws IOException {
+
+        prideJsonReader = new PrideJsonRandomAccess(prideInput);
+        prideJsonReader.parseIndex();
+        for(String key: prideJsonReader.getKeys()){
+
+            //mzspec:PRD000909:tio2_250ug:scan:92678:SQEPVTLDFLDAELENDIK/2
+            Integer scanNumber = Integer.parseInt(key.split(":")[4]);
+            String spectrumFile = key.split(":")[2];
+
+            ArchiveSpectrum spectrum = prideJsonReader.readArchiveSpectrum(key);
+            PSM psm = PSM.builder()
+                    .charge(spectrum.getPrecursorCharge())
+                    .isDecoy(spectrum.isDecoy())
+                    .srcFile(spectrumFile)
+                    .scanNum(scanNumber)
+                    .specId(spectrumFile + "." + scanNumber + "." + scanNumber + "." + spectrum.getPrecursorCharge())
+                    .build();
+
+            double obsScore = Double.parseDouble( spectrum.getBestSearchEngineScore().getValue());
+            psm.setPeptideSequence(spectrum.getPeptideSequence());
+
+            psm.setPSMscore(-1.0 * Math.log(obsScore));
+
+            if(spectrum.getModifications().size() == 0) { // no modifications so skip this PSM
+                continue;
+            }
+
+            // modification string syntax: <pos>=<mass_of_modified_AA>
+            // multiple modifications are comma separated (no spaces)
+            // N-term pos = -100, C-term pos = 100
+            // Fixed modifications are not reported
+            for(IdentifiedModification modSites : spectrum.getModifications()) {
+                for( Tuple<Integer, Set<? extends CvParamProvider >> entry: modSites.getPositionMap()){
+                    int pos = entry.getKey() - 1;
+                    if (pos == -1)
+                        pos = -100; // N-Term modification
+                    if (pos > spectrum.getPeptideSequence().length())
+                        pos = 100;  // C-term modification
+                    double mass = Double.parseDouble(modSites.getModification().getValue());
+                    psm.getModCoordMap().put(pos, mass);
+                }
+            }
+
+            // Determine if this PSM has any non-standard AA characters.
+            // If so, discard it
+            int numBadChars = 0;
+            for(int i = 0; i < psm.getPeptideSequence().length(); i++) {
+                String c = Character.toString( psm.getPeptideSequence().charAt(i) );
+                if( !"ACDEFGHIKLMNPQRSTVWY".contains(c) ) numBadChars++;
+            }
+
+            // Skip PSMs that exceed the number of candidate permutations
+            if(psm.getOrigPep().getNumPerm() > LucXorConfiguration.getMaxNumPermutations()) numBadChars = 100;
+
+            if(numBadChars == 0) {
+                psm.process();
+                psm.setSpecId(key);
+                if(psm.isKeeper()) psmList.add(psm);
+            }
+        }
+    }
 
 
     /**
@@ -874,10 +1001,8 @@ public class LucXor {
         }
 
         // Read mzXML files
-
         if(LucXorConfiguration.getSpectrumPrefix().equalsIgnoreCase(MZXML_TYPE))
-            readXMLFile(scanMap, LucXorConfiguration.getSpectrumPath().getAbsolutePath(),
-                    MZXML_TYPE);
+            readXMLFile(scanMap, LucXorConfiguration.getSpectrumPath().getAbsolutePath(),MZXML_TYPE);
 
         // Read mzML files
         if(LucXorConfiguration.getSpectrumPrefix().equalsIgnoreCase(MZML_TYPE))
@@ -952,74 +1077,6 @@ public class LucXor {
         return ret;
     }
 
-
-// --Commented out by Inspection START (2020-05-18 21:26):
-//    /****************
-//     * Function reads in spectral data from mzML files
-//     * @param scanMap {@link Map} where the key is the filename and the value the list of scan
-//     */
-//    private static void readMzML(Map<String, List<Integer>> scanMap, String spectraPath) throws
-//            FileParsingException {
-//
-//        long timeLo = System.nanoTime();
-//
-//        // Iterate over the file names
-//        for(Map.Entry<String, List<Integer>> stringListEntry : scanMap.entrySet()) {
-//            String baseFN = new File(spectraPath + "/" + stringListEntry.getKey()).getName();
-//            System.err.print("\n" + baseFN + ":  "); // beginning of info line
-//
-//            int ctr = 0;
-//            int iter = 0;
-//            List<Integer> scanNums = stringListEntry.getValue();
-//            Collections.sort(scanNums); // order scan numbers
-//
-//            // read in the mzXML file
-//            String mzML_path = LucXorConfiguration.getSpectrumPath() + "/" + baseFN;
-//
-//            final MZMLFile curMZML = new MZMLFile(mzML_path);
-//
-//            for(int scanNum : scanNums) {
-//                iter++;
-//                if( iter % 100 == 0 ) {
-//                    System.err.print("\r" + baseFN + ":  " + iter + "... ");
-//                    // beginning of info line
-//                }
-//                final IScan scan = curMZML.parseScan(scanNum, true);
-//                final ISpectrum spectrum = scan.getSpectrum();
-//                int N = spectrum.getMZs().length;
-//                if(N == 0) {
-//                    continue; // no valid spectrum for this scan number
-//                }
-//
-//                double[] mz = spectrum.getMZs();
-//                double[] intensities = spectrum.getIntensities();
-//
-//                // If this happens, there is something wrong with the spectrum so skip it
-//                if(mz.length != intensities.length) {
-//                    System.err.print(
-//                            "\nERROR:" + baseFN + " Scan: " + scanNum +
-//                                    "\n# of mz values != # intensity values: " +
-//                                    mz.length + " != " + intensities.length +
-//                                    "\nSkipping this scan...\n"
-//                    );
-//                    continue;
-//                }
-//
-//                Spectrum X = new Spectrum(mz, intensities);
-//
-//                PSM psm = psmList.getByScanOrder(baseFN, scanNum);
-//                psm.recordSpectra(X);
-//                ctr++;
-//            }
-//            // end of file reading
-//            System.err.print("\r" + baseFN +  ":  " + ctr + " spectra read in.            ");
-//        }
-//        long timeHi = System.nanoTime();
-//        log.info("Loading took: " + (timeHi - timeLo)/1e9f);
-//
-//    }
-// --Commented out by Inspection STOP (2020-05-18 21:26)
-
     private static void readXMLFile(Map<String, List<Integer>> scanMap, String
             pathSpectra, String fileType) throws FileParsingException, ExecutionException, InterruptedException {
 
@@ -1088,66 +1145,6 @@ public class LucXor {
 
     }
 
-// --Commented out by Inspection START (2020-05-18 21:27):
-//    /**
-//     * Function to read spectra from mzXML file
-//     * @param scanMap Scan Map
-//     * @throws IllegalStateException Access exception
-//     * @throws FileParsingException File parsing exception
-//     */
-//    private static void readMzXML(Map<String, List<Integer>> scanMap, String pathSpectra) throws
-//            IllegalStateException,
-//            FileParsingException {
-//
-//        // Iterate over the file names
-//        for(Map.Entry<String, List<Integer>> stringListEntry : scanMap.entrySet()) {
-//            String baseFN = new File(pathSpectra + "/" + stringListEntry.getKey()).getName();
-//            System.err.print(baseFN + ":  "); // beginning of info line
-//
-//            int ctr = 0;
-//            List<Integer> scanNums = stringListEntry.getValue();
-//            Collections.sort(scanNums); // order the scan numbers
-//
-//            int N = LucXorConfiguration.getNumThreads();
-//            if(LucXorConfiguration.getNumThreads() > 1) N -= 1;
-//
-//            final MZXMLFile mzxml = new MZXMLFile(stringListEntry.getKey(), false);
-//            mzxml.setNumThreadsForParsing(N);
-//            mzxml.setParsingTimeout(60L); // 1 minute before it times out trying to read a file
-//            final LCMSData lcmsData = new LCMSData(mzxml);
-//            lcmsData.load(LCMSDataSubset.MS2_WITH_SPECTRA);
-//            final IScanCollection scans = lcmsData.getScans();
-//            final ScanIndex ms2ScanIndex = scans.getMapMsLevel2index().get(2);
-//
-//            if( (ms2ScanIndex == null) || (ms2ScanIndex.getNum2scan().isEmpty()) ) {
-//                log.info("\nERROR: LucXorConfiguration.readMzXML(): Unable to read MS2 scans from '" + stringListEntry.getKey() + "'\n");
-//                System.exit(0);
-//            }
-//
-//            for(Map.Entry<Integer, IScan> num2scan : ms2ScanIndex.getNum2scan().entrySet()) {
-//                int scanNum = num2scan.getKey();
-//                IScan scan = num2scan.getValue();
-//                double[] mz = scan.getSpectrum().getMZs();
-//                double[] intensities = scan.getSpectrum().getIntensities();
-//
-//                Spectrum curSpectrum = new Spectrum(mz, intensities);
-//
-//                // assign this spectrum to it's PSM
-//                for(PSM p : psmList) {
-//                    if( (p.getSrcFile().equalsIgnoreCase(baseFN)) && (p.getScanNum() == scanNum) ) {
-//                        p.recordSpectra(curSpectrum);
-//                        ctr++;
-//                        break;
-//                    }
-//                }
-//            }
-//
-//            log.info(ctr + " spectra read in.");  // end of info line
-//        }
-//    }
-// --Commented out by Inspection STOP (2020-05-18 21:27)
-
-
     // Function assigns the global and local FLR for the current PSM from the FLRestimateMap
     private static void assignFLR() {
 
@@ -1193,5 +1190,50 @@ public class LucXor {
             d[1] = p.getLocalFDR();
             FLRestimateMap.put( p.getDeltaScore(), d );
         }
+    }
+
+    private static Options generateToolOptions(){
+        Options options = new Options();
+
+        Option confFile = Option.builder("t")
+                .longOpt("generation").hasArg()
+                .required(false)
+                .hasArg(false)
+                .desc("generates a configuration file default")
+                .build();
+        options.addOption(confFile);
+
+        Option config = Option.builder("c").longOpt("config")
+                .argName("config")
+                .hasArg(true)
+                .required(true)
+                .desc("config file to be used during the run").build();
+        options.addOption(config);
+
+        Option prideSpectra = Option.builder("p")
+                .longOpt("prideFile")
+                .hasArg(true)
+                .required(false)
+                .desc("use pride json file containing spectra")
+                .build();
+        options.addOption(prideSpectra);
+
+        Option prideSpectraOutput = Option.builder("o")
+                .longOpt("prideOutputFile")
+                .hasArg(true)
+                .required(false)
+                .desc("output json file containing spectra and FLR")
+                .build();
+        options.addOption(prideSpectraOutput);
+
+        Option algorithm = Option.builder("a")
+                .longOpt("algorithm")
+                .hasArg(true)
+                .required(false)
+                .desc("algorithm to be used by the tool HCD or CID")
+                .build();
+        options.addOption(algorithm);
+
+        return options;
     }
 }

@@ -2,6 +2,7 @@ package lucxor.common;
 
 
 import gnu.trove.list.array.TIntArrayList;
+import lombok.Builder;
 import org.apache.commons.math3.util.FastMath;
 
 import java.util.ArrayList;
@@ -10,6 +11,7 @@ import java.util.Collections;
 /**
  * Created by dfermin on 3/31/14.
  */
+@Builder
 public class Spectrum {
 
     public int N; // number of peaks
@@ -71,6 +73,15 @@ public class Spectrum {
         }
     }
 
+    public Spectrum(int n, int maxI_index, double maxI, double[] mz, double[] raw_intensity, double[] rel_intensity, double[] norm_intensity) {
+        N = n;
+        this.maxI_index = maxI_index;
+        this.maxI = maxI;
+        this.mz = mz;
+        this.raw_intensity = raw_intensity;
+        this.rel_intensity = rel_intensity;
+        this.norm_intensity = norm_intensity;
+    }
 
     public Spectrum() {} // empty constructor
 
@@ -116,60 +127,7 @@ public class Spectrum {
         }
     }
 
-// --Commented out by Inspection START (2020-05-18 00:52):
-//    /*
-//     * Get a particular peak value mz or intensity
-//     */
-//    public double getPeak(int idx, int dt) {
-//        double ret = 0;
-//
-//        switch(dt) {
-//            case 1:
-//                ret = this.mz[idx];
-//                break;
-//            case 2:
-//                ret = this.raw_intensity[idx];
-//                break;
-//            case 3:
-//                ret = this.rel_intensity[idx];
-//                break;
-//            case 4:
-//                ret = this.norm_intensity[idx];
-//                break;
-//        }
-//
-//        return ret;
-//    }
-// --Commented out by Inspection STOP (2020-05-18 00:52)
 
-// --Commented out by Inspection START (2020-05-18 00:52):
-//    /*
-//     * Returns true if the mz variable is empty or unset
-//     * @return
-//     */
-//    public boolean isEmpty() {
-//        if(null == this.mz) return true;
-//        return this.mz.length == 0;
-//    }
-// --Commented out by Inspection STOP (2020-05-18 00:52)
-
-
-// --Commented out by Inspection START (2020-05-18 00:52):
-//    /**********
-//     * This function returns the index for the element corresponding to the given mz value
-//     */
-//    public int findIndexByMZ(double passed_mz) {
-//        int ret = -1;
-//
-//        for(int i = 0; i < N; i++) {
-//            if(this.mz[i] == passed_mz) {
-//                ret = i;
-//                break;
-//            }
-//        }
-//        return ret;
-//    }
-// --Commented out by Inspection STOP (2020-05-18 00:52)
 
     /**
      * Get the peak information

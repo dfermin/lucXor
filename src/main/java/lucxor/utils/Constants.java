@@ -51,6 +51,9 @@ public class Constants {
 	public static final String MZML_TYPE = "MZML";
 	public static final String MZXML_TYPE = "MZXML";
 
+	public static final String PRIDE_TYPE = "PRIDE";
+
+
 	public static final String PEPTIDE_PROPHET_HEADER  = "peptideprophet";
 
 	public static final Map<String, Double> AA_MASS_MAP = Stream.of(

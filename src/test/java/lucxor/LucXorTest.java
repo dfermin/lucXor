@@ -28,13 +28,12 @@ import java.text.SimpleDateFormat;
 import java.util.*;
 import java.util.concurrent.ExecutorService;
 import java.util.concurrent.Executors;
-import java.util.concurrent.atomic.AtomicReference;
 
 public class LucXorTest {
 
   private File fileMzML;
   private File filePepXML;
-  private PSMList psmList = new PSMList();
+  private final PSMList psmList = new PSMList();
 
   private static final org.slf4j.Logger log = LoggerFactory.getLogger(LucXorTest.class);
 
@@ -42,9 +41,11 @@ public class LucXorTest {
   @Before
   public void setUp() throws Exception {
     URL url = LucXorTest.class.getClassLoader().getResource("tiny.pwiz.1.1.mzML");
+    assert url != null;
     fileMzML = new File(url.toURI());
 
     url = LucXorTest.class.getClassLoader().getResource("interact-ipro.pep.xml");
+    assert url != null;
     filePepXML = new File(url.toURI());
   }
 
@@ -154,12 +155,6 @@ public class LucXorTest {
       }
     }
   }
-
-
-
-
-
-
 
   private static boolean advanceReaderToNextRunSummary(XMLStreamReader xsr)
           throws XMLStreamException {

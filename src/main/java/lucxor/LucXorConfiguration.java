@@ -725,4 +725,16 @@ public class LucXorConfiguration {
 	public static String getIdentificationSuffix() {
 		return IDENTIFICATION_SUFFIX;
 	}
+
+	public static void setAlgorithm(int algorithm){
+		 SCORING_ALGORITHM = algorithm;
+	}
+
+	public static void setSpectraFileType(String prideType) {
+		SPECTRUM_PREFIX = prideType;
+	}
+
+	public static void setScoringMethod(int scoringMethod){
+		SCORING_METHOD = scoringMethod;
+	}
 }

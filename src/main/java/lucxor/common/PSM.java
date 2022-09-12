@@ -8,6 +8,8 @@ import gnu.trove.map.TMap;
 import gnu.trove.map.hash.TDoubleObjectHashMap;
 import gnu.trove.map.hash.THashMap;
 import gnu.trove.map.hash.TIntDoubleHashMap;
+import lombok.Builder;
+import lombok.extern.slf4j.Slf4j;
 import lucxor.algorithm.ModelDataCID;
 import lucxor.algorithm.ModelDataHCD;
 import lucxor.utils.Constants;
@@ -30,10 +32,10 @@ import java.util.regex.Pattern;
  *
  * @author dfermin
  */
-
+@Builder
+@Slf4j
 public class PSM {
 
-	private static final org.slf4j.Logger log = LoggerFactory.getLogger(PSM.class);
 
 	private String specId; // TPP-based name
 	private String srcFile; // name of file from which spectrum is derived
@@ -48,8 +50,7 @@ public class PSM {
 	private boolean isDecoy; // true means the top match for this PSM is a decoy
 	private boolean isUnambiguous; // true means the number potential PTM sites is equal to the number
 	                               // of reported PTM sites
-	
-	private final TIntDoubleHashMap modCoordMap; // holds modified amino acid positions
+	private TIntDoubleHashMap modCoordMap; // holds modified amino acid positions
 	
 	private TMap<String, Double> posPermutationScoreMap = null;
 	private TMap<String, Double> negPermutationScoreMap = null;
@@ -59,9 +60,8 @@ public class PSM {
     private List<Peak> negPeaks = null;
 
 	private Spectrum PeakList;
-	
-	
-	private final Peptide origPep;
+
+	private Peptide origPep;
 	private Peptide score1pep; // top scoring peptide permutation
 	private Peptide score2pep; // 2nd best scoring peptide permutation
 
@@ -79,7 +79,34 @@ public class PSM {
         PeakList = new Spectrum();
 	}
 
-	
+	public PSM(String specId, String srcFile, int scanNum, int charge, double PSMscore, double deltaScore,
+			   double localFDR, double globalFDR, boolean isKeeper, boolean useForModel, boolean isDecoy,
+			   boolean isUnambiguous, TIntDoubleHashMap modCoordMap, TMap<String, Double> posPermutationScoreMap,
+			   TMap<String, Double> negPermutationScoreMap, List<Peak> posPeaks, List<Peak> negPeaks,
+			   Spectrum peakList, Peptide origPep, Peptide score1pep, Peptide score2pep) {
+		this.specId = specId;
+		this.srcFile = srcFile;
+		this.scanNum = scanNum;
+		this.charge = charge;
+		this.PSMscore = PSMscore;
+		this.deltaScore = deltaScore;
+		this.localFDR = localFDR;
+		this.globalFDR = globalFDR;
+		this.isKeeper = isKeeper;
+		this.useForModel = useForModel;
+		this.isDecoy = isDecoy;
+		this.isUnambiguous = isUnambiguous;
+		this.modCoordMap = modCoordMap;
+		this.posPermutationScoreMap = posPermutationScoreMap;
+		this.negPermutationScoreMap = negPermutationScoreMap;
+		this.posPeaks = posPeaks;
+		this.negPeaks = negPeaks;
+		PeakList = peakList;
+		this.origPep = origPep;
+		this.score1pep = score1pep;
+		this.score2pep = score2pep;
+	}
+
 	public void process() {
 
 		origPep.initialize(modCoordMap);
@@ -112,6 +139,8 @@ public class PSM {
 					suffix = Constants.MZML_TYPE;
 				if(LucXorConfiguration.getSpectrumPrefix().equalsIgnoreCase(Constants.MGF_TYPE))
 					suffix = Constants.MGF_TYPE;
+				if(LucXorConfiguration.getSpectrumPrefix().equalsIgnoreCase(Constants.PRIDE_TYPE))
+					suffix = Constants.PRIDE_TYPE;
 
                 /*
                 ** Some scans might have a name formatted like this:
@@ -951,6 +980,9 @@ public class PSM {
 	}
 
 	public TIntDoubleHashMap getModCoordMap() {
+		if(modCoordMap == null){
+			modCoordMap = new TIntDoubleHashMap();
+		}
 		return modCoordMap;
 	}
 
@@ -991,6 +1023,10 @@ public class PSM {
 	}
 
 	public void setPeptideSequence(String sequence){
+		if(this.origPep == null){
+			origPep = new Peptide();
+		}
+
 		this.origPep.setPeptide(sequence);
 	}
 

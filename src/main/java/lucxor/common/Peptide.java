@@ -14,6 +14,7 @@ import gnu.trove.map.TMap;
 import gnu.trove.map.hash.TDoubleObjectHashMap;
 import gnu.trove.map.hash.THashMap;
 import gnu.trove.map.hash.TIntDoubleHashMap;
+import lombok.extern.slf4j.Slf4j;
 import lucxor.*;
 import lucxor.algorithm.ModelDataCID;
 import lucxor.algorithm.ModelDataHCD;
@@ -26,6 +27,7 @@ import org.apache.commons.math3.util.FastMath;
  *
  * @author dfermin
  */
+@Slf4j
 public class Peptide {
 
 	private String peptide;
@@ -59,7 +61,9 @@ public class Peptide {
 
 			if( (pos == Constants.NTERM_MOD) || (pos == Constants.CTERM_MOD) ) modPosMap.put(pos, mass);
 			else {
+
 				String C = Character.toString(peptide.charAt(pos));
+				System.out.println("Peptide: " + peptide + " Postision: " + pos + " Mass: " + mass + " AA: " + C);
 				String c = C.toLowerCase();
 
 				if( LucXorConfiguration.getFixedModMap().containsKey(C)) {
