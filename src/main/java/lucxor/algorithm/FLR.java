@@ -124,7 +124,7 @@ public class FLR {
 		
 		if(dataType == Constants.REAL) { // real
 			sigma = Math.sqrt(deltaScoreVar_pos);
-			N = (double) targetPSMs.size();
+			N = targetPSMs.size();
 			x = Math.pow(N, 0.2);
 			
 			result = 1.06 * (sigma / x);
@@ -134,7 +134,7 @@ public class FLR {
 		
 		if(dataType == Constants.DECOY) { // decoy
 			sigma = Math.sqrt(deltaScoreVar_neg);
-			N = (double) decoyPSMs.size();
+			N = decoyPSMs.size();
 			x = Math.pow(N, 0.2);
 			
 			result = 1.06 * (sigma / x);
@@ -150,14 +150,14 @@ public class FLR {
 		
 		// for the forwards
 		for(double d : pos) sum += d;
-		N = (double) pos.length;
+		N = pos.length;
 		deltaScoreMu_pos = sum / N;
 		
 		
 		// for the decoys
 		sum = 0d;
 		for(double d : neg) sum += d;
-		N = (double) neg.length;
+		N = neg.length;
 		deltaScoreMu_neg = sum / N;
 	}
 
@@ -207,7 +207,7 @@ public class FLR {
 		if(dataType == Constants.DECOY) { // decoys
 			dataAry = neg;
 			bw = bw_decoy;
-			N = (double) Ndecoy;
+			N = Ndecoy;
 			res = new double[ NMARKS ];
 			f0 = new double[ NMARKS ];
 		}
@@ -215,7 +215,7 @@ public class FLR {
 		if(dataType == Constants.REAL) { // real
 			dataAry = pos;
 			bw = bw_real;
-			N = (double) Nreal;
+			N = Nreal;
 			res = new double[ NMARKS ];
 			f1 = new double[ NMARKS ];
 		}
@@ -273,8 +273,8 @@ public class FLR {
 		double AUC_rev_1; // Area-Under Curve from end of tick marks working backwards (f1 data)
 		double ratio;
 		
-		double Nreal2 = (double) Nreal;
-		double Ndecoy2 = (double) Ndecoy;
+		double Nreal2 = Nreal;
+		double Ndecoy2 = Ndecoy;
 
 		int i = 0;
 		for(double tmp_score : pos) {

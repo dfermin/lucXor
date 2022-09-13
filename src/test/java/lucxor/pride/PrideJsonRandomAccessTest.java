@@ -1,6 +1,5 @@
 package lucxor.pride;
 
-import junit.framework.TestCase;
 import lucxor.LucXorTest;
 import org.junit.Assert;
 import org.junit.Before;

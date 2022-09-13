@@ -123,17 +123,17 @@ public class ModelDataCID {
 		
 		// Intensity
 		sum = 0;
-		N = (double) b_intensity.length;
+		N = b_intensity.length;
 		for(double d : b_intensity) sum += d;
 		mu_int_B = (sum / N);
 		
 		sum = 0;
-		N = (double) y_intensity.length;
+		N = y_intensity.length;
 		for(double d : y_intensity) sum += d;
 		mu_int_Y = (sum / N);
 		
 		sum = 0;
-		N = (double) u_intensity.length;
+		N = u_intensity.length;
 		for(double d : u_intensity) sum += d;
 		mu_int_U = (sum / N);
 		
@@ -141,12 +141,12 @@ public class ModelDataCID {
 
 		// Distance
 		sum = 0;
-		N = (double) b_distance.length;
+		N = b_distance.length;
 		for(double d : b_distance) sum += d;
 		mu_dist_B = (sum / N);
 
         sum = 0;
-        N = (double) y_distance.length;
+        N = y_distance.length;
         for(double d : y_distance) sum += d;
         mu_dist_Y = (sum / N);
 		

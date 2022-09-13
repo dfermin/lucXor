@@ -185,14 +185,14 @@ public class ModelDataHCD {
 		
 		
 		// B-ions
-		N = (double) b_int.length;
+		N = b_int.length;
 		sum = 0;
 		for(double b : b_int) sum += b;
 		bIntMean = sum / N;
 		
 		
 		// Y-ions
-		N = (double) y_int.length;
+		N = y_int.length;
 		sum = 0;
 		for(double y : y_int) sum += y;
 		yIntMean = sum / N;
@@ -202,7 +202,7 @@ public class ModelDataHCD {
 		
 		
 		// Noise peaks
-		N = (double) n_int.length;
+		N = n_int.length;
 		sum = 0;
 		for(double n : n_int) sum += n;
 		negIntMean = sum / N;
@@ -323,7 +323,7 @@ public class ModelDataHCD {
 
 		// Compute estimate of positive intensity bandwidth
 		double sigma = Math.sqrt( variance );
-		bw = ( 1.06 * (sigma / Math.pow(((double)N), 0.2)) ) * 0.5;
+		bw = ( 1.06 * (sigma / Math.pow(N, 0.2)) ) * 0.5;
 
 		f_int = new double[ ntick ]; // this will hold the estimated height
 		
@@ -427,7 +427,7 @@ public class ModelDataHCD {
 
 		// Compute estimate of positive intensity bandwidth
 		double sigma = Math.sqrt( posDistVar );
-		bw = ( 1.06 * (sigma / Math.pow(((double)N), 0.2)) ) * 0.1;
+		bw = ( 1.06 * (sigma / Math.pow(N, 0.2)) ) * 0.1;
 		
 		f_ary = new double[ ntick ];
 

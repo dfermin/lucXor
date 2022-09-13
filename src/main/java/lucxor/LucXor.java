@@ -205,7 +205,7 @@ public class LucXor {
             ArchiveSpectrum spectrum = prideJsonReader.readArchiveSpectrum(key);
             PSM psm = PSM.builder()
                     .charge(spectrum.getPrecursorCharge())
-                    .isDecoy(spectrum.isDecoy())
+                    .isDecoy(spectrum.getIsDecoy())
                     .srcFile(spectrumFile)
                     .scanNum(scanNumber)
                     .specId(spectrumFile + "." + scanNumber + "." + scanNumber + "." + spectrum.getPrecursorCharge())
@@ -341,9 +341,9 @@ public class LucXor {
 			
 			curPSM = new PSM();
 			curPSM.setSrcFile(vars[0]);
-			curPSM.setScanNum(Integer.valueOf( vars[1] ));
-			curPSM.setCharge(Integer.valueOf( vars[2] ));
-			double obsScore = Double.valueOf( vars[3] );
+			curPSM.setScanNum(Integer.parseInt( vars[1] ));
+			curPSM.setCharge(Integer.parseInt( vars[2] ));
+			double obsScore = Double.parseDouble( vars[3] );
 			curPSM.setPeptideSequence(vars[4].toUpperCase());
 
 			if(LucXorConfiguration.getScoringMethod() == Constants.NEGLOGEXPECT) {
@@ -363,8 +363,8 @@ public class LucXor {
 			// Fixed modifications are not reported
 			for(String modSites : vars[5].split(",")) {
 				String[] ary = modSites.split("=");
-				int pos = Integer.valueOf(ary[0]); // assume 0-based coordinates
-				double mass = Double.valueOf(ary[1]);
+				int pos = Integer.parseInt(ary[0]); // assume 0-based coordinates
+				double mass = Double.parseDouble(ary[1]);
 				
 				curPSM.getModCoordMap().put(pos, mass);
 			}
@@ -1060,15 +1060,15 @@ public class LucXor {
                 int i = line.indexOf('.') + 1;
                 int j = line.indexOf('.', i);
                 String s = line.substring(i,j);
-                scanNum = Integer.valueOf(s);
+                scanNum = Integer.parseInt(s);
             }
 
             if(line.startsWith("CHARGE") || line.startsWith("PEPMASS")) continue;
 
             if( Character.isDigit( line.charAt(0) ) ) {
                 String[] ary = line.split("\\s+");
-                double mz = MathFunctions.roundDouble( Double.valueOf(ary[0]), 8 );
-                double I  = MathFunctions.roundDouble( Double.valueOf(ary[1]), 8 );
+                double mz = MathFunctions.roundDouble( Double.parseDouble(ary[0]), 8 );
+                double I  = MathFunctions.roundDouble( Double.parseDouble(ary[1]), 8 );
                 mzAL.add(mz);
                 intensityAL.add(I);
             }

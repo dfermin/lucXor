@@ -115,72 +115,72 @@ public class LucXorConfiguration {
 			
 			if(line.startsWith("INPUT_TYPE")) {
 				String s = Utils.parseInputLine(line);
-				INPUT_TYPE = Integer.valueOf(s);
+				INPUT_TYPE = Integer.parseInt(s);
 			}
 
             if(line.startsWith("MAX_PEP_LEN")) {
                 String s = Utils.parseInputLine(line);
-                MAX_PEP_LENGTH = Integer.valueOf(s);
+                MAX_PEP_LENGTH = Integer.parseInt(s);
             }
 
 			if(line.startsWith("MAX_NUM_PERM")) {
 				String s = Utils.parseInputLine(line);
-				MAX_NUM_PERMUTATIONS = Double.valueOf(s);
+				MAX_NUM_PERMUTATIONS = Double.parseDouble(s);
 			}
 			
 			if(line.startsWith("MIN_NUM_PSMS_MODEL")) {
 				String s = Utils.parseInputLine(line);
-				MIN_NUM_PSM_MODELING = Integer.valueOf(s);
+				MIN_NUM_PSM_MODELING = Integer.parseInt(s);
 			}
 			
 			if(line.startsWith("MS2_TOL") && !line.contains("_UNITS")) {
 				String s = Utils.parseInputLine(line);
-				MS2TOL = Double.valueOf(s);
+				MS2TOL = Double.parseDouble(s);
 			}
 			
 			if(line.startsWith("MS2_TOL_UNITS")) {
 				String s = Utils.parseInputLine(line);
-				MS2TOL_UNITS = Integer.valueOf(s);
+				MS2TOL_UNITS = Integer.parseInt(s);
 			}
 			
 			if(line.startsWith("ALGORITHM")) {
 				String s = Utils.parseInputLine(line);
-				SCORING_ALGORITHM = Integer.valueOf(s);
+				SCORING_ALGORITHM = Integer.parseInt(s);
 			}
 
             if(line.startsWith("TSV_HEADER")) {
                 String s = Utils.parseInputLine(line);
-                TSV_HDR = Integer.valueOf(s);
+                TSV_HDR = Integer.parseInt(s);
             }
 
 			if(line.startsWith("REDUCE_PRECURSOR_NL")) {
 				String s = Utils.parseInputLine(line);
-				REDUCENL = Integer.valueOf(s);
+				REDUCENL = Integer.parseInt(s);
 			}
 			
 			if(line.startsWith("PRECURSOR_NL_MASS_DIFF")) {
 				String s = Utils.parseInputLine(line);
-				PRECURSOR_NL_MASS = Double.valueOf(s);
+				PRECURSOR_NL_MASS = Double.parseDouble(s);
 			}
 			
 			if(line.startsWith("SELECTION_METHOD")) {
 				String s = Utils.parseInputLine(line);
-				SCORING_METHOD = Integer.valueOf(s);
+				SCORING_METHOD = Integer.parseInt(s);
 			}
 			
 			if(line.startsWith("MODELING_SCORE_THRESHOLD")) {
 				String s = Utils.parseInputLine(line);
-				MODELTH = Double.valueOf(s);
+				MODELTH = Double.parseDouble(s);
 			}
 			
 			if(line.startsWith("MAX_CHARGE_STATE")) {
 				String s = Utils.parseInputLine(line);
-				MAX_CHARGE_STATE = Integer.valueOf(s);
+				MAX_CHARGE_STATE = Integer.parseInt(s);
 			}
 			
 			if(line.startsWith("NUM_THREADS")) {
 				String s = Utils.parseInputLine(line);
-				int x = Integer.valueOf(s);
+				int x = Integer.parseInt(s);
 				// We do minus 1 because 1 thread already goes to 
 				// running the whole program
 				if(x < 0) NUM_THREADS = 1;
@@ -191,7 +191,7 @@ public class LucXorConfiguration {
 			
 			if(line.startsWith("DEBUG_MODE")) {
 				String s = Utils.parseInputLine(line);
-				DEBUG_MODE = Integer.valueOf(s);
+				DEBUG_MODE = Integer.parseInt(s);
 			}
 
             if(line.startsWith("WRITE_MATCHED_PEAKS_FILE")) {
@@ -201,59 +201,59 @@ public class LucXorConfiguration {
 
             if(line.startsWith("RUN_MODE")) {
                 String s = Utils.parseInputLine(line);
-                RUN_MODE = Integer.valueOf(s);
+                RUN_MODE = Integer.parseInt(s);
                 if(RUN_MODE > 1) RUN_MODE = 0;
             }
 			
 			if(line.startsWith("SCORING_THRESHOLD")) {
 				String s = Utils.parseInputLine(line);
-				SCORETH = Double.valueOf(s);
+				SCORETH = Double.parseDouble(s);
 			}
 			
 			if(line.startsWith("DECOY_MASS")) {
 				String s = Utils.parseInputLine(line);
-				DECOY_MASS = Double.valueOf(s);
+				DECOY_MASS = Double.parseDouble(s);
 			}
 
             if(line.startsWith("DECOY_NL")) {
                 String[] ary = parseNLLine(line);
                 String k = ary[0].substring(1);
-                double m = Double.valueOf(ary[1]);
+                double m = Double.parseDouble(ary[1]);
                 DECOY_NEUTRAL_LOSS_MAP.put(k,m);
             }
 			
 			if(line.startsWith("NL")) {
 				String[] ary = parseNLLine(line);
-				double m = Double.valueOf(ary[1]);
+				double m = Double.parseDouble(ary[1]);
 				NEUTRAL_LOSS_MAP.put(ary[0], m);
 			}
 			
 			if(line.startsWith("MIN_MZ")) {
 				String s = Utils.parseInputLine(line);
-				MIN_MZ = Double.valueOf(s);
+				MIN_MZ = Double.parseDouble(s);
 			}
 
 			if(line.startsWith("MOD_PEP_REP")) {
 				String s = Utils.parseInputLine(line);
-				PEPTIDE_REPRESENTATION = Integer.valueOf(s);
+				PEPTIDE_REPRESENTATION = Integer.parseInt(s);
 			}
 			
 			if(line.startsWith("TARGET_MOD")) {
 				String[] ary = parseInputModLine(line);
-				double m = Double.valueOf(ary[1]);
+				double m = Double.parseDouble(ary[1]);
 				TARGET_MOD_MAP.put(ary[0].toUpperCase(), m);
 			}
 
 
             if(line.startsWith("VAR_MOD")) {
                 String[] ary = parseInputModLine(line);
-                double m = Double.valueOf(ary[1]);
+                double m = Double.parseDouble(ary[1]);
                 VAR_MOD_MAP.put(ary[0].toLowerCase(), m); // variable mods are lower case
             }
 
             if(line.startsWith("FIXED_MOD")) {
                 String[] ary = parseInputModLine(line);
-                double m = Double.valueOf(ary[1]);
+                double m = Double.parseDouble(ary[1]);
                 FIXED_MOD_MAP.put(ary[0].toUpperCase(), m);
             }
 
@@ -384,7 +384,7 @@ public class LucXorConfiguration {
 			else sb.append(c);
 		}
 		
-		mass = Double.valueOf( sb.toString() );
+		mass = Double.parseDouble( sb.toString() );
 		
 		ret[0] = Character.toString(aa);
 		ret[1] = String.valueOf(mass);

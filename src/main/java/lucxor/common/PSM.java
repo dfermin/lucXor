@@ -16,7 +16,6 @@ import lucxor.utils.Constants;
 import lucxor.LucXorConfiguration;
 import lucxor.utils.MathFunctions;
 import lucxor.utils.Utils;
-import org.slf4j.LoggerFactory;
 
 import java.io.BufferedWriter;
 import java.io.File;
