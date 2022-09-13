@@ -63,7 +63,7 @@ public class Peptide {
 			else {
 
 				String C = Character.toString(peptide.charAt(pos));
-				System.out.println("Peptide: " + peptide + " Postision: " + pos + " Mass: " + mass + " AA: " + C);
+				log.debug("Peptide: " + peptide + " Position: " + pos + " Mass: " + mass + " AA: " + C);
 				String c = C.toLowerCase();
 
 				if( LucXorConfiguration.getFixedModMap().containsKey(C)) {
