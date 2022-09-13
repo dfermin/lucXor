@@ -121,3 +121,4 @@ java jar lucxor-{version}.jar -t
 - Fermin D, Walmsley SJ, Gingras AC, Choi H, Nesvizhskii AI. LuciPHOr: algorithm for phosphorylation site localization with false localization rate estimation using modified target-decoy approach. Mol Cell Proteomics. 2013;12(11):3409‐3419. [doi:10.1074/mcp.M113.028928](https://www.ncbi.nlm.nih.gov/pmc/articles/pmid/23918812/)
 
 - Damian Fermin, Dmitry Avtonomov, Hyungwon Choi, Alexey I. Nesvizhskii, LuciPHOr2: site localization of generic post-translational modifications from tandem mass spectrometry data, Bioinformatics, Volume 31, Issue 7, 1 April 2015, Pages 1141–1143, [https://doi.org/10.1093/bioinformatics/btu788](https://academic.oup.com/bioinformatics/article-pdf/31/7/1141/17125407/btu788.pdf)
+

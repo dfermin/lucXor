@@ -96,7 +96,7 @@ public class PepXML {
 						hits.forEach(hit-> {
 							PSM curPSM = new PSM();
 							curPSM.setSpecId(spectrumId);
-							curPSM.setScanNum(new Long(startScan).intValue());
+curPSM.setScanNum(Long.valueOf(startScan).intValue());
 							curPSM.setCharge(charge);
 							curPSM.setPeptideSequence(hit.getPeptide());
 							List<NameValueType> scores = hit.getSearchScore();
